@@ -91,8 +91,8 @@ full_eventplot_l2tf <- function(delta, var, truth = NULL, nsim = 2000) {
   if (p >= 6) {
     target_df <- p - 1
     lam_bounds <- find_lam_bounds(p, var, target_df) # custom implementation
-    loglam1_range <- lam_bounds$loglam1_range
-    loglam2_range <- lam_bounds$loglam2_range
+    loglam1_range <- lam_bounds$lam1_range
+    loglam2_range <- lam_bounds$lam2_range
     bestK <- -1
     bestlam1 <- -1
     bestlam2 <- -1
@@ -102,7 +102,7 @@ full_eventplot_l2tf <- function(delta, var, truth = NULL, nsim = 2000) {
       for (jj in 1:nrow(loglambda_grid)) {
         res <- MDprojl2tf(delta, var, exp(loglambda_grid[jj, 1]), exp(loglambda_grid[jj, 2]), K) # custom implementation
         if (!is.null(truth)) condtruth <- MDprojl2tf(truth, var, exp(loglambda_grid[jj, 1]), exp(loglambda_grid[jj, 2]), K)$d else condtruth <- NULL
-        bic <- res$obj + log(p) * res$df
+        bic <- res$MD + log(p) * res$df
         if (bic < best_bic) {
           bestlam1 <- exp(loglambda_grid[jj, 1])
           bestlam2 <- exp(loglambda_grid[jj, 2])
@@ -196,20 +196,6 @@ MDproj2 <- function(delta, V, X) {
 }
 
 
-MDprojl2tf <- function(delta, var, lam1, lam2, K) {
-  # Placeholder for l2 trend filtering projection, to be implemented
-  # Should return list(d, Vd, obj, J, pval, df)
-  list(d = delta, Vd = var, obj = 0, J = diag(length(delta)), pval = 1, df = K)
-}
-
-find_lam_bounds <- function(p, var, target_df) {
-  # Placeholder for finding lambda bounds (MATLAB: find_lam_bounds)
-  list(
-    loglam1_range = matrix(log(1e-3), nrow = p-1, ncol = 2),
-    loglam2_range = matrix(log(1e-3), nrow = p-1, ncol = 2)
-  )
-}
-
 find_lam_bounds <- function(p, V, target_df) {
   # with no penalty on third diff (lam2=0), p>df>K+1.
   # with no penalty on first diff (lam1=0), p>df>3
@@ -283,13 +269,16 @@ MDprojl2tf <- function(delta, V, lambda1, lambda2, K) {
   
   p <- length(delta)
   
+  
   # First difference matrix
-  D1 <- diag(-1, p, p) + diag(1, p-1, p, k = -1)
-  D1 <- D1[2:p, ]  # Remove first row
+  D1 <- matrix(0, nrow = p, ncol = p)
+  D1[cbind(2:p, 1:(p-1))] <- 1  # Put 1's on the subdiagonal
+  D1 <- D1 - diag(p)  
+  D1 <- D1[-1, ]  # Remove first row (equivalent to D1(2:end,:))
   
   # Second and third difference matrices
-  D2 <- D1[2:nrow(D1), 2:ncol(D1)]
-  D3 <- D2[2:nrow(D2), 2:ncol(D2)]
+  D2 <- D1[-1, -1]  # Remove first row and first column
+  D3 <- D2[-1, -1]  # Remove first row and first column again
   D3 <- D3 %*% D2 %*% D1  # Third difference
   
   # l2 trend filtering problem formulation
@@ -333,7 +322,7 @@ MDprojl2tf <- function(delta, V, lambda1, lambda2, K) {
   D_eigen <- diag(eigen_result$values)
   
   # Check if eigenvalues are real
-  if (!all(is.real(eigen_result$values))) {
+  if (any(Im(eigen_result$values) > 0)) {
     cat("hi - perhaps issue with covariance?\n")
   }
   
