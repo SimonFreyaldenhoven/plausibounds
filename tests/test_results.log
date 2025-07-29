@@ -1,0 +1,385 @@
+Test Log Started: 2025-07-29 10:31:15.43238 
+ ================================================== 
+
+Starting test case: constant_iid at 2025-07-29 10:32:24.465928 
+ERROR in test case constant_iid : could not find function "arrange" at 2025-07-29 10:32:28.368479 
+------------------------------ 
+Starting test case: constant_iid at 2025-07-29 10:32:48.249311 
+   pw_width : PASSED 
+   supt_width : PASSED 
+   restricted_width : PASSED 
+   wald_width : PASSED 
+   df : PASSED 
+Test case constant_iid completed: ALL TESTS PASSED at 2025-07-29 10:37:35.263402 
+------------------------------ 
+Summary Table:
+                        Statistic     Matlab          R
+pw_width                 pw_width 0.54962748 0.54962748
+supt_width             supt_width 0.89409163 0.89765154
+restricted_width restricted_width 0.16091472 0.16164632
+wald_width             wald_width 0.09195421 0.09195421
+df                             df 1.00000000 1.00000000
+                 Test_Result
+pw_width                   ✓
+supt_width                 ✓
+restricted_width           ✓
+wald_width                 ✓
+df                         ✓
+
+------------------------------ 
+Starting test case: constant_large_n at 2025-07-29 10:37:35.266907 
+   pw_width : PASSED 
+   supt_width : PASSED 
+   restricted_width : PASSED 
+   wald_width : PASSED 
+   df : PASSED 
+Test case constant_large_n completed: ALL TESTS PASSED at 2025-07-29 10:43:00.308809 
+------------------------------ 
+Summary Table:
+                        Statistic      Matlab           R
+pw_width                 pw_width 0.048580664 0.048580664
+supt_width             supt_width 0.079328459 0.079341936
+restricted_width restricted_width 0.014311995 0.014287651
+wald_width             wald_width 0.008127681 0.008127681
+df                             df 1.000000000 1.000000000
+                 Test_Result
+pw_width                   ✓
+supt_width                 ✓
+restricted_width           ✓
+wald_width                 ✓
+df                         ✓
+
+------------------------------ 
+Starting test case: constant_strong_corr at 2025-07-29 10:43:00.319425 
+   pw_width : PASSED 
+   supt_width : PASSED 
+   restricted_width : FAILED: `r_restricted_width` not equal to unname(matlab_diag_values["restricted_width"]).
+1/1 mismatches
+[1] 0.651 - 0.572 == 0.0792 
+   wald_width : PASSED 
+   df : PASSED 
+Test case constant_strong_corr completed: SOME TESTS FAILED at 2025-07-29 10:51:23.368778 
+------------------------------ 
+Summary Table:
+                        Statistic    Matlab         R
+pw_width                 pw_width 0.5496275 0.5496275
+supt_width             supt_width 0.7932134 0.7854158
+restricted_width restricted_width 0.5720752 0.6513012
+wald_width             wald_width 0.4224721 0.4224721
+df                             df 1.0000000 1.0000000
+                 Test_Result
+pw_width                   ✓
+supt_width                 ✓
+restricted_width           ✗
+wald_width                 ✓
+df                         ✓
+
+------------------------------ 
+Starting test case: no_flat_iid at 2025-07-29 10:51:23.378881 
+   pw_width : PASSED 
+   supt_width : PASSED 
+   restricted_width : PASSED 
+   wald_width : PASSED 
+   df : PASSED 
+Test case no_flat_iid completed: ALL TESTS PASSED at 2025-07-29 11:02:03.617471 
+------------------------------ 
+Summary Table:
+                        Statistic     Matlab          R
+pw_width                 pw_width 0.54962748 0.54962748
+supt_width             supt_width 0.89250214 0.89765154
+restricted_width restricted_width 0.31527890 0.31508264
+wald_width             wald_width 0.09195421 0.09195421
+df                             df 4.00000000 4.00000000
+                 Test_Result
+pw_width                   ✓
+supt_width                 ✓
+restricted_width           ✓
+wald_width                 ✓
+df                         ✓
+
+------------------------------ 
+Starting test case: no_flat_large_n at 2025-07-29 11:02:03.626255 
+   pw_width : PASSED 
+   supt_width : PASSED 
+   restricted_width : PASSED 
+   wald_width : PASSED 
+   df : PASSED 
+Test case no_flat_large_n completed: ALL TESTS PASSED at 2025-07-29 11:12:41.077385 
+------------------------------ 
+Summary Table:
+                        Statistic       Matlab            R
+pw_width                 pw_width  0.048580664  0.048580664
+supt_width             supt_width  0.078628894  0.079341936
+restricted_width restricted_width  0.052936403  0.053078652
+wald_width             wald_width  0.008127681  0.008127681
+df                             df 20.460653147 20.460652662
+                 Test_Result
+pw_width                   ✓
+supt_width                 ✓
+restricted_width           ✓
+wald_width                 ✓
+df                         ✓
+
+------------------------------ 
+Starting test case: no_flat_strong_corr at 2025-07-29 11:12:41.086744 
+   pw_width : PASSED 
+   supt_width : PASSED 
+   restricted_width : FAILED: `r_restricted_width` not equal to unname(matlab_diag_values["restricted_width"]).
+1/1 mismatches
+[1] 0.854 - 0.754 == 0.1 
+   wald_width : PASSED 
+   df : PASSED 
+Test case no_flat_strong_corr completed: SOME TESTS FAILED at 2025-07-29 11:20:57.865706 
+------------------------------ 
+Summary Table:
+                        Statistic    Matlab         R
+pw_width                 pw_width 0.5496275 0.5496275
+supt_width             supt_width 0.7918697 0.7854158
+restricted_width restricted_width 0.7540739 0.8541839
+wald_width             wald_width 0.4224721 0.4224721
+df                             df 4.0000000 4.0000000
+                 Test_Result
+pw_width                   ✓
+supt_width                 ✓
+restricted_width           ✗
+wald_width                 ✓
+df                         ✓
+
+------------------------------ 
+Starting test case: quadratic_iid at 2025-07-29 11:20:57.87553 
+   pw_width : PASSED 
+   supt_width : PASSED 
+   restricted_width : PASSED 
+   wald_width : PASSED 
+   df : PASSED 
+Test case quadratic_iid completed: ALL TESTS PASSED at 2025-07-29 11:31:32.828506 
+------------------------------ 
+Summary Table:
+                        Statistic     Matlab          R
+pw_width                 pw_width 0.54962748 0.54962748
+supt_width             supt_width 0.89672252 0.89765154
+restricted_width restricted_width 0.27215391 0.27368596
+wald_width             wald_width 0.09195421 0.09195421
+df                             df 3.00000000 3.00000000
+                 Test_Result
+pw_width                   ✓
+supt_width                 ✓
+restricted_width           ✓
+wald_width                 ✓
+df                         ✓
+
+------------------------------ 
+Starting test case: quadratic_large_n at 2025-07-29 11:31:32.841728 
+   pw_width : PASSED 
+   supt_width : PASSED 
+   restricted_width : PASSED 
+   wald_width : PASSED 
+   df : PASSED 
+Test case quadratic_large_n completed: ALL TESTS PASSED at 2025-07-29 11:42:11.256107 
+------------------------------ 
+Summary Table:
+                        Statistic      Matlab           R
+pw_width                 pw_width 0.048580664 0.048580664
+supt_width             supt_width 0.079177639 0.079341936
+restricted_width restricted_width 0.027735464 0.027849634
+wald_width             wald_width 0.008127681 0.008127681
+df                             df 4.000000000 4.000000000
+                 Test_Result
+pw_width                   ✓
+supt_width                 ✓
+restricted_width           ✓
+wald_width                 ✓
+df                         ✓
+
+------------------------------ 
+Starting test case: quadratic_strong_corr at 2025-07-29 11:42:11.268254 
+   pw_width : PASSED 
+   supt_width : PASSED 
+   restricted_width : FAILED: `r_restricted_width` not equal to unname(matlab_diag_values["restricted_width"]).
+1/1 mismatches
+[1] 0.82 - 0.722 == 0.0974 
+   wald_width : PASSED 
+   df : PASSED 
+Test case quadratic_strong_corr completed: SOME TESTS FAILED at 2025-07-29 11:50:34.399086 
+------------------------------ 
+Summary Table:
+                        Statistic    Matlab         R
+pw_width                 pw_width 0.5496275 0.5496275
+supt_width             supt_width 0.7896291 0.7854158
+restricted_width restricted_width 0.7224567 0.8198572
+wald_width             wald_width 0.4224721 0.4224721
+df                             df 3.0000000 3.0000000
+                 Test_Result
+pw_width                   ✓
+supt_width                 ✓
+restricted_width           ✗
+wald_width                 ✓
+df                         ✓
+
+------------------------------ 
+Starting test case: wiggly_iid at 2025-07-29 11:50:34.4073 
+   pw_width : PASSED 
+   supt_width : PASSED 
+   restricted_width : PASSED 
+   wald_width : PASSED 
+   df : PASSED 
+Test case wiggly_iid completed: ALL TESTS PASSED at 2025-07-29 11:56:22.338899 
+------------------------------ 
+Summary Table:
+                        Statistic     Matlab          R
+pw_width                 pw_width 0.54962748 0.54962748
+supt_width             supt_width 0.89714508 0.89765154
+restricted_width restricted_width 0.29401680 0.29613090
+wald_width             wald_width 0.09195421 0.09195421
+df                             df 6.25153483 6.25153483
+                 Test_Result
+pw_width                   ✓
+supt_width                 ✓
+restricted_width           ✓
+wald_width                 ✓
+df                         ✓
+
+------------------------------ 
+Starting test case: wiggly_large_n at 2025-07-29 11:56:22.341848 
+   pw_width : PASSED 
+   supt_width : PASSED 
+   restricted_width : PASSED 
+   wald_width : PASSED 
+   df : PASSED 
+Test case wiggly_large_n completed: ALL TESTS PASSED at 2025-07-29 12:03:31.414206 
+------------------------------ 
+Summary Table:
+                        Statistic       Matlab            R
+pw_width                 pw_width  0.048580664  0.048580664
+supt_width             supt_width  0.079408703  0.079341936
+restricted_width restricted_width  0.083896843  0.084203022
+wald_width             wald_width  0.008127681  0.008127681
+df                             df 34.991100404 34.991098496
+                 Test_Result
+pw_width                   ✓
+supt_width                 ✓
+restricted_width           ✓
+wald_width                 ✓
+df                         ✓
+
+------------------------------ 
+Starting test case: wiggly_strong_corr at 2025-07-29 12:03:31.42441 
+   pw_width : PASSED 
+   supt_width : PASSED 
+   restricted_width : FAILED: `r_restricted_width` not equal to unname(matlab_diag_values["restricted_width"]).
+1/1 mismatches
+[1] 0.881 - 0.772 == 0.109 
+   wald_width : PASSED 
+   df : PASSED 
+Test case wiggly_strong_corr completed: SOME TESTS FAILED at 2025-07-29 12:11:53.994568 
+------------------------------ 
+Summary Table:
+                        Statistic     Matlab          R
+pw_width                 pw_width  0.5496275  0.5496275
+supt_width             supt_width  0.7912138  0.7854158
+restricted_width restricted_width  0.7720259  0.8812132
+wald_width             wald_width  0.4224721  0.4224721
+df                             df 30.8858458 30.8858458
+                 Test_Result
+pw_width                   ✓
+supt_width                 ✓
+restricted_width           ✗
+wald_width                 ✓
+df                         ✓
+
+------------------------------ 
+Starting test case: quadratic_strong_corr at 2025-07-29 13:18:35.437503 
+Starting test case: quadratic_strong_corr at 2025-07-29 13:22:28.295114 
+   pw_width : PASSED 
+   supt_width : PASSED 
+   restricted_width : PASSED 
+   wald_width : PASSED 
+   df : PASSED 
+Test case quadratic_strong_corr completed: ALL TESTS PASSED at 2025-07-29 13:27:00.034569 
+------------------------------ 
+Summary Table:
+                        Statistic    Matlab         R
+pw_width                 pw_width 0.5496275 0.5496275
+supt_width             supt_width 0.7896291 0.7854158
+restricted_width restricted_width 0.7224567 0.7199388
+wald_width             wald_width 0.4224721 0.4224721
+df                             df 3.0000000 3.0000000
+                 Test_Result
+pw_width                   ✓
+supt_width                 ✓
+restricted_width           ✓
+wald_width                 ✓
+df                         ✓
+
+------------------------------ 
+Starting test case: constant_strong_corr at 2025-07-29 13:41:10.884309 
+   pw_width : PASSED 
+   supt_width : PASSED 
+   restricted_width : PASSED 
+   wald_width : PASSED 
+   df : PASSED 
+Test case constant_strong_corr completed: ALL TESTS PASSED at 2025-07-29 13:45:46.967182 
+------------------------------ 
+Summary Table:
+                        Statistic    Matlab         R
+pw_width                 pw_width 0.5496275 0.5496275
+supt_width             supt_width 0.7932134 0.7854158
+restricted_width restricted_width 0.5720752 0.5719252
+wald_width             wald_width 0.4224721 0.4224721
+df                             df 1.0000000 1.0000000
+                 Test_Result
+pw_width                   ✓
+supt_width                 ✓
+restricted_width           ✓
+wald_width                 ✓
+df                         ✓
+
+------------------------------ 
+Starting test case: no_flat_strong_corr at 2025-07-29 13:45:46.971423 
+   pw_width : PASSED 
+   supt_width : PASSED 
+   restricted_width : PASSED 
+   wald_width : PASSED 
+   df : PASSED 
+Test case no_flat_strong_corr completed: ALL TESTS PASSED at 2025-07-29 13:49:45.277798 
+------------------------------ 
+Summary Table:
+                        Statistic    Matlab         R
+pw_width                 pw_width 0.5496275 0.5496275
+supt_width             supt_width 0.7918697 0.7854158
+restricted_width restricted_width 0.7540739 0.7500820
+wald_width             wald_width 0.4224721 0.4224721
+df                             df 4.0000000 4.0000000
+                 Test_Result
+pw_width                   ✓
+supt_width                 ✓
+restricted_width           ✓
+wald_width                 ✓
+df                         ✓
+
+------------------------------ 
+Starting test case: wiggly_strong_corr at 2025-07-29 13:49:45.282257 
+   pw_width : PASSED 
+   supt_width : PASSED 
+   restricted_width : FAILED: `r_restricted_width` not equal to unname(matlab_diag_values["restricted_width"]).
+1/1 mismatches
+[1] 0.796 - 0.772 == 0.0237 
+   wald_width : PASSED 
+   df : PASSED 
+Test case wiggly_strong_corr completed: SOME TESTS FAILED at 2025-07-29 13:53:27.699758 
+------------------------------ 
+Summary Table:
+                        Statistic     Matlab          R
+pw_width                 pw_width  0.5496275  0.5496275
+supt_width             supt_width  0.7912138  0.7854158
+restricted_width restricted_width  0.7720259  0.7956826
+wald_width             wald_width  0.4224721  0.4224721
+df                             df 30.8858458 30.8858458
+                 Test_Result
+pw_width                   ✓
+supt_width                 ✓
+restricted_width           ✗
+wald_width                 ✓
+df                         ✓
+
+------------------------------ 
