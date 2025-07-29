@@ -1,3 +1,6 @@
+library(stringr)
+library(dplyr)
+
 full_eventplot_l2tf <- function(delta, var, truth = NULL, nsim = 2000) {
   # Ensure positive-definite variance matrix (MATLAB: eig, A*B*A')
   eigs <- eigen(var, symmetric = TRUE)
@@ -7,11 +10,11 @@ full_eventplot_l2tf <- function(delta, var, truth = NULL, nsim = 2000) {
 
   p <- length(delta)
   # --- SUP-t (simultaneous) bands ---
-  supt_bands <- bands_plugin(delta, var, p, nsim = nsim, level = 0.95) # custom implementation
+  supt_bands <- bands_plugin(delta, var, p, nsim = nsim, level = 0.95) 
   supt_LB <- supt_bands$LB
   supt_UB <- supt_bands$UB
   supt <- supt_bands$sup_t
-  print("Calculated supt")
+  print(str_glue("Calculated supt: {supt}"))
 
   # --- Standardized covariance and correlation matrix (MATLAB: diag, sqrt, diag(1./stdV)*V*diag(1./stdV)) ---
   stdv <- sqrt(diag(var))
@@ -27,7 +30,7 @@ full_eventplot_l2tf <- function(delta, var, truth = NULL, nsim = 2000) {
   eig_c <- eigen(Corrmat, symmetric = TRUE)
   Corrmat_sqrt <- eig_c$vectors %*% diag(sqrt(pmax(eig_c$values, 0))) %*% t(eig_c$vectors)
   t_stat <- abs(rd %*% Corrmat_sqrt)
-  supt_critval <- as.numeric(quantile(apply(t_stat, 1, max), 0.95))
+  supt_critval <- as.numeric(quantile(apply(t_stat, 1, max), 0.95)) # This may be the same as supt above
 
   # --- Model selection among polynomials (MATLAB: while, Xtmp, MDproj2) ---
   best_bic <- Inf
@@ -38,7 +41,6 @@ full_eventplot_l2tf <- function(delta, var, truth = NULL, nsim = 2000) {
   best_pval <- NULL
   best_condtruth <- NULL
   surrogate_class <- "polynomial"
-  mbhsf <- apply(abs(rd), 1, max)
   
   Xtmp <- matrix(1, nrow = p, ncol = 1)
   res <- MDproj2(delta, var, Xtmp) 
@@ -49,6 +51,7 @@ full_eventplot_l2tf <- function(delta, var, truth = NULL, nsim = 2000) {
   best_J <- res$J
   best_pval <- res$pval
   best_bic <- bic
+  mbhsf <- apply(abs(rd %*% best_J), 1, max)
   
   for (degree in 1:3) {
     Xtmp <- cbind(Xtmp, (1:p)^degree)
@@ -130,7 +133,7 @@ full_eventplot_l2tf <- function(delta, var, truth = NULL, nsim = 2000) {
   ub <- sum(wald_bounds$UB)
 
   # --- Diagnostics (MATLAB: diagnostics struct) ---
-  # diagnostics <- list()
+   diagnostics <- list()
   #   diagnostics$inpw <- all(truth < delta + 1.96 * sqrt(diag(var)) & truth > delta - 1.96 * sqrt(diag(var)))
   #   diagnostics$inwald <- sum(truth) < sum(wald_bounds$UB) & sum(truth) > sum(wald_bounds$LB)
   #   diagnostics$insupt <- all(truth < delta + supt * sqrt(diag(var)) & truth > delta - supt * sqrt(diag(var)))
@@ -138,26 +141,37 @@ full_eventplot_l2tf <- function(delta, var, truth = NULL, nsim = 2000) {
   #   diagnostics$incond <- if (!is.null(best_condtruth)) all(best_condtruth < best_fit$d + suptb * sqrt(diag(best_fit$Vd)) & best_condtruth > best_fit$d - suptb * sqrt(diag(best_fit$Vd))) else NA
   #   diagnostics$mse_pw <- mean((delta - truth)^2)
   #   diagnostics$mse_smooth <- mean((best_fit$d - truth)^2)
-  #   diagnostics$pw_width <- mean(2 * 1.96 * sqrt(diag(var)))
-  #   diagnostics$supt_width <- mean(2 * supt * sqrt(diag(var)))
-  #   diagnostics$restricted_width <- mean(2 * suptb * sqrt(diag(best_fit$Vd)))
+     diagnostics$pw_width <- mean(2 * 1.96 * sqrt(diag(var)))
+     diagnostics$supt_width <- mean(2 * supt_critval * sqrt(diag(var)))
+     diagnostics$restricted_width <- mean(2 * suptb * sqrt(diag(best_fit$Vd)))
+     diagnostics$suptb <- suptb
   #   diagnostics$wald_width <- (sum(wald_bounds$UB) - sum(wald_bounds$LB)) / p
-  #   diagnostics$df <- best_df
-  #   diagnostics$K <- if (exists("bestK")) bestK else NA
-  #   diagnostics$lam1 <- if (exists("bestlam1")) bestlam1 else NA
-  #   diagnostics$lam2 <- if (exists("bestlam2")) bestlam2 else NA
-  #   diagnostics$suptbands <- cbind(delta + supt * sqrt(diag(var)), delta - supt * sqrt(diag(var)))
+     diagnostics$df <- best_df
+     diagnostics$K <- if (exists("bestK")) bestK else NA
+     diagnostics$lam1 <- if (exists("bestlam1")) bestlam1 else NA
+     diagnostics$lam2 <- if (exists("bestlam2")) bestlam2 else NA
+     diagnostics$suptbands <- cbind(delta + supt_critval * sqrt(diag(var)), delta - supt_critval * sqrt(diag(var)))
   #   diagnostics$surrogate <- best_condtruth
   #   diagnostics$surrogate_class <- surrogate_class
   
 
+  # Calculate restricted bounds
+  restricted_LB <- best_fit$d - suptb * sqrt(diag(best_fit$Vd))
+  restricted_UB <- best_fit$d + suptb * sqrt(diag(best_fit$Vd))
+  
   list(
-   # diagnostics = diagnostics,
+    diagnostics = diagnostics,
     lb = lb,
     ub = ub,
     supt_LB = supt_LB,
     supt_UB = supt_UB,
-    best_fit = best_fit
+    supt_critval = supt_critval,
+    suptb = suptb,
+    best_fit = best_fit,
+    surrogate = best_fit$d,
+    restricted_LB = restricted_LB,
+    restricted_UB = restricted_UB,
+    mbhsf = mbhsf
   )
 }
 
@@ -166,7 +180,10 @@ full_eventplot_l2tf <- function(delta, var, truth = NULL, nsim = 2000) {
 bands_plugin <- function(delta, var, p, nsim, level) {
   # Simulate from N(0, var), calculate sup-t bands, return LB and UB
   rd <- MASS::mvrnorm(nsim, mu = rep(0, p), Sigma = var)
-  sup_t <- as.numeric(quantile(apply(abs(rd), 1, max), level))
+  std_devs <- sqrt(diag(var))
+  rd_standardized <- rd / matrix(std_devs, nrow = nsim, ncol = length(std_devs), byrow = TRUE)
+  sup_t <- as.numeric(quantile(apply(abs(rd_standardized), 1, max), level))
+ # sup_t <- as.numeric(quantile(apply(abs(rd), 1, max), level))
   list(
     LB = delta - sup_t * sqrt(diag(var)),
     UB = delta + sup_t * sqrt(diag(var)),
@@ -239,6 +256,7 @@ setup_grid <- function(n_grid, loglam1_range, loglam2_range, K, V, lb, ub) {
   }
   
   legit <- (grid_df <= ub) & (grid_df >= lb)
+  
   if (mean(legit) < 0.1) {
     cat('Warning: few gridpoints in range\n')
   }
@@ -249,17 +267,17 @@ setup_grid <- function(n_grid, loglam1_range, loglam2_range, K, V, lb, ub) {
 
 
 
-Wald_bounds <- function(dhat, Vhat, alpha, df) {
+Wald_bounds <- function(dhat, Vhat, alpha, df = 1) {
   h <- length(dhat)
   critval <- qchisq(1 - alpha, df)
   
   lambda1 <- sqrt(sum(Vhat) / (4 * critval))
   lambda2 <- -sqrt(sum(Vhat) / (4 * critval))
   
-  UB <- dhat + (1 / (2 * lambda1)) * (t(rep(1, h)) %*% Vhat)
-  LB <- dhat + (1 / (2 * lambda2)) * (t(rep(1, h)) %*% Vhat)
+  UB <- t(dhat) + (1 / (2 * lambda1)) * (t(rep(1, h)) %*% Vhat)
+  LB <- t(dhat) + (1 / (2 * lambda2)) * (t(rep(1, h)) %*% Vhat)
   
-  return(list(LB = LB, UB = UB))
+  return(list(LB = t(LB), UB = t(UB)))
 }
 
 
@@ -291,7 +309,8 @@ MDprojl2tf <- function(delta, V, lambda1, lambda2, K) {
   # Weight matrices
   vD1 <- D1 %*% scaledV %*% t(D1)
   zeros_block <- matrix(0, nrow = K-1, ncol = K-1)
-  vD1_block <- vD1[K:nrow(vD1), K:ncol(vD1)] / mean(diag(vD1[K:nrow(vD1), K:ncol(vD1)]))
+  partial_vD1 <- vD1[K:nrow(vD1), K:ncol(vD1)] %>% as.matrix()
+  vD1_block <- partial_vD1 / mean(diag(partial_vD1))
   W1 <- as.matrix(bdiag(zeros_block, vD1_block))
   
   vD3 <- D3 %*% scaledV %*% t(D3)
@@ -423,7 +442,7 @@ my_df <- function(loglam1, loglam2, K, V) {
     
     # Create block diagonal matrix W1
     zeros_block <- matrix(0, K-1, K-1)
-    vD1_subset <- vD1[K:nrow(vD1), K:ncol(vD1)]
+    vD1_subset <- vD1[K:nrow(vD1), K:ncol(vD1)] %>% as.matrix()
     normalized_vD1 <- vD1_subset / mean(diag(vD1_subset))
     W1 <- bdiag(zeros_block, normalized_vD1)
     W1 <- as.matrix(W1)  # Convert to regular matrix
