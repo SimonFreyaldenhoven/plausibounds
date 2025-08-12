@@ -1,0 +1,356 @@
+#' Create Plot for Plausible Bounds
+#'
+#' This function creates a plot of plausible bounds from the results of plausible_bounds,
+#' calculate_cumulative_bounds, or calculate_restricted_bounds functions.
+#'
+#' @param ... One or two objects: either a plausible_bounds object or individual bounds objects
+#' @param show_cumulative Whether to show cumulative bounds (default: TRUE)
+#' @param show_restricted Whether to show restricted bounds (default: TRUE)
+#' @param show_supt Whether to show sup-t bounds (default: TRUE)
+#' @param show_pointwise Whether to show pointwise bounds (default: TRUE)
+#' @param theme Optional ggplot2 theme to use
+#' @param colors Optional vector of colors for different elements
+#' @param line_types Optional vector of line types for different elements
+#'
+#' @return A ggplot2 object
+#'
+#' @export
+create_plot <- function(..., 
+                       show_cumulative = TRUE,
+                       show_restricted = TRUE,
+                       show_supt = TRUE,
+                       show_pointwise = TRUE,
+                       theme = NULL, 
+                       colors = NULL, 
+                       line_types = NULL) {
+  
+  # Collect all arguments
+  args <- list(...)
+  
+  # Handle different input patterns and extract bounds data
+  bounds_data <- extract_bounds_data(args, show_cumulative, show_restricted)
+  
+  # Check what's available and what's requested
+  availability <- check_bounds_availability(bounds_data, show_cumulative, show_restricted, show_supt, show_pointwise)
+  
+  # Display informative messages about missing bounds
+  display_availability_messages(availability)
+  
+  # Create the plot with available data
+  create_bounds_plot(bounds_data, availability, theme, colors, line_types)
+}
+
+# Helper function to extract bounds data from input arguments
+extract_bounds_data <- function(args, show_cumulative, show_restricted) {
+  if (length(args) == 1) {
+    x <- args[[1]]
+    
+    if (inherits(x, "plausible_bounds")) {
+      # Extract from plausible_bounds object
+      result <- list(type = "plausible_bounds")
+      
+      if (show_cumulative && !is.null(x$cumulative_bounds)) {
+        result$cumulative <- x$cumulative_bounds$bounds
+        result$has_cumulative <- TRUE
+      } else {
+        result$has_cumulative <- FALSE
+      }
+      
+      if (show_restricted && !is.null(x$restricted_bounds)) {
+        result$restricted <- x$restricted_bounds$bounds
+        result$has_restricted <- TRUE
+      } else {
+        result$has_restricted <- FALSE
+      }
+      
+      return(result)
+      
+    } else if (inherits(x, "cumulative_bounds")) {
+      # Extract from cumulative_bounds object
+      result <- list(
+        type = "cumulative_only",
+        has_cumulative = TRUE,
+        has_restricted = FALSE
+      )
+      
+      if (show_cumulative) {
+        result$cumulative <- x$bounds
+      }
+      
+      return(result)
+      
+    } else if (inherits(x, "restricted_bounds")) {
+      # Extract from restricted_bounds object
+      result <- list(
+        type = "restricted_only",
+        has_cumulative = FALSE,
+        has_restricted = TRUE
+      )
+      
+      if (show_restricted) {
+        result$restricted <- x$bounds
+      }
+      
+      return(result)
+      
+    } else {
+      stop("Unrecognized input type. Expected plausible_bounds, cumulative_bounds, or restricted_bounds object.")
+    }
+    
+  } else if (length(args) == 2) {
+    # Handle two separate bounds objects
+    result <- list(type = "combined")
+    result$has_cumulative <- FALSE
+    result$has_restricted <- FALSE
+    
+    for (arg in args) {
+      if (inherits(arg, "cumulative_bounds")) {
+        if (show_cumulative) {
+          result$cumulative <- arg$bounds
+        }
+        result$has_cumulative <- TRUE
+      } else if (inherits(arg, "restricted_bounds")) {
+        if (show_restricted) {
+          result$restricted <- arg$bounds
+        }
+        result$has_restricted <- TRUE
+      } else {
+        stop("When providing two arguments, both must be either cumulative_bounds or restricted_bounds objects.")
+      }
+    }
+    
+    if (!result$has_cumulative && !result$has_restricted) {
+      stop("At least one valid bounds object must be provided.")
+    }
+    
+    return(result)
+    
+  } else {
+    stop("create_plot() accepts 1 or 2 arguments")
+  }
+}
+
+# Helper function to check what bounds are available and requested
+check_bounds_availability <- function(bounds_data, show_cumulative, show_restricted, show_supt, show_pointwise) {
+  availability <- list(
+    cumulative_requested = show_cumulative,
+    cumulative_available = bounds_data$has_cumulative && !is.null(bounds_data$cumulative),
+    restricted_requested = show_restricted,
+    restricted_available = bounds_data$has_restricted && !is.null(bounds_data$restricted),
+    supt_requested = show_supt,
+    supt_available = FALSE,
+    pointwise_requested = show_pointwise,
+    pointwise_available = FALSE
+  )
+  
+  # Check for sup-t availability
+  if (availability$cumulative_available && !is.null(bounds_data$cumulative)) {
+    if ("supt_lower" %in% names(bounds_data$cumulative) && "supt_upper" %in% names(bounds_data$cumulative)) {
+      availability$supt_available <- TRUE
+    }
+  }
+  if (availability$restricted_available && !is.null(bounds_data$restricted)) {
+    if ("supt_lower" %in% names(bounds_data$restricted) && "supt_upper" %in% names(bounds_data$restricted)) {
+      availability$supt_available <- TRUE
+    }
+  }
+  
+  # Check for pointwise availability
+  if (availability$cumulative_available && !is.null(bounds_data$cumulative)) {
+    if ("pointwise_lower" %in% names(bounds_data$cumulative) && "pointwise_upper" %in% names(bounds_data$cumulative)) {
+      availability$pointwise_available <- TRUE
+    }
+  }
+  if (availability$restricted_available && !is.null(bounds_data$restricted)) {
+    if ("pointwise_lower" %in% names(bounds_data$restricted) && "pointwise_upper" %in% names(bounds_data$restricted)) {
+      availability$pointwise_available <- TRUE
+    }
+  }
+  
+  # Determine what will actually be shown
+  availability$show_cumulative <- availability$cumulative_requested && availability$cumulative_available
+  availability$show_restricted <- availability$restricted_requested && availability$restricted_available
+  availability$show_supt <- availability$supt_requested && availability$supt_available
+  availability$show_pointwise <- availability$pointwise_requested && availability$pointwise_available
+  
+  return(availability)
+}
+
+# Helper function to display informative messages about missing bounds
+display_availability_messages <- function(availability) {
+  missing_types <- c()
+  
+  # Check for requested but unavailable bounds
+  if (availability$cumulative_requested && !availability$cumulative_available) {
+    missing_types <- c(missing_types, "cumulative")
+  }
+  
+  if (availability$restricted_requested && !availability$restricted_available) {
+    missing_types <- c(missing_types, "restricted")
+  }
+  
+  if (availability$supt_requested && !availability$supt_available) {
+    missing_types <- c(missing_types, "sup-t")
+  }
+  
+  if (availability$pointwise_requested && !availability$pointwise_available) {
+    missing_types <- c(missing_types, "pointwise")
+  }
+  
+  # Display message if any requested bounds are not available
+  if (length(missing_types) > 0) {
+    message("Note: ", paste(missing_types, collapse = ", "), " bounds not available in data.")
+  }
+  
+  # Check if nothing will be plotted
+  if (!availability$show_cumulative && !availability$show_restricted) {
+    warning("No bounds available to plot. Check your input data and parameters.")
+  }
+}
+
+# Helper function to create the actual plot
+create_bounds_plot <- function(bounds_data, availability, theme = NULL, colors = NULL, line_types = NULL) {
+  # Set default colors if not provided
+  if (is.null(colors)) {
+    colors <- c(
+      estimate = "black",
+      surrogate = "green",
+      surrogate_bounds = "green",
+      pointwise = "darkgray",
+      supt = "gray",
+      restricted = "green",
+      cumulative = "red"
+    )
+  }
+  
+  # Set default line types if not provided
+  if (is.null(line_types)) {
+    line_types <- c(
+      estimate = "solid",
+      surrogate = "solid",
+      surrogate_bounds = "dashed",
+      pointwise = "solid",
+      supt = "solid",
+      restricted = "solid",
+      cumulative = "solid"
+    )
+  }
+  
+  # Determine which data to use for the base plot
+  if (availability$show_cumulative && availability$show_restricted) {
+    # Plot both cumulative and restricted bounds
+    df_c <- bounds_data$cumulative %>%
+      dplyr::mutate(
+        lower = lower / max(horizon),
+        upper = upper / max(horizon) 
+      )
+    df_r <- bounds_data$restricted
+    
+    # Ensure both data frames have the same horizon values
+    if (!identical(df_c$horizon, df_r$horizon)) {
+      stop("Cumulative and restricted bounds must have the same horizon values")
+    }
+    
+    # Create a combined data frame
+    df <- df_c
+    df$surrogate <- df_r$surrogate
+    df$restricted_lower <- df_r$lower
+    df$restricted_upper <- df_r$upper
+    
+    p <- ggplot2::ggplot(df, ggplot2::aes(x = horizon)) +
+      ggplot2::geom_ribbon(ggplot2::aes(ymin = lower, ymax = upper, fill = "cumulative"), alpha = 0.2) +
+      ggplot2::geom_point(ggplot2::aes(y = coef, color = "estimate")) +
+      ggplot2::geom_line(ggplot2::aes(y = surrogate, color = "surrogate", linetype = "surrogate")) +
+      ggplot2::geom_line(ggplot2::aes(y = restricted_lower, color = "surrogate_bounds", linetype = "surrogate_bounds")) +
+      ggplot2::geom_line(ggplot2::aes(y = restricted_upper, color = "surrogate_bounds", linetype = "surrogate_bounds"))
+    
+  } else if (availability$show_cumulative) {
+    # Plot only cumulative bounds
+    df <- bounds_data$cumulative %>%
+      dplyr::mutate(
+        lower = lower / max(horizon),
+        upper = upper / max(horizon) 
+      )
+    
+    p <- ggplot2::ggplot(df, ggplot2::aes(x = horizon)) +
+      ggplot2::geom_point(ggplot2::aes(y = coef, color = "estimate")) +
+      ggplot2::geom_ribbon(ggplot2::aes(ymin = lower, ymax = upper, fill = "cumulative"), alpha = 0.2)
+    
+  } else if (availability$show_restricted) {
+    # Plot only restricted bounds
+    df <- bounds_data$restricted
+    
+    p <- ggplot2::ggplot(df, ggplot2::aes(x = horizon)) +
+      ggplot2::geom_point(ggplot2::aes(y = coef, color = "estimate")) +
+      ggplot2::geom_line(ggplot2::aes(y = surrogate, color = "surrogate", linetype = "surrogate")) +
+      ggplot2::geom_line(ggplot2::aes(y = lower, color = "surrogate_bounds", linetype = "surrogate_bounds")) +
+      ggplot2::geom_line(ggplot2::aes(y = upper, color = "surrogate_bounds", linetype = "surrogate_bounds"))
+    
+  } else {
+    # No bounds to plot
+    stop("No bounds available to plot.")
+  }
+  
+  # Add pointwise bounds if requested and available
+  if (availability$show_pointwise && "pointwise_lower" %in% names(df) && "pointwise_upper" %in% names(df)) {
+    for (i in 1:nrow(df)) {
+      p <- p + ggplot2::geom_segment(
+        x = df$horizon[i] - 0.2, xend = df$horizon[i] + 0.2,
+        y = df$pointwise_lower[i], yend = df$pointwise_lower[i],
+        color = colors["pointwise"], linewidth = 0.5
+      ) +
+      ggplot2::geom_segment(
+        x = df$horizon[i] - 0.2, xend = df$horizon[i] + 0.2,
+        y = df$pointwise_upper[i], yend = df$pointwise_upper[i],
+        color = colors["pointwise"], linewidth = 0.5
+      )
+    }
+  }
+  
+  # Add sup-t bounds if requested and available
+  if (availability$show_supt && "supt_lower" %in% names(df) && "supt_upper" %in% names(df)) {
+    for (i in 1:nrow(df)) {
+      p <- p + ggplot2::geom_segment(
+        x = df$horizon[i], xend = df$horizon[i],
+        y = df$supt_lower[i], yend = df$supt_upper[i],
+        color = colors["supt"], linewidth = 0.5
+      )
+    }
+  }
+  
+  # Add theme and labels
+  p <- p +
+    ggplot2::labs(
+      title = "Plausible Bounds",
+      x = "Horizon",
+      y = "Estimate"
+    ) +
+    ggplot2::scale_color_manual(
+      name = NULL,
+      values = colors,
+      breaks = c("estimate", "surrogate"),
+      labels = c("Point Estimates", "Restricted")
+    ) +
+    ggplot2::scale_fill_manual(
+      name = NULL,
+      values = colors,
+      breaks = c("cumulative"),
+      labels = c("Cumulative")
+    ) +
+    # Hide linetype from legend
+    ggplot2::guides(linetype = "none")
+  
+  # Apply custom theme if provided
+  if (!is.null(theme)) {
+    p <- p + theme + ggplot2::theme(legend.position = "bottom")
+  } else {
+    p <- p + ggplot2::theme_minimal() + ggplot2::theme(legend.position = "bottom")
+  }
+  
+  return(p)
+}
+
+# Backward compatibility: keep plot_bounds as an alias
+#' @rdname create_plot
+#' @export
+plot_bounds <- create_plot
