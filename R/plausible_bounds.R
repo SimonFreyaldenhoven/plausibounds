@@ -65,7 +65,7 @@ print.plausible_bounds <- function(x, ...) {
   cat("  Surrogate class:", x$restricted_bounds$metadata$surrogate_class, "\n")
   cat("  Degrees of freedom:", x$restricted_bounds$metadata$df, "\n")
   
-  cat("\nUse plot_bounds() to visualize the results.\n")
+  cat("\nUse create_plot() to visualize the results.\n")
 }
 
 #' Summary method for plausible_bounds objects

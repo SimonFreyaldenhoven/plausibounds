@@ -2,6 +2,7 @@
 
 export(calculate_cumulative_bounds)
 export(calculate_restricted_bounds)
+export(create_plot)
 export(plausible_bounds)
 export(plot_bounds)
 
