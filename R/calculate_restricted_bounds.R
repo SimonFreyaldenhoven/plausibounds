@@ -14,6 +14,20 @@
 #'   \item{type}{The type of bounds ("restricted")}
 #'   \item{metadata}{A list with metadata about the calculation}
 #'
+#' @examples
+#' # Example with constant estimates and IID errors
+#' data(estimates_constant_iid)
+#' data(var_constant_iid)
+#' restr_bounds <- calculate_restricted_bounds(estimates_constant_iid, var_constant_iid)
+#'
+#' # Example with wiggly estimates and strong correlation
+#' data(estimates_wiggly_strong_corr)
+#' data(var_wiggly_strong_corr)
+#' restr_bounds_complex <- calculate_restricted_bounds(
+#'   estimates_wiggly_strong_corr,
+#'   var_wiggly_strong_corr
+#' )
+#'
 #' @export
 calculate_restricted_bounds <- function(estimates, var, alpha = 0.05, 
                                        include_pointwise = TRUE, include_supt = TRUE) {
@@ -135,6 +149,7 @@ calculate_restricted_bounds <- function(estimates, var, alpha = 0.05,
   restricted_LB <- best_fit$d - suptb * sqrt(diag(best_fit$Vd))
   restricted_UB <- best_fit$d + suptb * sqrt(diag(best_fit$Vd))
   
+  # Create data frame with horizon and coefficients
   bounds_df <- data.frame(
     horizon = 1:p,
     coef = estimates,
@@ -143,34 +158,37 @@ calculate_restricted_bounds <- function(estimates, var, alpha = 0.05,
     upper = restricted_UB
   )
   
-  if (include_pointwise) {
-    pointwise_critical <- qnorm(1 - alpha/2)
-    bounds_df$pointwise_lower <- estimates - pointwise_critical * sqrt(diag(var))
-    bounds_df$pointwise_upper <- estimates + pointwise_critical * sqrt(diag(var))
-  }
-  
-  if (include_supt) {
-    supt_bands <- bands_plugin(estimates, var, p, nsim = 2000, level = 1 - alpha)
-    bounds_df$supt_lower <- supt_bands$LB
-    bounds_df$supt_upper <- supt_bands$UB
-  }
-  
+  # Calculate width
   restricted_width <- mean(bounds_df$upper - bounds_df$lower)
   
+  # Create result list with restricted bounds
   result <- list(
-    bounds = bounds_df,
-    type = "restricted",
-    metadata = list(
-      alpha = alpha,
-      suptb = suptb,
-      df = best_df,
-      K = bestK,
-      lambda1 = bestlam1,
-      lambda2 = bestlam2,
-      surrogate_class = surrogate_class,
-      width = restricted_width,
-      best_fit_model = best_fit
-    )
+    restricted_bounds = bounds_df
+  )
+  
+  # Calculate pointwise bounds if requested
+  if (include_pointwise) {
+    result$pointwise_bounds <- calculate_pointwise_bounds(estimates, var, alpha)
+  }
+  
+  # Calculate sup-t bounds if requested
+  if (include_supt) {
+    result$supt_bounds <- calculate_supt_bounds(estimates, var, alpha)
+  }
+  
+  # Add metadata
+  result$metadata <- list(
+    alpha = alpha,
+    suptb = suptb,
+    df = best_df,
+    K = bestK,
+    lambda1 = bestlam1,
+    lambda2 = bestlam2,
+    surrogate_class = surrogate_class,
+    width = restricted_width,
+    individual_upper = restricted_UB,
+    individual_lower = restricted_LB,
+    best_fit_model = best_fit
   )
   
   class(result) <- c("restricted_bounds", "plausible_bounds_result")

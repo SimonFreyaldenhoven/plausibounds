@@ -28,6 +28,20 @@ Wald_bounds <- function(dhat, Vhat, alpha, df = 1) {
 #'   \item{type}{The type of bounds ("cumulative")}
 #'   \item{metadata}{A list with metadata about the calculation}
 #'
+#' @examples
+#' # Example with constant estimates and IID errors
+#' data(estimates_constant_iid)
+#' data(var_constant_iid)
+#' cumul_bounds <- calculate_cumulative_bounds(estimates_constant_iid, var_constant_iid)
+#'
+#' # Example with wiggly estimates and strong correlation
+#' data(estimates_wiggly_strong_corr)
+#' data(var_wiggly_strong_corr)
+#' cumul_bounds_complex <- calculate_cumulative_bounds(
+#'   estimates_wiggly_strong_corr,
+#'   var_wiggly_strong_corr
+#' )
+#'
 #' @export
 calculate_cumulative_bounds <- function(estimates, var, alpha = 0.05, 
                                        include_pointwise = TRUE, include_supt = TRUE) {
@@ -56,39 +70,32 @@ calculate_cumulative_bounds <- function(estimates, var, alpha = 0.05,
     lower = lb, 
     upper = ub
   )
-  
-  # Calculate pointwise bounds if requested
-  if (include_pointwise) {
-    pointwise_critical <- qnorm(1 - alpha/2)
-    bounds_df$pointwise_lower <- estimates - pointwise_critical * sqrt(diag(var))
-    bounds_df$pointwise_upper <- estimates + pointwise_critical * sqrt(diag(var))
-  }
-  
-  # Calculate sup-t bounds if requested
-  if (include_supt) {
-    supt_bands <- bands_plugin(estimates, var, p, nsim = 2000, level = 1 - alpha)
-    bounds_df$supt_lower <- supt_bands$LB
-    bounds_df$supt_upper <- supt_bands$UB
-    supt_critval <- supt_bands$sup_t
-  } else {
-    supt_critval <- NA
-  }
-  
-  
+
   # Calculate width
   width <- mean(bounds_df$upper - bounds_df$lower)
   
   # Return list with bounds data frame and metadata
   result <- list(
-    bounds = bounds_df,
-    type = "cumulative",
-    metadata = list(
+    cumulative_bounds = bounds_df
+  )
+
+  # Calculate pointwise bounds if requested
+  if (include_pointwise) {
+    result$pointwise_bounds <- calculate_pointwise_bounds(estimates, var, alpha)
+  }
+  
+  # Calculate sup-t bounds if requested
+  if (include_supt) {
+    result$supt_bounds <- calculate_supt_bounds(estimates, var, alpha)
+  }
+  
+  
+  result$metadata <- list(
       alpha = alpha,
       width = width,
       individual_upper = wald_bounds$UB,
       individual_lower = wald_bounds$LB
     )
-  )
   
   class(result) <- c("cumulative_bounds", "plausible_bounds_result")
   return(result)

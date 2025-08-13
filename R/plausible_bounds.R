@@ -13,6 +13,19 @@
 #'   \item{cumulative_bounds}{Results from calculate_cumulative_bounds}
 #'   \item{restricted_bounds}{Results from calculate_restricted_bounds}
 #'
+#' @examples
+#' # Example with constant estimates and IID errors (simple case)
+#' data(estimates_constant_iid)
+#' data(var_constant_iid)
+#' result1 <- plausible_bounds(estimates_constant_iid, var_constant_iid)
+#' print(result1)
+#'
+#' # Example with wiggly estimates and strong correlation (complex case)
+#' data(estimates_wiggly_strong_corr)
+#' data(var_wiggly_strong_corr)
+#' result2 <- plausible_bounds(estimates_wiggly_strong_corr, var_wiggly_strong_corr)
+#' print(result2)
+#'
 #' @export
 plausible_bounds <- function(estimates, var, alpha = 0.05, 
                             include_pointwise = TRUE, include_supt = TRUE) {
@@ -33,13 +46,23 @@ plausible_bounds <- function(estimates, var, alpha = 0.05,
   
   # Calculate restricted bounds
   restr_bd <- calculate_restricted_bounds(estimates, var, alpha, 
-                                         include_pointwise, include_supt)
+                                         include_pointwise = FALSE, include_supt = FALSE)
   
   # Return combined results
   result <- list(
-    cumulative_bounds = cumul_bd,
-    restricted_bounds = restr_bd
+    cumulative_bounds = cumul_bd$cumulative_bounds,
+    restricted_bounds = restr_bd$restricted_bounds,
+    cumulative_metadata = cumul_bd$metadata,
+    restricted_metadata = restr_bd$metadata
   )
+
+  if(include_pointwise) {
+    result$pointwise_bounds <- cumul_bd$pointwise_bounds
+  }
+
+  if(include_supt) {
+    result$supt_bounds <- cumul_bd$supt_bounds
+  }
   
   class(result) <- "plausible_bounds"
   return(result)
@@ -56,14 +79,14 @@ print.plausible_bounds <- function(x, ...) {
   cat("------------------------\n")
   
   cat("\nCumulative Bounds:\n")
-  cat("  Width:", x$cumulative_bounds$metadata$width, "\n")
-  cat("  Alpha:", x$cumulative_bounds$metadata$alpha, "\n")
+  cat("  Width:", x$cumulative_metadata$width, "\n")
+  cat("  Alpha:", x$cumulative_metadata$alpha, "\n")
   
   cat("\nRestricted Bounds:\n")
-  cat("  Width:", x$restricted_bounds$metadata$width, "\n")
-  cat("  Alpha:", x$restricted_bounds$metadata$alpha, "\n")
-  cat("  Surrogate class:", x$restricted_bounds$metadata$surrogate_class, "\n")
-  cat("  Degrees of freedom:", x$restricted_bounds$metadata$df, "\n")
+  cat("  Width:", x$restricted_metadata$width, "\n")
+  cat("  Alpha:", x$restricted_metadata$alpha, "\n")
+  cat("  Surrogate class:", x$restricted_metadata$surrogate_class, "\n")
+  cat("  Degrees of freedom:", x$restricted_metadata$df, "\n")
   
   cat("\nUse create_plot() to visualize the results.\n")
 }

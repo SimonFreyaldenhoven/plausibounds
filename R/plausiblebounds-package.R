@@ -1,0 +1,27 @@
+#' plausiblebounds: Plausible Bounds for Impulse Response Functions
+#'
+#' The plausiblebounds package provides methods for calculating plausible bounds
+#' for impulse response functions. It implements both cumulative and restricted
+#' bounds calculations, as well as visualization tools.
+#'
+#' @section Main Functions:
+#' \itemize{
+#'   \item \code{\link{plausible_bounds}}: Calculate both cumulative and restricted bounds
+#'   \item \code{\link{calculate_cumulative_bounds}}: Calculate cumulative bounds
+#'   \item \code{\link{calculate_restricted_bounds}}: Calculate restricted bounds
+#'   \item \code{\link{create_plot}}: Create plots of the bounds
+#' }
+#'
+#' @section Example Datasets:
+#' The package includes example datasets to demonstrate the functionality:
+#' \itemize{
+#'   \item \code{\link{estimates_constant_iid}} and \code{\link{var_constant_iid}}: 
+#'         A simple case with constant estimates and independent errors
+#'   \item \code{\link{estimates_wiggly_strong_corr}} and \code{\link{var_wiggly_strong_corr}}:
+#'         A complex case with wiggly estimates and strongly correlated errors
+#' }
+#'
+#' @docType package
+#' @name plausiblebounds-package
+#' @aliases plausiblebounds
+NULL
