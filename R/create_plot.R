@@ -14,6 +14,7 @@
 #'
 #' @return A ggplot2 object
 #'
+#' @importFrom magrittr %>%
 #' @export
 create_plot <- function(..., 
                        show_cumulative = TRUE,
@@ -29,10 +30,8 @@ create_plot <- function(...,
   
   # Handle different input patterns and extract bounds data
   bounds_data <- extract_bounds_data(args, show_cumulative, show_restricted)
-  
   # Check what's available and what's requested
   availability <- check_bounds_availability(bounds_data, show_cumulative, show_restricted, show_supt, show_pointwise)
-  
   # Display informative messages about missing bounds
   display_availability_messages(availability)
   
@@ -208,6 +207,7 @@ display_availability_messages <- function(availability) {
   }
 }
 
+
 # Helper function to create the actual plot
 create_bounds_plot <- function(bounds_data, availability, theme = NULL, colors = NULL, line_types = NULL) {
   # Set default colors if not provided
@@ -235,6 +235,9 @@ create_bounds_plot <- function(bounds_data, availability, theme = NULL, colors =
       cumulative = "solid"
     )
   }
+
+  p <- NULL
+  df <- NULL
   
   # Determine which data to use for the base plot
   if (availability$show_cumulative && availability$show_restricted) {
@@ -245,7 +248,6 @@ create_bounds_plot <- function(bounds_data, availability, theme = NULL, colors =
         upper = upper / max(horizon) 
       )
     df_r <- bounds_data$restricted
-    
     # Ensure both data frames have the same horizon values
     if (!identical(df_c$horizon, df_r$horizon)) {
       stop("Cumulative and restricted bounds must have the same horizon values")
@@ -271,7 +273,6 @@ create_bounds_plot <- function(bounds_data, availability, theme = NULL, colors =
         lower = lower / max(horizon),
         upper = upper / max(horizon) 
       )
-    
     p <- ggplot2::ggplot(df, ggplot2::aes(x = horizon)) +
       ggplot2::geom_point(ggplot2::aes(y = coef, color = "estimate")) +
       ggplot2::geom_ribbon(ggplot2::aes(ymin = lower, ymax = upper, fill = "cumulative"), alpha = 0.2)
@@ -287,7 +288,6 @@ create_bounds_plot <- function(bounds_data, availability, theme = NULL, colors =
       ggplot2::geom_line(ggplot2::aes(y = upper, color = "surrogate_bounds", linetype = "surrogate_bounds"))
     
   } else {
-    # No bounds to plot
     stop("No bounds available to plot.")
   }
   
@@ -317,7 +317,7 @@ create_bounds_plot <- function(bounds_data, availability, theme = NULL, colors =
       )
     }
   }
-  
+
   # Add theme and labels
   p <- p +
     ggplot2::labs(
@@ -349,8 +349,3 @@ create_bounds_plot <- function(bounds_data, availability, theme = NULL, colors =
   
   return(p)
 }
-
-# Backward compatibility: keep plot_bounds as an alias
-#' @rdname create_plot
-#' @export
-plot_bounds <- create_plot

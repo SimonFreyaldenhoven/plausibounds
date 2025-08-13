@@ -14,3 +14,4 @@ bands_plugin <- function(delta, var, p, nsim = 2000, level = 0.95) {
     sup_t = sup_t
   )
 }
+
