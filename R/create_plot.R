@@ -421,6 +421,8 @@ create_bounds_plot <- function(bounds_data, availability) {
       x = "Horizon",
       y = "Estimate"
     ) +
+    # Ensure x-axis has integer breaks
+    ggplot2::scale_x_continuous(breaks = function(x) seq(floor(min(x)), ceiling(max(x)), by = 1)) +
     ggplot2::scale_color_manual(
       name = NULL,
       values = colors,
