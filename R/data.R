@@ -10,7 +10,7 @@
 #' data(estimates_constant_iid)
 #' data(var_constant_iid)
 #' result <- plausible_bounds(estimates_constant_iid, var_constant_iid)
-#' plot(result)
+#' create_plot(result)
 "estimates_constant_iid"
 
 #' Variance Matrix for Constant Estimates with IID Errors
@@ -24,7 +24,7 @@
 #' data(estimates_constant_iid)
 #' data(var_constant_iid)
 #' result <- plausible_bounds(estimates_constant_iid, var_constant_iid)
-#' plot(result)
+#' create_plot(result)
 "var_constant_iid"
 
 #' Wiggly Estimates with Strong Correlation in Errors
@@ -39,7 +39,7 @@
 #' data(estimates_wiggly_strong_corr)
 #' data(var_wiggly_strong_corr)
 #' result <- plausible_bounds(estimates_wiggly_strong_corr, var_wiggly_strong_corr)
-#' plot(result)
+#' create_plot(result)
 "estimates_wiggly_strong_corr"
 
 #' Variance Matrix for Wiggly Estimates with Strong Correlation in Errors
@@ -54,5 +54,5 @@
 #' data(estimates_wiggly_strong_corr)
 #' data(var_wiggly_strong_corr)
 #' result <- plausible_bounds(estimates_wiggly_strong_corr, var_wiggly_strong_corr)
-#' plot(result)
+#' create_plot(result)
 "var_wiggly_strong_corr"

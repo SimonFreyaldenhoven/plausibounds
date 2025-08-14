@@ -39,3 +39,20 @@ A ggplot2 object
 This function creates a plot of plausible bounds from the results of plausible_bounds,
 calculate_cumulative_bounds, or calculate_restricted_bounds functions.
 }
+\examples{
+# Example with constant estimates and IID errors
+data(estimates_constant_iid)
+data(var_constant_iid)
+result <- plausible_bounds(estimates_constant_iid, var_constant_iid)
+plot <- create_plot(result)
+
+# Example with wiggly estimates and strong correlation
+data(estimates_wiggly_strong_corr)
+data(var_wiggly_strong_corr)
+result_complex <- plausible_bounds(estimates_wiggly_strong_corr, var_wiggly_strong_corr)
+plot_complex <- create_plot(result_complex)
+
+# Example showing only restricted bounds
+plot_restricted <- create_plot(result_complex, show_cumulative = FALSE)
+
+}

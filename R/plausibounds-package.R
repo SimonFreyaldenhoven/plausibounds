@@ -1,6 +1,6 @@
-#' plausiblebounds: Plausible Bounds for Impulse Response Functions
+#' plausibounds: Plausible Bounds for Impulse Response Functions
 #'
-#' The plausiblebounds package provides methods for calculating plausible bounds
+#' The plausibounds package provides methods for calculating plausible bounds
 #' for impulse response functions. It implements both cumulative and restricted
 #' bounds calculations, as well as visualization tools.
 #'
@@ -21,7 +21,7 @@
 #'         A complex case with wiggly estimates and strongly correlated errors
 #' }
 #'
-#' @docType package
-#' @name plausiblebounds-package
-#' @aliases plausiblebounds
+#' 
+#' @name plausibounds-package
+#' @aliases plausibounds
 NULL
