@@ -67,8 +67,8 @@ calculate_cumulative_bounds <- function(estimates, var, alpha = 0.05,
   bounds_df <- data.frame(
     horizon = 1:p,
     coef = estimates,
-    lower = lb, 
-    upper = ub
+    lower = lb / p, 
+    upper = ub / p
   )
 
   # Calculate width
