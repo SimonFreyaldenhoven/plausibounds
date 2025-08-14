@@ -9,10 +9,7 @@ create_plot(
   show_cumulative = TRUE,
   show_restricted = TRUE,
   show_supt = TRUE,
-  show_pointwise = TRUE,
-  theme = NULL,
-  colors = NULL,
-  line_types = NULL
+  show_pointwise = TRUE
 )
 }
 \arguments{
@@ -25,12 +22,6 @@ create_plot(
 \item{show_supt}{Whether to show sup-t bounds (default: TRUE)}
 
 \item{show_pointwise}{Whether to show pointwise bounds (default: TRUE)}
-
-\item{theme}{Optional ggplot2 theme to use}
-
-\item{colors}{Optional vector of colors for different elements}
-
-\item{line_types}{Optional vector of line types for different elements}
 }
 \value{
 A ggplot2 object

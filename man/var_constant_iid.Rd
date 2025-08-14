@@ -5,7 +5,7 @@
 \alias{var_constant_iid}
 \title{Variance Matrix for Constant Estimates with IID Errors}
 \format{
-A 36 x 36 diagonal matrix
+A 12 x 12 diagonal matrix
 }
 \source{
 Generated from simulation with constant mean and IID errors

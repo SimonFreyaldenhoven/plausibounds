@@ -5,7 +5,7 @@
 \alias{var_wiggly_strong_corr}
 \title{Variance Matrix for Wiggly Estimates with Strong Correlation in Errors}
 \format{
-A 36 x 36 matrix
+A 12 x 12 matrix
 }
 \source{
 Generated from simulation with wiggly mean and strongly correlated errors

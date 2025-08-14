@@ -5,7 +5,7 @@
 \alias{estimates_constant_iid}
 \title{Constant Estimates with IID Errors}
 \format{
-A numeric vector with 36 elements
+A numeric vector with 12 elements
 }
 \source{
 Generated from simulation with constant mean and IID errors

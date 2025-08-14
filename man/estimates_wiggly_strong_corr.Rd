@@ -5,7 +5,7 @@
 \alias{estimates_wiggly_strong_corr}
 \title{Wiggly Estimates with Strong Correlation in Errors}
 \format{
-A numeric vector with 36 elements
+A numeric vector with 12 elements
 }
 \source{
 Generated from simulation with wiggly mean and strongly correlated errors
