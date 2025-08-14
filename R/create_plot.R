@@ -415,14 +415,50 @@ create_bounds_plot <- function(bounds_data, availability) {
     }
   }
 
+  # Calculate y-axis limits to include all bounds
+  y_min <- min(df$coef, df$lower, na.rm = TRUE)
+  y_max <- max(df$coef, df$upper, na.rm = TRUE)
+  
+  # Include pointwise bounds in y-axis limits if available
+  if ("pointwise_lower" %in% names(df) && "pointwise_upper" %in% names(df)) {
+    y_min <- min(y_min, min(df$pointwise_lower, na.rm = TRUE))
+    y_max <- max(y_max, max(df$pointwise_upper, na.rm = TRUE))
+  }
+  
+  # Include sup-t bounds in y-axis limits if available
+  if ("supt_lower" %in% names(df) && "supt_upper" %in% names(df)) {
+    y_min <- min(y_min, min(df$supt_lower, na.rm = TRUE))
+    y_max <- max(y_max, max(df$supt_upper, na.rm = TRUE))
+  }
+  
+  # Add a small buffer to the y-axis limits
+  y_buffer <- 0.05 * (y_max - y_min)
+  y_min <- y_min - y_buffer
+  y_max <- y_max + y_buffer
+  
   # Add theme and labels
   p <- p +
     ggplot2::labs(
       x = "Horizon",
       y = "Estimate"
     ) +
-    # Ensure x-axis has integer breaks
-    ggplot2::scale_x_continuous(breaks = function(x) seq(floor(min(x)), ceiling(max(x)), by = 1)) +
+    # Set y-axis limits to include all bounds
+    ggplot2::coord_cartesian(ylim = c(y_min, y_max)) +
+    # Ensure x-axis has appropriate integer breaks (avoid clutter for large horizons)
+    ggplot2::scale_x_continuous(breaks = function(x) {
+      range <- ceiling(max(x)) - floor(min(x))
+      if (range <= 10) {
+        # For small ranges, show all integer breaks
+        return(seq(floor(min(x)), ceiling(max(x)), by = 1))
+      } else if (range <= 20) {
+        # For medium ranges, show every other integer
+        return(seq(floor(min(x)), ceiling(max(x)), by = 2))
+      } else {
+        # For large ranges, use approximately 8-10 breaks
+        by_value <- ceiling(range / 8)
+        return(seq(floor(min(x)), ceiling(max(x)), by = by_value))
+      }
+    }) +
     ggplot2::scale_color_manual(
       name = NULL,
       values = colors,
