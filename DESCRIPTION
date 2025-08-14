@@ -12,13 +12,14 @@ Description: Provides tools for calculating and visualizing plausible bounds
 License: MIT + file LICENSE
 Depends: 
     R (>= 3.5)
-Imports: 
+Imports:
     dplyr,
     ggplot2,
     stringr,
     Matrix,
     MASS,
-    magrittr
+    magrittr,
+    cli
 Suggests: 
     testthat (>= 3.0.0)
 Config/testthat/edition: 3

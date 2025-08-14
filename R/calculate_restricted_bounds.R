@@ -122,7 +122,17 @@ calculate_restricted_bounds <- function(estimates, var, alpha = 0.05,
     loglam1_range <- lam_bounds$lam1_range
     loglam2_range <- lam_bounds$lam2_range
     
+    # Initialize progress bar for K iterations
+    cli::cli_progress_bar(
+      format = "Calculating restricted bounds: {cli::pb_bar} K = {K}/{p-1} [{cli::pb_percent}]",
+      total = p-1,
+      clear = FALSE
+    )
+    
     for (K in 1:(p-1)) {
+      # Update progress bar
+      cli::cli_progress_update(set = K)
+      
       loglambda_grid <- setup_grid(20, loglam1_range, loglam2_range, K, var, 4, target_df)
       for (jj in 1:nrow(loglambda_grid)) {
         res <- MDprojl2tf(estimates, var, exp(loglambda_grid[jj, 1]), exp(loglambda_grid[jj, 2]), K)
@@ -142,6 +152,9 @@ calculate_restricted_bounds <- function(estimates, var, alpha = 0.05,
         mbhsf <- pmax(mbhsf, apply(abs(rd %*% res$J), 1, max))
       }
     }
+    
+    # Complete the progress bar
+    cli::cli_progress_done()
   }
   
   suptb <- as.numeric(quantile(mbhsf, 1 - alpha))
