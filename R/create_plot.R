@@ -312,12 +312,12 @@ create_bounds_plot <- function(bounds_data, availability) {
   
   colors <- c(
       estimate = "black",
-      surrogate = "green",
-      surrogate_bounds = "darkgreen",
+      surrogate = "cornflowerblue",
+      surrogate_bounds = "cornflowerblue",
       pointwise = "darkgray",
       supt = "gray",
-      restricted = "darkgreen",
-      cumulative = "red"
+      restricted = "cornflowerblue",
+      cumulative = "orange"
     )
   
   line_types <- c(
