@@ -8,9 +8,6 @@
 #' @param show_restricted Whether to show restricted bounds (default: TRUE)
 #' @param show_supt Whether to show sup-t bounds (default: TRUE)
 #' @param show_pointwise Whether to show pointwise bounds (default: TRUE)
-#' @param theme Optional ggplot2 theme to use
-#' @param colors Optional vector of colors for different elements
-#' @param line_types Optional vector of line types for different elements
 #'
 #' @return A ggplot2 object
 #'
@@ -36,10 +33,7 @@ create_plot <- function(...,
                        show_cumulative = TRUE,
                        show_restricted = TRUE,
                        show_supt = TRUE,
-                       show_pointwise = TRUE,
-                       theme = NULL, 
-                       colors = NULL, 
-                       line_types = NULL) {
+                       show_pointwise = TRUE) {
   
   # Collect all arguments
   args <- list(...)
@@ -52,7 +46,7 @@ create_plot <- function(...,
   display_availability_messages(availability)
   
   # Create the plot with available data
-  create_bounds_plot(bounds_data, availability, theme, colors, line_types)
+  create_bounds_plot(bounds_data, availability)
 }
 
 # Helper function to merge pointwise and supt bounds with main bounds data frames
@@ -314,23 +308,19 @@ display_availability_messages <- function(availability) {
 
 
 # Helper function to create the actual plot
-create_bounds_plot <- function(bounds_data, availability, theme = NULL, colors = NULL, line_types = NULL) {
-  # Set default colors if not provided
-  if (is.null(colors)) {
-    colors <- c(
+create_bounds_plot <- function(bounds_data, availability) {
+  
+  colors <- c(
       estimate = "black",
       surrogate = "green",
-      surrogate_bounds = "green",
+      surrogate_bounds = "darkgreen",
       pointwise = "darkgray",
       supt = "gray",
-      restricted = "green",
+      restricted = "darkgreen",
       cumulative = "red"
     )
-  }
   
-  # Set default line types if not provided
-  if (is.null(line_types)) {
-    line_types <- c(
+  line_types <- c(
       estimate = "solid",
       surrogate = "solid",
       surrogate_bounds = "dashed",
@@ -338,8 +328,8 @@ create_bounds_plot <- function(bounds_data, availability, theme = NULL, colors =
       supt = "solid",
       restricted = "solid",
       cumulative = "solid"
-    )
-  }
+  )
+  
 
   p <- NULL
   df <- NULL
@@ -347,11 +337,7 @@ create_bounds_plot <- function(bounds_data, availability, theme = NULL, colors =
   # Determine which data to use for the base plot
   if (availability$show_cumulative && availability$show_restricted) {
     # Plot both cumulative and restricted bounds
-    df_c <- bounds_data$cumulative %>%
-      dplyr::mutate(
-        lower = lower / max(horizon),
-        upper = upper / max(horizon) 
-      )
+    df_c <- bounds_data$cumulative
     df_r <- bounds_data$restricted
     # Ensure both data frames have the same horizon values
     if (!identical(df_c$horizon, df_r$horizon)) {
@@ -383,11 +369,7 @@ create_bounds_plot <- function(bounds_data, availability, theme = NULL, colors =
     
   } else if (availability$show_cumulative) {
     # Plot only cumulative bounds
-    df <- bounds_data$cumulative %>%
-      dplyr::mutate(
-        lower = lower / max(horizon),
-        upper = upper / max(horizon) 
-      )
+    df <- bounds_data$cumulative 
     p <- ggplot2::ggplot(df, ggplot2::aes(x = horizon)) +
       ggplot2::geom_point(ggplot2::aes(y = coef, color = "estimate")) +
       ggplot2::geom_ribbon(ggplot2::aes(ymin = lower, ymax = upper, fill = "cumulative"), alpha = 0.2)
@@ -436,7 +418,6 @@ create_bounds_plot <- function(bounds_data, availability, theme = NULL, colors =
   # Add theme and labels
   p <- p +
     ggplot2::labs(
-      title = "Plausible Bounds",
       x = "Horizon",
       y = "Estimate"
     ) +
@@ -454,13 +435,9 @@ create_bounds_plot <- function(bounds_data, availability, theme = NULL, colors =
     ) +
     # Hide linetype from legend
     ggplot2::guides(linetype = "none")
+    
+  p <- p + ggplot2::theme_minimal() + ggplot2::theme(legend.position = "bottom")
   
-  # Apply custom theme if provided
-  if (!is.null(theme)) {
-    p <- p + theme + ggplot2::theme(legend.position = "bottom")
-  } else {
-    p <- p + ggplot2::theme_minimal() + ggplot2::theme(legend.position = "bottom")
-  }
   
   return(p)
 }
