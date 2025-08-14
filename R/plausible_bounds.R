@@ -98,22 +98,17 @@ print.plausible_bounds <- function(x, ...) {
 #'
 #' @export
 summary.plausible_bounds <- function(object, ...) {
-  result <- list(
-    cumulative = data.frame(
-      width = object$cumulative_bounds$metadata$width,
-      alpha = object$cumulative_bounds$metadata$alpha,
-      wald_lb = object$cumulative_bounds$metadata$wald_lb,
-      wald_ub = object$cumulative_bounds$metadata$wald_ub
-    ),
-    restricted = data.frame(
-      width = object$restricted_bounds$metadata$width,
-      alpha = object$restricted_bounds$metadata$alpha,
-      df = object$restricted_bounds$metadata$df,
-      surrogate_class = object$restricted_bounds$metadata$surrogate_class
-    )
-  )
+
+  cumul_df <- object$cumulative_bounds %>%
+    dplyr::rename(cumul_lower = lower, cumul_upper = upper) 
+
+  restr_df <- object$restricted_bounds %>%
+    dplyr::rename(restr_lower = lower, restr_upper = upper) %>%
+    dplyr::select(-coef)
+
+  result <- dplyr::left_join(cumul_df, restr_df, by = "horizon")
   
-  class(result) <- "summary.plausible_bounds"
+  class(result) <- c("summary.plausible_bounds", class(result))
   return(result)
 }
 
@@ -124,12 +119,13 @@ summary.plausible_bounds <- function(object, ...) {
 #'
 #' @export
 print.summary.plausible_bounds <- function(x, ...) {
-  cat("Summary of Plausible Bounds Analysis\n")
+  cat("Summary of Plausible Bounds Results\n")
   cat("----------------------------------\n")
   
-  cat("\nCumulative Bounds:\n")
-  print(x$cumulative)
-  
-  cat("\nRestricted Bounds:\n")
-  print(x$restricted)
+  cat("\nBounds data.frame:\n")
+  class(x) <- setdiff(class(x), "summary.plausible_bounds")
+  print(x)
+
+  invisible(x)
+
 }
