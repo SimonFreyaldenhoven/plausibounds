@@ -1,0 +1,33 @@
+Package: plausibounds
+Title: Plausible Bounds for Treatment Path Estimates
+Version: 0.1.0
+Authors@R: 
+    person(given = "First",
+           family = "Last",
+           role = c("aut", "cre"),
+           email = "first.last@example.com")
+Description: Provides tools for calculating and visualizing plausible bounds
+    for event study estimates. Includes functions for calculating cumulative
+    bounds, restricted bounds, and visualizing the results.
+License: MIT + file LICENSE
+Depends: 
+    R (>= 3.5)
+Imports:
+    dplyr,
+    ggplot2,
+    stringr,
+    Matrix,
+    MASS,
+    magrittr,
+    cli
+Suggests: 
+    testthat (>= 3.0.0)
+Config/testthat/edition: 3
+Encoding: UTF-8
+LazyData: true
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.2
+URL: https://github.com/username/plausibounds
+BugReports: https://github.com/username/plausibounds/issues
+VignetteBuilder: knitr
+Config/Needs/website: quarto, rmarkdown
