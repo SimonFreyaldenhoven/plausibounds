@@ -171,7 +171,7 @@ calculate_restricted_bounds <- function(estimates, var, alpha = 0.05,
           .packages = c("Matrix", "dplyr"),
           .export = c("setup_grid", "MDprojl2tf", "my_df", "diff_df", "process_K"),
           .errorhandling = "pass"
-        ) %dopar% {
+        ) foreach::`%dopar%` {
           # Add some progress indication even in parallel mode - this isn't working
           if (K %% 5 == 0 || K == 1 || K == (p-1)) {
             message(sprintf("Processing K = %d of %d\n", K, p-1))

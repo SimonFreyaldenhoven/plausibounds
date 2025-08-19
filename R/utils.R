@@ -54,3 +54,8 @@ calculate_supt_bounds <- function(estimates, var, alpha) {
   )
 }
 
+# Declare global variables used in dplyr/ggplot2 operations
+utils::globalVariables(c(
+  "horizon", "lower", "upper", "coef", "surrogate", 
+  "restricted_lower", "restricted_upper", "Var1"
+))

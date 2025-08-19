@@ -20,14 +20,14 @@ full_eventplot_l2tf <- function(delta, var, truth = NULL, nsim = 2000) {
   # --- Critical value simulation (MATLAB: randn) ---
   set.seed(42)
   kk <- 10000
-  rd <- matrix(rnorm(kk * p), nrow = kk)
+  rd <- matrix(stats::rnorm(kk * p), nrow = kk)
   
   # --- sup-t (MATLAB: max, prctile) ---
   Corrmat <- cV
   eig_c <- eigen(Corrmat, symmetric = TRUE)
   Corrmat_sqrt <- eig_c$vectors %*% diag(sqrt(pmax(eig_c$values, 0))) %*% t(eig_c$vectors)
   t_stat <- abs(rd %*% Corrmat_sqrt)
-  supt_critval <- as.numeric(quantile(apply(t_stat, 1, max), 0.95)) # This may be the same as supt above
+  supt_critval <- as.numeric(stats::quantile(apply(t_stat, 1, max), 0.95)) # This may be the same as supt above
 
   # --- Model selection among polynomials (MATLAB: while, Xtmp, MDproj2) ---
   best_bic <- Inf
@@ -122,7 +122,7 @@ full_eventplot_l2tf <- function(delta, var, truth = NULL, nsim = 2000) {
   }
 
   # --- POSI critical value (MATLAB: prctile) ---
-  suptb <- as.numeric(quantile(mbhsf, 0.95))
+  suptb <- as.numeric(stats::quantile(mbhsf, 0.95))
 
   # --- Wald bounds on cumulative effect (MATLAB: Wald_bounds) ---
   wald_bounds <- _Wald_bounds(delta, var, alpha = 0.05) # custom implementation
@@ -179,7 +179,7 @@ _bands_plugin <- function(delta, var, p, nsim, level) {
   rd <- MASS::mvrnorm(nsim, mu = rep(0, p), Sigma = var)
   std_devs <- sqrt(diag(var))
   rd_standardized <- rd / matrix(std_devs, nrow = nsim, ncol = length(std_devs), byrow = TRUE)
-  sup_t <- as.numeric(quantile(apply(abs(rd_standardized), 1, max), level))
+  sup_t <- as.numeric(stats::quantile(apply(abs(rd_standardized), 1, max), level))
  # sup_t <- as.numeric(quantile(apply(abs(rd), 1, max), level))
   list(
     LB = delta - sup_t * sqrt(diag(var)),
@@ -204,7 +204,7 @@ _MDproj2 <- function(delta, V, X) {
   J <- eigVec %*% diag(sqrt(D * (Re(D) > 1e-12))) %*% t(eigVec)
   
   MD <- t(delta - d) %*% solve(V, delta - d)
-  pv <- 1 - pchisq(MD, p - length(beta))
+  pv <- 1 - stats::pchisq(MD, p - length(beta))
   
   return(list(d = d, Vd = Vd, MD = MD, J = J, pv = pv))
 }
@@ -223,7 +223,7 @@ _find_lam_bounds <- function(p, V, target_df) {
   }
   
   # Using optim with Nelder-Mead method (equivalent to fminsearch)
-  result <- optim(par = 1, fn = f, method = "Brent", lower = -50, upper = 50)
+  result <- stats::optim(par = 1, fn = f, method = "Brent", lower = -50, upper = 50)
   lam2_upper <- result$par
   
   # cur_df = df(-lim, lam2_upper, 1, V)  # check: should be 4
@@ -243,8 +243,8 @@ _setup_grid <- function(n_grid, loglam1_range, loglam2_range, K, V, lb, ub) {
   
   grid_ll2 <- seq(loglam2_range[K, 1], loglam2_range[K, 2], length.out = n_grid)
   grid_ll1 <- seq(loglam1_range[K, 1], loglam1_range[K, 2], length.out = n_grid)
-  full_grid <- expand.grid(grid_ll1, grid_ll2) %>% 
-    arrange(Var1)
+  full_grid <- expand.grid(grid_ll1, grid_ll2)
+  full_grid <- dplyr::arrange(full_grid, Var1)
   
   grid_df <- numeric(n_grid^2)
   
@@ -266,7 +266,7 @@ _setup_grid <- function(n_grid, loglam1_range, loglam2_range, K, V, lb, ub) {
 
 _Wald_bounds <- function(dhat, Vhat, alpha, df = 1) {
   h <- length(dhat)
-  critval <- qchisq(1 - alpha, df)
+  critval <- stats::qchisq(1 - alpha, df)
   
   lambda1 <- sqrt(sum(Vhat) / (4 * critval))
   lambda2 <- -sqrt(sum(Vhat) / (4 * critval))
@@ -279,8 +279,6 @@ _Wald_bounds <- function(dhat, Vhat, alpha, df = 1) {
 
 
 _MDprojl2tf <- function(delta, V, lambda1, lambda2, K) {
-  # Load required libraries
-  library(Matrix)
   
   p <- length(delta)
   
@@ -306,9 +304,9 @@ _MDprojl2tf <- function(delta, V, lambda1, lambda2, K) {
   # Weight matrices
   vD1 <- D1 %*% scaledV %*% t(D1)
   zeros_block <- matrix(0, nrow = K-1, ncol = K-1)
-  partial_vD1 <- vD1[K:nrow(vD1), K:ncol(vD1)] %>% as.matrix()
+  partial_vD1 <- as.matrix(vD1[K:nrow(vD1), K:ncol(vD1)])
   vD1_block <- partial_vD1 / mean(diag(partial_vD1))
-  W1 <- as.matrix(bdiag(zeros_block, vD1_block))
+  W1 <- as.matrix(Matrix::bdiag(zeros_block, vD1_block))
   
   vD3 <- D3 %*% scaledV %*% t(D3)
   W3 <- vD3 / mean(diag(vD3))
@@ -352,7 +350,7 @@ _MDprojl2tf <- function(delta, V, lambda1, lambda2, K) {
   MD <- as.numeric(t(residual) %*% solve(V) %*% residual)
   
   # P-value using chi-squared distribution
-  pv <- 1 - pchisq(MD, df = p - df)
+  pv <- 1 - stats::pchisq(MD, df = p - df)
   
   # Return results as a list
   return(list(
@@ -414,7 +412,6 @@ _diff_df <- function(loglam1, loglam2, K, V, targetdf) {
 
 
 _my_df <- function(loglam1, loglam2, K, V) {
-    library(Matrix)  # For block diagonal operations
     
     p <- nrow(V)
     
@@ -439,9 +436,9 @@ _my_df <- function(loglam1, loglam2, K, V) {
     
     # Create block diagonal matrix W1
     zeros_block <- matrix(0, K-1, K-1)
-    vD1_subset <- vD1[K:nrow(vD1), K:ncol(vD1)] %>% as.matrix()
+    vD1_subset <- as.matrix(vD1[K:nrow(vD1), K:ncol(vD1)])
     normalized_vD1 <- vD1_subset / mean(diag(vD1_subset))
-    W1 <- bdiag(zeros_block, normalized_vD1)
+    W1 <- Matrix::bdiag(zeros_block, normalized_vD1)
     W1 <- as.matrix(W1)  # Convert to regular matrix
     
     # Calculate vD3 and W2
