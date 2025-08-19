@@ -5,7 +5,7 @@ test_that("plausible_bounds functions work with simple test data", {
   # Create test data
   set.seed(123)
   p <- 10
-  estimates <- rnorm(p)
+  estimates <- stats::rnorm(p)
   var <- diag(p) * 0.1
   
   # Test calculate_cumulative_bounds

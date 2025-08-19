@@ -2,7 +2,9 @@
 #'
 #' This function calculates restricted bounds for a vector of estimates using model selection.
 #' It can calculate both pointwise and simultaneous (sup-t) bounds.
-#'
+#' 
+#' @importFrom foreach %dopar%
+#' 
 #' @param estimates A vector of point estimates
 #' @param var The variance-covariance matrix of the estimates
 #' @param alpha Significance level (default: 0.05)
@@ -20,14 +22,6 @@
 #' data(estimates_constant_iid)
 #' data(var_constant_iid)
 #' restr_bounds <- calculate_restricted_bounds(estimates_constant_iid, var_constant_iid)
-#'
-#' # Example with wiggly estimates and strong correlation
-#' data(estimates_wiggly_strong_corr)
-#' data(var_wiggly_strong_corr)
-#' restr_bounds_complex <- calculate_restricted_bounds(
-#'   estimates_wiggly_strong_corr,
-#'   var_wiggly_strong_corr
-#' )
 #'
 #' @export
 
@@ -56,7 +50,7 @@ calculate_restricted_bounds <- function(estimates, var, alpha = 0.05,
   
   set.seed(42)
   kk <- 10000
-  rd <- matrix(rnorm(kk * p), nrow = kk)
+  rd <- matrix(stats::rnorm(kk * p), nrow = kk)
   
   Corrmat <- cV
   eig_c <- eigen(Corrmat, symmetric = TRUE)
@@ -364,7 +358,7 @@ find_lam_bounds <- function(p, V, target_df) {
     diff_df(-lim, lam2, 1, V, target_df)
   }
   
-  result <- optim(par = 1, fn = f, method = "Brent", lower = -50, upper = 50)
+  result <- stats::optim(par = 1, fn = f, method = "Brent", lower = -50, upper = 50)
   lam2_upper <- result$par
   
   lam1_range <- matrix(0, nrow = p-1, ncol = 2)

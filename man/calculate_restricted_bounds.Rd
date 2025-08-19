@@ -42,12 +42,4 @@ data(estimates_constant_iid)
 data(var_constant_iid)
 restr_bounds <- calculate_restricted_bounds(estimates_constant_iid, var_constant_iid)
 
-# Example with wiggly estimates and strong correlation
-data(estimates_wiggly_strong_corr)
-data(var_wiggly_strong_corr)
-restr_bounds_complex <- calculate_restricted_bounds(
-  estimates_wiggly_strong_corr,
-  var_wiggly_strong_corr
-)
-
 }

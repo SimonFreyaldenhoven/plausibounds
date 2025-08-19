@@ -71,29 +71,6 @@ plausible_bounds <- function(estimates, var, alpha = 0.05,
   return(result)
 }
 
-#' Print method for plausible_bounds objects
-#'
-#' @param x A plausible_bounds object
-#' @param ... Additional arguments passed to print
-#'
-#' @export
-print.plausible_bounds <- function(x, ...) {
-  cat("Plausible Bounds Analysis\n")
-  cat("------------------------\n")
-  
-  cat("\nCumulative Bounds:\n")
-  cat("  Width:", x$cumulative_metadata$width, "\n")
-  cat("  Alpha:", x$cumulative_metadata$alpha, "\n")
-  
-  cat("\nRestricted Bounds:\n")
-  cat("  Width:", x$restricted_metadata$width, "\n")
-  cat("  Alpha:", x$restricted_metadata$alpha, "\n")
-  cat("  Surrogate class:", x$restricted_metadata$surrogate_class, "\n")
-  cat("  Degrees of freedom:", x$restricted_metadata$df, "\n")
-  
-  cat("\nUse create_plot() to visualize the results.\n")
-}
-
 #' Summary method for plausible_bounds objects
 #'
 #' @param object A plausible_bounds object
