@@ -465,14 +465,18 @@ create_bounds_plot <- function(bounds_data, availability) {
       breaks = c("estimate", "surrogate"),
       labels = c("Point Estimates", "Restricted")
     ) +
-    ggplot2::scale_fill_manual(
+    # Hide linetype from legend
+    ggplot2::guides(linetype = "none")
+    
+  # Only add fill scale if cumulative bounds are shown
+  if (availability$show_cumulative) {
+    p <- p + ggplot2::scale_fill_manual(
       name = NULL,
       values = colors,
       breaks = c("cumulative"),
       labels = c("Cumulative")
-    ) +
-    # Hide linetype from legend
-    ggplot2::guides(linetype = "none")
+    )
+  }
     
   p <- p + ggplot2::theme_minimal() + ggplot2::theme(legend.position = "bottom")
   
