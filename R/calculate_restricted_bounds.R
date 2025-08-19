@@ -8,7 +8,7 @@
 #' @param alpha Significance level (default: 0.05)
 #' @param include_pointwise Whether to include pointwise bounds (default: TRUE)
 #' @param include_supt Whether to include sup-t bounds (default: TRUE)
-#' @param parallel Whether to use parallel processing (default: TRUE)
+#' @param parallel Whether to use parallel processing (default: FALSE)
 #'
 #' @return A list containing:
 #'   \item{bounds}{A data frame with columns for horizon, coefficients, surrogate values, and bounds}
@@ -33,7 +33,7 @@
 
 calculate_restricted_bounds <- function(estimates, var, alpha = 0.05,
                                        include_pointwise = TRUE, include_supt = TRUE,
-                                       parallel = TRUE) {
+                                       parallel = FALSE) {
   if (!is.numeric(estimates) || !is.vector(estimates)) {
     stop("estimates must be a numeric vector")
   }
@@ -62,7 +62,7 @@ calculate_restricted_bounds <- function(estimates, var, alpha = 0.05,
   eig_c <- eigen(Corrmat, symmetric = TRUE)
   Corrmat_sqrt <- eig_c$vectors %*% diag(sqrt(pmax(eig_c$values, 0))) %*% t(eig_c$vectors)
   t_stat <- abs(rd %*% Corrmat_sqrt)
-  supt_critval <- as.numeric(quantile(apply(t_stat, 1, max), 1 - alpha))
+  supt_critval <- as.numeric(stats::quantile(apply(t_stat, 1, max), 1 - alpha))
   
   best_bic <- Inf
   best_fit <- NULL
@@ -129,9 +129,9 @@ calculate_restricted_bounds <- function(estimates, var, alpha = 0.05,
     use_parallel <- FALSE
     if (parallel) {
       if (!requireNamespace("foreach", quietly = TRUE)) {
-        warning("Package 'foreach' is required for parallel processing but not available. Falling back to sequential processing.")
+        warning("Package 'foreach' is required for parallel processing but not installed. Falling back to sequential processing.")
       } else if (!requireNamespace("doParallel", quietly = TRUE)) {
-        warning("Package 'doParallel' is required for parallel processing but not available. Falling back to sequential processing.")
+        warning("Package 'doParallel' is required for parallel processing but not installed. Falling back to sequential processing.")
       } else {
         use_parallel <- TRUE
         # Determine number of cores to use (leave one core free)
@@ -178,9 +178,9 @@ calculate_restricted_bounds <- function(estimates, var, alpha = 0.05,
           .export = c("setup_grid", "MDprojl2tf", "my_df", "diff_df", "process_K"),
           .errorhandling = "pass"
         ) %dopar% {
-          # Add some progress indication even in parallel mode
+          # Add some progress indication even in parallel mode - this isn't working
           if (K %% 5 == 0 || K == 1 || K == (p-1)) {
-            cat(sprintf("Processing K = %d of %d\n", K, p-1))
+            message(sprintf("Processing K = %d of %d\n", K, p-1))
           }
           process_K(K, estimates, var, loglam1_range, loglam2_range, target_df, p, rd)
         }
@@ -232,7 +232,7 @@ calculate_restricted_bounds <- function(estimates, var, alpha = 0.05,
     }
   }
   
-  suptb <- as.numeric(quantile(mbhsf, 1 - alpha))
+  suptb <- as.numeric(stats::quantile(mbhsf, 1 - alpha))
   
   restricted_LB <- best_fit$d - suptb * sqrt(diag(best_fit$Vd))
   restricted_UB <- best_fit$d + suptb * sqrt(diag(best_fit$Vd))
@@ -351,7 +351,7 @@ MDproj2 <- function(delta, V, X) {
   J <- eigVec %*% diag(sqrt(D * (Re(D) > 1e-12))) %*% t(eigVec)
   
   MD <- t(delta - d) %*% solve(V, delta - d)
-  pv <- 1 - pchisq(MD, p - length(beta))
+  pv <- 1 - stats::pchisq(MD, p - length(beta))
   
   return(list(d = d, Vd = Vd, MD = MD, J = J, pval = pv))
 }
@@ -427,7 +427,7 @@ MDprojl2tf <- function(delta, V, lambda1, lambda2, K) {
   zeros_block <- matrix(0, nrow = K-1, ncol = K-1)
   partial_vD1 <- vD1[K:nrow(vD1), K:ncol(vD1)] %>% as.matrix()
   vD1_block <- partial_vD1 / mean(diag(partial_vD1))
-  W1 <- as.matrix(bdiag(zeros_block, vD1_block))
+  W1 <- as.matrix(Matrix::bdiag(zeros_block, vD1_block))
   
   # Calculate vD3 and W3
   vD3 <- D3 %*% scaledV %*% t(D3)
@@ -464,7 +464,7 @@ MDprojl2tf <- function(delta, V, lambda1, lambda2, K) {
   residual <- delta - d
   MD <- as.numeric(t(residual) %*% iV %*% residual)
   
-  pv <- 1 - pchisq(MD, df = p - df)
+  pv <- 1 - stats::pchisq(MD, df = p - df)
   
   return(list(
     d = as.vector(d),
@@ -538,7 +538,7 @@ my_df <- function(loglam1, loglam2, K, V) {
   vD1_subset <- vD1[K:nrow(vD1), K:ncol(vD1)] %>% as.matrix()
   diag_mean <- mean(diag(vD1_subset))
   normalized_vD1 <- vD1_subset / diag_mean
-  W1 <- bdiag(zeros_block, normalized_vD1)
+  W1 <- Matrix::bdiag(zeros_block, normalized_vD1)
   W1 <- as.matrix(W1)
   
   # Calculate vD3 and W2

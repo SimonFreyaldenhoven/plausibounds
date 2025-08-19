@@ -9,7 +9,8 @@ calculate_restricted_bounds(
   var,
   alpha = 0.05,
   include_pointwise = TRUE,
-  include_supt = TRUE
+  include_supt = TRUE,
+  parallel = FALSE
 )
 }
 \arguments{
@@ -22,6 +23,8 @@ calculate_restricted_bounds(
 \item{include_pointwise}{Whether to include pointwise bounds (default: TRUE)}
 
 \item{include_supt}{Whether to include sup-t bounds (default: TRUE)}
+
+\item{parallel}{Whether to use parallel processing (default: FALSE)}
 }
 \value{
 A list containing:

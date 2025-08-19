@@ -8,7 +8,7 @@
 #' @param alpha Significance level (default: 0.05)
 #' @param include_pointwise Whether to include pointwise bounds (default: TRUE)
 #' @param include_supt Whether to include sup-t bounds (default: TRUE)
-#' @param parallel Whether to use parallel processing for restricted bounds calculation (default: TRUE)
+#' @param parallel Whether to use parallel processing for restricted bounds calculation (default: FALSE)
 #'
 #' @return A list containing:
 #'   \item{cumulative_bounds}{Results from calculate_cumulative_bounds}
@@ -30,7 +30,7 @@
 #' @export
 plausible_bounds <- function(estimates, var, alpha = 0.05,
                             include_pointwise = TRUE, include_supt = TRUE,
-                            parallel = TRUE) {
+                            parallel = FALSE) {
   # Check inputs
   if (!is.numeric(estimates) || !is.vector(estimates)) {
     stop("estimates must be a numeric vector")
