@@ -478,7 +478,7 @@ create_bounds_plot <- function(bounds_data, availability) {
     )
   }
     
-  p <- p + ggplot2::theme_minimal() + ggplot2::theme(legend.position = "bottom")
+  p <- p + ggplot2::theme_minimal() + ggplot2::theme(legend.position = "bottom") 
   
   
   return(p)

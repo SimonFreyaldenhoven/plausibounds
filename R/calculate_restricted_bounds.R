@@ -3,7 +3,6 @@
 #' This function calculates restricted bounds for a vector of estimates using model selection.
 #' It can calculate both pointwise and simultaneous (sup-t) bounds.
 #' 
-#' @importFrom foreach %dopar%
 #' 
 #' @param estimates A vector of point estimates
 #' @param var The variance-covariance matrix of the estimates
@@ -131,6 +130,7 @@ calculate_restricted_bounds <- function(estimates, var, alpha = 0.05,
         # Determine number of cores to use (leave one core free)
         num_cores <- max(1, parallel::detectCores() - 1)
         
+        `%dopar%` <- foreach::`%dopar%` 
         # Limit to a reasonable number of cores to avoid system overload
         max_recommended_cores <- 16
         if (num_cores > max_recommended_cores) {
@@ -171,7 +171,7 @@ calculate_restricted_bounds <- function(estimates, var, alpha = 0.05,
           .packages = c("Matrix", "dplyr"),
           .export = c("setup_grid", "MDprojl2tf", "my_df", "diff_df", "process_K"),
           .errorhandling = "pass"
-        ) foreach::`%dopar%` {
+        ) %dopar% {
           # Add some progress indication even in parallel mode - this isn't working
           if (K %% 5 == 0 || K == 1 || K == (p-1)) {
             message(sprintf("Processing K = %d of %d\n", K, p-1))
@@ -552,4 +552,3 @@ my_df <- function(loglam1, loglam2, K, V) {
   
   return(df_result)
 }
-
