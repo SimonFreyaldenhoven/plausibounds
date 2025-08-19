@@ -297,7 +297,15 @@ display_availability_messages <- function(availability) {
   
   # Display message if any requested bounds are not available
   if (length(missing_types) > 0) {
-    message("Note: ", paste(missing_types, collapse = ", "), " bounds not available in data.")
+    msg <- paste("Note:", paste(missing_types, collapse = ", "), "bounds not available in data.")
+
+    param_names <- gsub("sup-t", "supt", missing_types)
+    param_names <- paste0("show_", param_names, " = FALSE")
+    
+    msg <- paste(msg, "Set", paste(param_names, collapse = " and "), "to silence this message.")
+    
+    message(msg)
+
   }
   
   # Check if nothing will be plotted
