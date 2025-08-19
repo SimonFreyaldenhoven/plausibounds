@@ -159,7 +159,7 @@ calculate_restricted_bounds <- function(estimates, var, alpha = 0.05,
         clear = FALSE
       )
     } else {
-      message("Processing in parallel. Progress updates will be limited.")
+      message("Processing in parallel...")
     }
     
     # Process all K values (either in parallel or sequentially)

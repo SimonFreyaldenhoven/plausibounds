@@ -21,7 +21,7 @@ and the errors are independent with variance increasing slightly with horizon.
 \examples{
 data(estimates_constant_iid)
 data(var_constant_iid)
-result <- plausible_bounds(estimates_constant_iid, var_constant_iid)
+result <- calculate_cumulative_bounds(estimates_constant_iid, var_constant_iid)
 create_plot(result)
 }
 \keyword{datasets}

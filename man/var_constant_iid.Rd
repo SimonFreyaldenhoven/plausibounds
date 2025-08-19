@@ -20,7 +20,7 @@ distributed errors. This is a diagonal matrix where the variance increases sligh
 \examples{
 data(estimates_constant_iid)
 data(var_constant_iid)
-result <- plausible_bounds(estimates_constant_iid, var_constant_iid)
+result <- calculate_cumulative_bounds(estimates_constant_iid, var_constant_iid)
 create_plot(result)
 }
 \keyword{datasets}
