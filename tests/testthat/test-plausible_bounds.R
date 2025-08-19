@@ -1,6 +1,12 @@
-library(testthat)
+# Test plausible_bounds functions
+#
+# This file tests the functionality of the plausible_bounds package
 
-# Test data
+library(testthat)
+library(plausibounds)
+source(test_path("helpers.R"))
+
+# Test basic functionality
 test_that("plausible_bounds functions work with simple test data", {
   # Create test data
   set.seed(123)
@@ -51,11 +57,12 @@ test_that("plausible_bounds functions work with simple test data", {
 # Test comparison with original function
 test_that("new functions match original full_eventplot_l2tf results", {
   # Skip this test if the test data files don't exist
-  skip_if_not(file.exists("../delta.csv") && file.exists("../vhat.csv"))
+  skip_if_not(file.exists(test_path("fixtures", "dhat.csv")) &&
+              file.exists(test_path("fixtures", "vhat.csv")))
   
   # Load test data
-  delta <- as.matrix(read.csv("tests/delta.csv", header = FALSE))
-  vhat <- as.matrix(read.csv("tests/vhat.csv", header = FALSE))
+  delta <- as.matrix(read.csv(test_path("fixtures", "dhat.csv"), header = FALSE))
+  vhat <- as.matrix(read.csv(test_path("fixtures", "vhat.csv"), header = FALSE))
   
   # Run original function (if available)
   if (exists("full_eventplot_l2tf")) {

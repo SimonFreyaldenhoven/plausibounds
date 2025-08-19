@@ -8,7 +8,7 @@ full_eventplot_l2tf <- function(delta, var, truth = NULL, nsim = 2000) {
 
   p <- length(delta)
   # --- SUP-t (simultaneous) bands ---
-  supt_bands <- bands_plugin(delta, var, p, nsim = nsim, level = 0.95) 
+  supt_bands <- _bands_plugin(delta, var, p, nsim = nsim, level = 0.95)
   supt_LB <- supt_bands$LB
   supt_UB <- supt_bands$UB
   supt <- supt_bands$sup_t
@@ -40,7 +40,7 @@ full_eventplot_l2tf <- function(delta, var, truth = NULL, nsim = 2000) {
   surrogate_class <- "polynomial"
   
   Xtmp <- matrix(1, nrow = p, ncol = 1)
-  res <- MDproj2(delta, var, Xtmp) 
+  res <- _MDproj2(delta, var, Xtmp)
   bic <- res$MD + log(p) 
   best_fit <- res
   best_df <- ncol(Xtmp)
@@ -52,9 +52,9 @@ full_eventplot_l2tf <- function(delta, var, truth = NULL, nsim = 2000) {
   
   for (degree in 1:3) {
     Xtmp <- cbind(Xtmp, (1:p)^degree)
-    res <- MDproj2(delta, var, Xtmp) # custom implementation
+    res <- _MDproj2(delta, var, Xtmp) # custom implementation
     bic <- res$MD + log(p) * ncol(Xtmp)
-    if (!is.null(truth)) condtruth <- MDproj2(truth, var, Xtmp)$d else condtruth <- NULL
+    if (!is.null(truth)) condtruth <- _MDproj2(truth, var, Xtmp)$d else condtruth <- NULL
     if (bic < best_bic) {
       best_fit <- res
       best_df <- ncol(Xtmp)
@@ -90,7 +90,7 @@ full_eventplot_l2tf <- function(delta, var, truth = NULL, nsim = 2000) {
   # --- More flexible smoothers (trend filtering, MATLAB: MDprojl2tf, skipped unless p >= 6) ---
   if (p >= 6) {
     target_df <- p - 1
-    lam_bounds <- find_lam_bounds(p, var, target_df) # custom implementation
+    lam_bounds <- _find_lam_bounds(p, var, target_df) # custom implementation
     loglam1_range <- lam_bounds$lam1_range
     loglam2_range <- lam_bounds$lam2_range
     bestK <- -1
@@ -98,10 +98,10 @@ full_eventplot_l2tf <- function(delta, var, truth = NULL, nsim = 2000) {
     bestlam2 <- -1
     for (K in 1:(p-1)) {
       print(K)
-      loglambda_grid <- setup_grid(20, loglam1_range, loglam2_range, K, var, 4, target_df) # custom implementation
+      loglambda_grid <- _setup_grid(20, loglam1_range, loglam2_range, K, var, 4, target_df) # custom implementation
       for (jj in 1:nrow(loglambda_grid)) {
-        res <- MDprojl2tf(delta, var, exp(loglambda_grid[jj, 1]), exp(loglambda_grid[jj, 2]), K) # custom implementation
-        if (!is.null(truth)) condtruth <- MDprojl2tf(truth, var, exp(loglambda_grid[jj, 1]), exp(loglambda_grid[jj, 2]), K)$d else condtruth <- NULL
+        res <- _MDprojl2tf(delta, var, exp(loglambda_grid[jj, 1]), exp(loglambda_grid[jj, 2]), K) # custom implementation
+        if (!is.null(truth)) condtruth <- _MDprojl2tf(truth, var, exp(loglambda_grid[jj, 1]), exp(loglambda_grid[jj, 2]), K)$d else condtruth <- NULL
         bic <- res$MD + log(p) * res$df
         if (bic < best_bic) {
           bestlam1 <- exp(loglambda_grid[jj, 1])
@@ -125,7 +125,7 @@ full_eventplot_l2tf <- function(delta, var, truth = NULL, nsim = 2000) {
   suptb <- as.numeric(quantile(mbhsf, 0.95))
 
   # --- Wald bounds on cumulative effect (MATLAB: Wald_bounds) ---
-  wald_bounds <- Wald_bounds(delta, var, alpha = 0.05) # custom implementation
+  wald_bounds <- _Wald_bounds(delta, var, alpha = 0.05) # custom implementation
   lb <- sum(wald_bounds$LB)
   ub <- sum(wald_bounds$UB)
 
@@ -174,7 +174,7 @@ full_eventplot_l2tf <- function(delta, var, truth = NULL, nsim = 2000) {
 
 # --- Helper function stubs (to be implemented) ---
 
-bands_plugin <- function(delta, var, p, nsim, level) {
+_bands_plugin <- function(delta, var, p, nsim, level) {
   # Simulate from N(0, var), calculate sup-t bands, return LB and UB
   rd <- MASS::mvrnorm(nsim, mu = rep(0, p), Sigma = var)
   std_devs <- sqrt(diag(var))
@@ -189,7 +189,7 @@ bands_plugin <- function(delta, var, p, nsim, level) {
 }
 
 # Polynomial projection taking as input beta_hat, V_beta, design matrix defining degrees of freedom
-MDproj2 <- function(delta, V, X) {
+_MDproj2 <- function(delta, V, X) {
   p <- length(delta)                       
   Vb <- solve(t(X) %*% solve(V) %*% X)      # Covariance of projected coefficients 
   beta <- Vb %*% (t(X) %*% solve(V, delta)) # Projected coefficients
@@ -210,7 +210,7 @@ MDproj2 <- function(delta, V, X) {
 }
 
 
-find_lam_bounds <- function(p, V, target_df) {
+_find_lam_bounds <- function(p, V, target_df) {
   # with no penalty on third diff (lam2=0), p>df>K+1.
   # with no penalty on first diff (lam1=0), p>df>3
   
@@ -219,7 +219,7 @@ find_lam_bounds <- function(p, V, target_df) {
   
   # Upper bound on lambda2 does not depend on K for the reason above
   f <- function(lam2) {
-    diff_df(-lim, lam2, 1, V, target_df)
+    _diff_df(-lim, lam2, 1, V, target_df)
   }
   
   # Using optim with Nelder-Mead method (equivalent to fminsearch)
@@ -239,7 +239,7 @@ find_lam_bounds <- function(p, V, target_df) {
   return(list(lam1_range = lam1_range, lam2_range = lam2_range))
 }
 
-setup_grid <- function(n_grid, loglam1_range, loglam2_range, K, V, lb, ub) {
+_setup_grid <- function(n_grid, loglam1_range, loglam2_range, K, V, lb, ub) {
   
   grid_ll2 <- seq(loglam2_range[K, 1], loglam2_range[K, 2], length.out = n_grid)
   grid_ll1 <- seq(loglam1_range[K, 1], loglam1_range[K, 2], length.out = n_grid)
@@ -249,7 +249,7 @@ setup_grid <- function(n_grid, loglam1_range, loglam2_range, K, V, lb, ub) {
   grid_df <- numeric(n_grid^2)
   
   for (sim in 1:(n_grid^2)) {
-    grid_df[sim] <- my_df(full_grid[sim, 1], full_grid[sim, 2], K, V / mean(diag(V)))
+    grid_df[sim] <- _my_df(full_grid[sim, 1], full_grid[sim, 2], K, V / mean(diag(V)))
   }
   
   legit <- (grid_df <= ub) & (grid_df >= lb)
@@ -264,7 +264,7 @@ setup_grid <- function(n_grid, loglam1_range, loglam2_range, K, V, lb, ub) {
 
 
 
-Wald_bounds <- function(dhat, Vhat, alpha, df = 1) {
+_Wald_bounds <- function(dhat, Vhat, alpha, df = 1) {
   h <- length(dhat)
   critval <- qchisq(1 - alpha, df)
   
@@ -278,7 +278,7 @@ Wald_bounds <- function(dhat, Vhat, alpha, df = 1) {
 }
 
 
-MDprojl2tf <- function(delta, V, lambda1, lambda2, K) {
+_MDprojl2tf <- function(delta, V, lambda1, lambda2, K) {
   # Load required libraries
   library(Matrix)
   
@@ -366,7 +366,7 @@ MDprojl2tf <- function(delta, V, lambda1, lambda2, K) {
 }
 
 
-diff_df <- function(loglam1, loglam2, K, V, targetdf) {
+_diff_df <- function(loglam1, loglam2, K, V, targetdf) {
   p <- nrow(V)
   
   # First difference matrix
@@ -413,7 +413,7 @@ diff_df <- function(loglam1, loglam2, K, V, targetdf) {
 }
 
 
-my_df <- function(loglam1, loglam2, K, V) {
+_my_df <- function(loglam1, loglam2, K, V) {
     library(Matrix)  # For block diagonal operations
     
     p <- nrow(V)
