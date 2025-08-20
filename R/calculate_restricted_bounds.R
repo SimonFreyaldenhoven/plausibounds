@@ -130,13 +130,7 @@ calculate_restricted_bounds <- function(estimates, var, alpha = 0.05,
         # Determine number of cores to use (leave one core free)
         num_cores <- max(1, parallel::detectCores() - 1)
         
-        `%dopar%` <- foreach::`%dopar%` 
-        # Limit to a reasonable number of cores to avoid system overload
-        max_recommended_cores <- 16
-        if (num_cores > max_recommended_cores) {
-          message(paste("Limiting to", max_recommended_cores, "cores to avoid system overload"))
-          num_cores <- max_recommended_cores
-        }
+        `%dopar%` <- foreach::`%dopar%`     
         
         tryCatch({
           cl <- parallel::makeCluster(num_cores)
@@ -290,10 +284,8 @@ process_K <- function(K, estimates, var, loglam1_range, loglam2_range, target_df
   K_best_pval <- NULL
   K_mbhsf <- numeric(nrow(rd))
   
-  # Setup grid for this K
   loglambda_grid <- setup_grid(20, loglam1_range, loglam2_range, K, var, 4, target_df)
   
-  # Process each grid point
   for (jj in 1:nrow(loglambda_grid)) {
     res <- MDprojl2tf(estimates, var, exp(loglambda_grid[jj, 1]), exp(loglambda_grid[jj, 2]), K)
     bic <- res$MD + log(p) * res$df
@@ -401,7 +393,6 @@ MDprojl2tf <- function(delta, V, lambda1, lambda2, K) {
   
   p <- length(delta)
   
-  # Create D matrices more efficiently
   D1 <- matrix(0, nrow = p, ncol = p)
   D1[cbind(2:p, 1:(p-1))] <- 1
   D1 <- D1 - diag(p)
@@ -410,7 +401,6 @@ MDprojl2tf <- function(delta, V, lambda1, lambda2, K) {
   D2 <- D1[-1, -1]
   D3 <- D2[-1, -1] %*% D2 %*% D1
   
-  # Pre-compute values used multiple times
   diag_mean <- mean(diag(V))
   scaledV <- V / diag_mean
   iV <- solve(V)
