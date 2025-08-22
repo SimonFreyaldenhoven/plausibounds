@@ -8,6 +8,7 @@
 #' @param alpha Significance level (default: 0.05)
 #' @param include_pointwise Whether to include pointwise bounds (default: TRUE)
 #' @param include_supt Whether to include sup-t bounds (default: TRUE)
+#' @param parallel Whether to use parallel processing for restricted bounds calculation (default: FALSE)
 #'
 #' @return A list containing:
 #'   \item{cumulative_bounds}{Results from calculate_cumulative_bounds}
@@ -27,8 +28,9 @@
 #' print(result2)
 #'
 #' @export
-plausible_bounds <- function(estimates, var, alpha = 0.05, 
-                            include_pointwise = TRUE, include_supt = TRUE) {
+plausible_bounds <- function(estimates, var, alpha = 0.05,
+                            include_pointwise = TRUE, include_supt = TRUE,
+                            parallel = FALSE) {
   # Check inputs
   if (!is.numeric(estimates) || !is.vector(estimates)) {
     stop("estimates must be a numeric vector")
@@ -45,8 +47,9 @@ plausible_bounds <- function(estimates, var, alpha = 0.05,
                                          include_pointwise, include_supt)
   
   # Calculate restricted bounds
-  restr_bd <- calculate_restricted_bounds(estimates, var, alpha, 
-                                         include_pointwise = FALSE, include_supt = FALSE)
+  restr_bd <- calculate_restricted_bounds(estimates, var, alpha,
+                                         include_pointwise = FALSE, include_supt = FALSE,
+                                         parallel = parallel)
   
   # Return combined results
   result <- list(
@@ -66,29 +69,6 @@ plausible_bounds <- function(estimates, var, alpha = 0.05,
   
   class(result) <- "plausible_bounds"
   return(result)
-}
-
-#' Print method for plausible_bounds objects
-#'
-#' @param x A plausible_bounds object
-#' @param ... Additional arguments passed to print
-#'
-#' @export
-print.plausible_bounds <- function(x, ...) {
-  cat("Plausible Bounds Analysis\n")
-  cat("------------------------\n")
-  
-  cat("\nCumulative Bounds:\n")
-  cat("  Width:", x$cumulative_metadata$width, "\n")
-  cat("  Alpha:", x$cumulative_metadata$alpha, "\n")
-  
-  cat("\nRestricted Bounds:\n")
-  cat("  Width:", x$restricted_metadata$width, "\n")
-  cat("  Alpha:", x$restricted_metadata$alpha, "\n")
-  cat("  Surrogate class:", x$restricted_metadata$surrogate_class, "\n")
-  cat("  Degrees of freedom:", x$restricted_metadata$df, "\n")
-  
-  cat("\nUse create_plot() to visualize the results.\n")
 }
 
 #' Summary method for plausible_bounds objects

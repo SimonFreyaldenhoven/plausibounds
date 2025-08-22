@@ -1,7 +1,7 @@
 # Internal helper function for Wald bounds
 Wald_bounds <- function(dhat, Vhat, alpha, df = 1) {
   h <- length(dhat)
-  critval <- qchisq(1 - alpha, df)
+  critval <- stats::qchisq(1 - alpha, df)
   
   lambda1 <- sqrt(sum(Vhat) / (4 * critval))
   lambda2 <- -sqrt(sum(Vhat) / (4 * critval))

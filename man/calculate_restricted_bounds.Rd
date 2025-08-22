@@ -9,7 +9,8 @@ calculate_restricted_bounds(
   var,
   alpha = 0.05,
   include_pointwise = TRUE,
-  include_supt = TRUE
+  include_supt = TRUE,
+  parallel = FALSE
 )
 }
 \arguments{
@@ -22,6 +23,8 @@ calculate_restricted_bounds(
 \item{include_pointwise}{Whether to include pointwise bounds (default: TRUE)}
 
 \item{include_supt}{Whether to include sup-t bounds (default: TRUE)}
+
+\item{parallel}{Whether to use parallel processing (default: FALSE)}
 }
 \value{
 A list containing:
@@ -38,13 +41,5 @@ It can calculate both pointwise and simultaneous (sup-t) bounds.
 data(estimates_constant_iid)
 data(var_constant_iid)
 restr_bounds <- calculate_restricted_bounds(estimates_constant_iid, var_constant_iid)
-
-# Example with wiggly estimates and strong correlation
-data(estimates_wiggly_strong_corr)
-data(var_wiggly_strong_corr)
-restr_bounds_complex <- calculate_restricted_bounds(
-  estimates_wiggly_strong_corr,
-  var_wiggly_strong_corr
-)
 
 }

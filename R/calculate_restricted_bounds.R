@@ -2,12 +2,14 @@
 #'
 #' This function calculates restricted bounds for a vector of estimates using model selection.
 #' It can calculate both pointwise and simultaneous (sup-t) bounds.
-#'
+#' 
+#' 
 #' @param estimates A vector of point estimates
 #' @param var The variance-covariance matrix of the estimates
 #' @param alpha Significance level (default: 0.05)
 #' @param include_pointwise Whether to include pointwise bounds (default: TRUE)
 #' @param include_supt Whether to include sup-t bounds (default: TRUE)
+#' @param parallel Whether to use parallel processing (default: FALSE)
 #'
 #' @return A list containing:
 #'   \item{bounds}{A data frame with columns for horizon, coefficients, surrogate values, and bounds}
@@ -20,17 +22,11 @@
 #' data(var_constant_iid)
 #' restr_bounds <- calculate_restricted_bounds(estimates_constant_iid, var_constant_iid)
 #'
-#' # Example with wiggly estimates and strong correlation
-#' data(estimates_wiggly_strong_corr)
-#' data(var_wiggly_strong_corr)
-#' restr_bounds_complex <- calculate_restricted_bounds(
-#'   estimates_wiggly_strong_corr,
-#'   var_wiggly_strong_corr
-#' )
-#'
 #' @export
-calculate_restricted_bounds <- function(estimates, var, alpha = 0.05, 
-                                       include_pointwise = TRUE, include_supt = TRUE) {
+
+calculate_restricted_bounds <- function(estimates, var, alpha = 0.05,
+                                       include_pointwise = TRUE, include_supt = TRUE,
+                                       parallel = FALSE) {
   if (!is.numeric(estimates) || !is.vector(estimates)) {
     stop("estimates must be a numeric vector")
   }
@@ -53,13 +49,13 @@ calculate_restricted_bounds <- function(estimates, var, alpha = 0.05,
   
   set.seed(42)
   kk <- 10000
-  rd <- matrix(rnorm(kk * p), nrow = kk)
+  rd <- matrix(stats::rnorm(kk * p), nrow = kk)
   
   Corrmat <- cV
   eig_c <- eigen(Corrmat, symmetric = TRUE)
   Corrmat_sqrt <- eig_c$vectors %*% diag(sqrt(pmax(eig_c$values, 0))) %*% t(eig_c$vectors)
   t_stat <- abs(rd %*% Corrmat_sqrt)
-  supt_critval <- as.numeric(quantile(apply(t_stat, 1, max), 1 - alpha))
+  supt_critval <- as.numeric(stats::quantile(apply(t_stat, 1, max), 1 - alpha))
   
   best_bic <- Inf
   best_fit <- NULL
@@ -122,42 +118,109 @@ calculate_restricted_bounds <- function(estimates, var, alpha = 0.05,
     loglam1_range <- lam_bounds$lam1_range
     loglam2_range <- lam_bounds$lam2_range
     
-    # Initialize progress bar for K iterations
-    cli::cli_progress_bar(
-      format = "Calculating restricted bounds: {cli::pb_bar} K = {K}/{p-1} [{cli::pb_percent}]",
-      total = p-1,
-      clear = FALSE
-    )
-    
-    for (K in 1:(p-1)) {
-      # Update progress bar
-      cli::cli_progress_update(set = K)
-      
-      loglambda_grid <- setup_grid(20, loglam1_range, loglam2_range, K, var, 4, target_df)
-      for (jj in 1:nrow(loglambda_grid)) {
-        res <- MDprojl2tf(estimates, var, exp(loglambda_grid[jj, 1]), exp(loglambda_grid[jj, 2]), K)
-        bic <- res$MD + log(p) * res$df
-        if (bic < best_bic) {
-          bestlam1 <- exp(loglambda_grid[jj, 1])
-          bestlam2 <- exp(loglambda_grid[jj, 2])
-          bestK <- K
-          best_fit <- res
-          best_df <- res$df
-          best_obj <- res$MD
-          best_J <- res$J
-          best_pval <- res$pval
-          surrogate_class <- "M"
-          best_bic <- bic
-        }
-        mbhsf <- pmax(mbhsf, apply(abs(rd %*% res$J), 1, max))
+    # Set up parallel processing
+    use_parallel <- FALSE
+    if (parallel) {
+      if (!requireNamespace("foreach", quietly = TRUE)) {
+        warning("Package 'foreach' is required for parallel processing but not installed. Falling back to sequential processing.")
+      } else if (!requireNamespace("doParallel", quietly = TRUE)) {
+        warning("Package 'doParallel' is required for parallel processing but not installed. Falling back to sequential processing.")
+      } else {
+        use_parallel <- TRUE
+        # Determine number of cores to use (leave one core free)
+        num_cores <- max(1, parallel::detectCores() - 1)
+        
+        `%dopar%` <- foreach::`%dopar%`     
+        
+        tryCatch({
+          cl <- parallel::makeCluster(num_cores)
+          doParallel::registerDoParallel(cl)
+          on.exit(parallel::stopCluster(cl), add = TRUE)
+          message(paste("Parallelizing over", num_cores, "cores"))
+        }, error = function(e) {
+          warning(paste("Failed to set up parallel cluster:", e$message, "\nFalling back to sequential processing."))
+          use_parallel <- FALSE
+        })
       }
     }
     
-    # Complete the progress bar
-    cli::cli_progress_done()
+    # Initialize progress reporting
+    if (!use_parallel) {
+      # Use standard progress bar for sequential processing
+      cli::cli_progress_bar(
+        format = "Calculating restricted bounds: {cli::pb_bar} K = {K}/{p-1} [{cli::pb_percent}]",
+        total = p-1,
+        clear = FALSE
+      )
+    } else {
+      message("Processing in parallel...")
+    }
+    
+    # Process all K values (either in parallel or sequentially)
+    if (use_parallel) {
+      # Parallel processing using foreach
+      tryCatch({
+        results <- foreach::foreach(
+          K = 1:(p-1),
+          .packages = c("Matrix", "dplyr"),
+          .export = c("setup_grid", "MDprojl2tf", "my_df", "diff_df", "process_K"),
+          .errorhandling = "pass"
+        ) %dopar% {
+          # Add some progress indication even in parallel mode - this isn't working
+          if (K %% 5 == 0 || K == 1 || K == (p-1)) {
+            message(sprintf("Processing K = %d of %d\n", K, p-1))
+          }
+          process_K(K, estimates, var, loglam1_range, loglam2_range, target_df, p, rd)
+        }
+        
+        # Check for errors in parallel execution
+        error_indices <- which(sapply(results, inherits, "error"))
+        if (length(error_indices) > 0) {
+          warning(paste("Errors occurred during parallel processing for K values:",
+                        paste(error_indices, collapse = ", ")))
+          # Remove error results
+          results <- results[!sapply(results, inherits, "error")]
+          if (length(results) == 0) {
+            stop("All parallel computations failed. Check the error messages above.")
+          }
+        }
+      }, error = function(e) {
+        warning(paste("Error in parallel execution:", e$message, "\nFalling back to sequential processing."))
+        use_parallel <- FALSE
+      })
+    }
+    
+    # Process sequentially if parallel is not available or failed
+    if (!use_parallel) {
+      # Sequential processing with progress updates
+      results <- list()
+      for (K in 1:(p-1)) {
+        cli::cli_progress_update(set = K)
+        results[[K]] <- process_K(K, estimates, var, loglam1_range, loglam2_range, target_df, p, rd)
+      }
+      # Complete the progress bar
+      cli::cli_progress_done()
+    }
+    
+    # Combine results from all K values
+    for (result in results) {
+      if (result$best_bic < best_bic) {
+        bestlam1 <- result$bestlam1
+        bestlam2 <- result$bestlam2
+        bestK <- result$K
+        best_fit <- result$best_fit
+        best_df <- result$best_df
+        best_obj <- result$best_obj
+        best_J <- result$best_J
+        best_pval <- result$best_pval
+        surrogate_class <- "M"
+        best_bic <- result$best_bic
+      }
+      mbhsf <- pmax(mbhsf, result$mbhsf)
+    }
   }
   
-  suptb <- as.numeric(quantile(mbhsf, 1 - alpha))
+  suptb <- as.numeric(stats::quantile(mbhsf, 1 - alpha))
   
   restricted_LB <- best_fit$d - suptb * sqrt(diag(best_fit$Vd))
   restricted_UB <- best_fit$d + suptb * sqrt(diag(best_fit$Vd))
@@ -209,6 +272,56 @@ calculate_restricted_bounds <- function(estimates, var, alpha = 0.05,
 }
 
 
+process_K <- function(K, estimates, var, loglam1_range, loglam2_range, target_df, p, rd) {
+  # Initialize results for this K
+  K_best_bic <- Inf
+  K_bestlam1 <- NA
+  K_bestlam2 <- NA
+  K_best_fit <- NULL
+  K_best_df <- NA
+  K_best_obj <- NULL
+  K_best_J <- NULL
+  K_best_pval <- NULL
+  K_mbhsf <- numeric(nrow(rd))
+  
+  loglambda_grid <- setup_grid(20, loglam1_range, loglam2_range, K, var, 4, target_df)
+  
+  for (jj in 1:nrow(loglambda_grid)) {
+    res <- MDprojl2tf(estimates, var, exp(loglambda_grid[jj, 1]), exp(loglambda_grid[jj, 2]), K)
+    bic <- res$MD + log(p) * res$df
+    
+    # Update best results for this K
+    if (bic < K_best_bic) {
+      K_bestlam1 <- exp(loglambda_grid[jj, 1])
+      K_bestlam2 <- exp(loglambda_grid[jj, 2])
+      K_best_fit <- res
+      K_best_df <- res$df
+      K_best_obj <- res$MD
+      K_best_J <- res$J
+      K_best_pval <- res$pval
+      K_best_bic <- bic
+    }
+    
+    # Update mbhsf for this K
+    K_mbhsf <- pmax(K_mbhsf, apply(abs(rd %*% res$J), 1, max))
+  }
+  
+  # Return results for this K
+  return(list(
+    K = K,
+    best_bic = K_best_bic,
+    bestlam1 = K_bestlam1,
+    bestlam2 = K_bestlam2,
+    best_fit = K_best_fit,
+    best_df = K_best_df,
+    best_obj = K_best_obj,
+    best_J = K_best_J,
+    best_pval = K_best_pval,
+    mbhsf = K_mbhsf
+  ))
+}
+
+
 MDproj2 <- function(delta, V, X) {
   p <- length(delta)                       
   Vb <- solve(t(X) %*% solve(V) %*% X)      
@@ -224,7 +337,7 @@ MDproj2 <- function(delta, V, X) {
   J <- eigVec %*% diag(sqrt(D * (Re(D) > 1e-12))) %*% t(eigVec)
   
   MD <- t(delta - d) %*% solve(V, delta - d)
-  pv <- 1 - pchisq(MD, p - length(beta))
+  pv <- 1 - stats::pchisq(MD, p - length(beta))
   
   return(list(d = d, Vd = Vd, MD = MD, J = J, pval = pv))
 }
@@ -237,7 +350,7 @@ find_lam_bounds <- function(p, V, target_df) {
     diff_df(-lim, lam2, 1, V, target_df)
   }
   
-  result <- optim(par = 1, fn = f, method = "Brent", lower = -50, upper = 50)
+  result <- stats::optim(par = 1, fn = f, method = "Brent", lower = -50, upper = 50)
   lam2_upper <- result$par
   
   lam1_range <- matrix(0, nrow = p-1, ncol = 2)
@@ -254,19 +367,22 @@ find_lam_bounds <- function(p, V, target_df) {
 setup_grid <- function(n_grid, loglam1_range, loglam2_range, K, V, lb, ub) {
   grid_ll2 <- seq(loglam2_range[K, 1], loglam2_range[K, 2], length.out = n_grid)
   grid_ll1 <- seq(loglam1_range[K, 1], loglam1_range[K, 2], length.out = n_grid)
-  full_grid <- expand.grid(grid_ll1, grid_ll2) %>% 
+  full_grid <- expand.grid(grid_ll1, grid_ll2) %>%
     dplyr::arrange(Var1)
+  
+  # Normalize V once outside the loop
+  scaled_V <- V / mean(diag(V))
   
   grid_df <- numeric(n_grid^2)
   
   for (sim in 1:(n_grid^2)) {
-    grid_df[sim] <- my_df(full_grid[sim, 1], full_grid[sim, 2], K, V / mean(diag(V)))
+    grid_df[sim] <- my_df(full_grid[sim, 1], full_grid[sim, 2], K, scaled_V)
   }
   
   legit <- (grid_df <= ub) & (grid_df >= lb)
   
   if (mean(legit) < 0.1) {
-    cat('Warning: few gridpoints in range\n')
+    warning('Few gridpoints in range, results may be suboptimal')
   }
   
   loglambda_grid <- full_grid[legit, ]
@@ -274,34 +390,35 @@ setup_grid <- function(n_grid, loglam1_range, loglam2_range, K, V, lb, ub) {
 }
 
 MDprojl2tf <- function(delta, V, lambda1, lambda2, K) {
-  library(Matrix)
   
   p <- length(delta)
   
   D1 <- matrix(0, nrow = p, ncol = p)
-  D1[cbind(2:p, 1:(p-1))] <- 1  
-  D1 <- D1 - diag(p)  
-  D1 <- D1[-1, ]  
+  D1[cbind(2:p, 1:(p-1))] <- 1
+  D1 <- D1 - diag(p)
+  D1 <- D1[-1, ]
   
-  D2 <- D1[-1, -1]  
-  D3 <- D2[-1, -1]  
-  D3 <- D3 %*% D2 %*% D1  
+  D2 <- D1[-1, -1]
+  D3 <- D2[-1, -1] %*% D2 %*% D1
   
+  diag_mean <- mean(diag(V))
+  scaledV <- V / diag_mean
   iV <- solve(V)
-  scaledV <- V / mean(diag(V))
+  scalediV <- solve(scaledV)
   
+  # Calculate vD1 and related matrices
   vD1 <- D1 %*% scaledV %*% t(D1)
   zeros_block <- matrix(0, nrow = K-1, ncol = K-1)
   partial_vD1 <- vD1[K:nrow(vD1), K:ncol(vD1)] %>% as.matrix()
   vD1_block <- partial_vD1 / mean(diag(partial_vD1))
-  W1 <- as.matrix(bdiag(zeros_block, vD1_block))
+  W1 <- as.matrix(Matrix::bdiag(zeros_block, vD1_block))
   
+  # Calculate vD3 and W3
   vD3 <- D3 %*% scaledV %*% t(D3)
   W3 <- vD3 / mean(diag(vD3))
   
-  scalediV <- solve(scaledV)
-  
-  den <- solve(scalediV + lambda1 * t(D1) %*% diag(diag(W1)) %*% D1 + 
+  # Solve system and calculate results
+  den <- solve(scalediV + lambda1 * t(D1) %*% diag(diag(W1)) %*% D1 +
                  lambda2 * t(D3) %*% diag(diag(W3)) %*% D3)
   
   df <- sum(diag(den %*% scalediV))
@@ -309,27 +426,29 @@ MDprojl2tf <- function(delta, V, lambda1, lambda2, K) {
   d <- den %*% (scalediV %*% delta)
   
   Vd <- den %*% scalediV %*% t(den)
-  Vd <- Vd * mean(diag(V))
+  Vd <- Vd * diag_mean
   
   stdVd <- sqrt(diag(Vd))
   cVdb <- diag(1/stdVd) %*% Vd %*% diag(1/stdVd)
   
   eigen_result <- eigen(cVdb)
   eigVec <- eigen_result$vectors
-  D_eigen <- diag(eigen_result$values)
+  eigen_values <- eigen_result$values
+  D_eigen <- diag(eigen_values)
   
-  if (any(Im(eigen_result$values) > 0)) {
-    cat("hi - perhaps issue with covariance?\n")
+  if (any(Im(eigen_values) > 0)) {
+    warning("Complex eigenvalues detected in covariance matrix, results may be unreliable")
   }
   
+  # Create J matrix more efficiently
   sqrt_D <- sqrt(pmax(D_eigen, 1e-12))
   sqrt_D[D_eigen <= 1e-12] <- 0
   J <- eigVec %*% sqrt_D %*% t(eigVec)
   
   residual <- delta - d
-  MD <- as.numeric(t(residual) %*% solve(V) %*% residual)
+  MD <- as.numeric(t(residual) %*% iV %*% residual)
   
-  pv <- 1 - pchisq(MD, df = p - df)
+  pv <- 1 - stats::pchisq(MD, df = p - df)
   
   return(list(
     d = as.vector(d),
@@ -344,73 +463,82 @@ MDprojl2tf <- function(delta, V, lambda1, lambda2, K) {
 diff_df <- function(loglam1, loglam2, K, V, targetdf) {
   p <- nrow(V)
   
+  # Create D matrices more efficiently
   D1 <- matrix(0, nrow = p, ncol = p)
-  D1[cbind(2:p, 1:(p-1))] <- 1  
-  D1 <- D1 - diag(p)  
-  D1 <- D1[-1, ]  
+  D1[cbind(2:p, 1:(p-1))] <- 1
+  D1 <- D1 - diag(p)
+  D1 <- D1[-1, ]
   
-  D2 <- D1[-1, -1]  
-  D3 <- D2[-1, -1]  
-  D3 <- D3 %*% D2 %*% D1  
+  D2 <- D1[-1, -1]
+  D3 <- D2[-1, -1] %*% D2 %*% D1
   
+  # Calculate vD1 and related matrices
   vD1 <- D1 %*% V %*% t(D1)
-  
   zeros_block <- matrix(0, nrow = K-1, ncol = K-1)
   vD1_subset <- vD1[K:nrow(vD1), K:ncol(vD1)]
-  vD1_normalized <- vD1_subset / mean(diag(vD1_subset))
+  diag_mean <- mean(diag(vD1_subset))
+  vD1_normalized <- vD1_subset / diag_mean
   
   W1 <- matrix(0, nrow = nrow(vD1), ncol = ncol(vD1))
   W1[K:nrow(W1), K:ncol(W1)] <- vD1_normalized
   
+  # Calculate vD3 and W2
   vD3 <- D3 %*% V %*% t(D3)
   W2 <- vD3 / mean(diag(vD3))
   
+  # Pre-compute exponentials
+  exp_loglam1 <- exp(loglam1)
+  exp_loglam2 <- exp(loglam2)
+  
+  # Solve system and calculate df
   iV <- solve(V)
+  den <- solve(iV + exp_loglam1 * t(D1) %*% diag(diag(W1)) %*% D1 +
+                 exp_loglam2 * t(D3) %*% diag(diag(W2)) %*% D3)
   
-  den <- solve(iV + exp(loglam1) * t(D1) %*% diag(diag(W1)) %*% D1 + 
-                 exp(loglam2) * t(D3) %*% diag(diag(W2)) %*% D3)
+  df <- sum(diag(den %*% iV))
   
-  df <- sum(diag(den %*% iV))  
-  
+  # Calculate squared difference from target
   f <- (df - targetdf)^2
   
   return(f)
 }
 
 my_df <- function(loglam1, loglam2, K, V) {
-  library(Matrix)  
   
   p <- nrow(V)
   
+  # Create D matrices more efficiently
   D1 <- matrix(0, p, p)
-  diag(D1[-1, ]) <- 1  
-  D1 <- D1 - diag(1, p)  
-  D1 <- D1[-1, ]  
+  diag(D1[-1, ]) <- 1
+  D1 <- D1 - diag(1, p)
+  D1 <- D1[-1, ]
   
-  D2 <- D1[-1, -1]  
+  D2 <- D1[-1, -1]
+  D3 <- D2[-1, -1] %*% D2 %*% D1
   
-  D3 <- D2[-1, -1]  
-  
-  D3 <- D3 %*% D2 %*% D1  
-  
+  # Calculate vD1 and related matrices
   vD1 <- D1 %*% V %*% t(D1)
-  
   zeros_block <- matrix(0, K-1, K-1)
   vD1_subset <- vD1[K:nrow(vD1), K:ncol(vD1)] %>% as.matrix()
-  normalized_vD1 <- vD1_subset / mean(diag(vD1_subset))
-  W1 <- bdiag(zeros_block, normalized_vD1)
-  W1 <- as.matrix(W1)  
+  diag_mean <- mean(diag(vD1_subset))
+  normalized_vD1 <- vD1_subset / diag_mean
+  W1 <- Matrix::bdiag(zeros_block, normalized_vD1)
+  W1 <- as.matrix(W1)
   
+  # Calculate vD3 and W2
   vD3 <- D3 %*% V %*% t(D3)
   W2 <- vD3 / mean(diag(vD3))
   
-  iV <- solve(V)
+  # Pre-compute exponentials
+  exp_loglam1 <- exp(loglam1)
+  exp_loglam2 <- exp(loglam2)
   
-  den <- solve(iV + exp(loglam1) * t(D1) %*% diag(diag(W1)) %*% D1 + 
-                 exp(loglam2) * t(D3) %*% diag(diag(W2)) %*% D3)
+  # Solve system and calculate df
+  iV <- solve(V)
+  den <- solve(iV + exp_loglam1 * t(D1) %*% diag(diag(W1)) %*% D1 +
+                 exp_loglam2 * t(D3) %*% diag(diag(W2)) %*% D3)
   
   df_result <- sum(diag(den %*% iV))
   
   return(df_result)
 }
-

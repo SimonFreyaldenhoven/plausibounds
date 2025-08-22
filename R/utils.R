@@ -6,7 +6,7 @@ bands_plugin <- function(delta, var, p, nsim = 2000, level = 0.95) {
   rd <- MASS::mvrnorm(nsim, mu = rep(0, p), Sigma = var)
   std_devs <- sqrt(diag(var))
   rd_standardized <- rd / matrix(std_devs, nrow = nsim, ncol = length(std_devs), byrow = TRUE)
-  sup_t <- as.numeric(quantile(apply(abs(rd_standardized), 1, max), level))
+  sup_t <- as.numeric(stats::quantile(apply(abs(rd_standardized), 1, max), level))
   
   list(
     LB = delta - sup_t * sqrt(diag(var)),
@@ -24,7 +24,7 @@ bands_plugin <- function(delta, var, p, nsim = 2000, level = 0.95) {
 #' @return A list containing lower bounds, upper bounds, and critical value
 #' @keywords internal
 calculate_pointwise_bounds <- function(estimates, var, alpha) {
-  pointwise_critical <- qnorm(1 - alpha/2)
+  pointwise_critical <- stats::qnorm(1 - alpha/2)
   pointwise_lower <- estimates - pointwise_critical * sqrt(diag(var))
   pointwise_upper <- estimates + pointwise_critical * sqrt(diag(var))
   
@@ -54,3 +54,8 @@ calculate_supt_bounds <- function(estimates, var, alpha) {
   )
 }
 
+# Declare global variables used in dplyr/ggplot2 operations
+utils::globalVariables(c(
+  "horizon", "lower", "upper", "coef", "surrogate", 
+  "restricted_lower", "restricted_upper", "Var1"
+))

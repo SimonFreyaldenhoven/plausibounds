@@ -21,7 +21,7 @@ and the errors have strong correlation structure.
 \examples{
 data(estimates_wiggly_strong_corr)
 data(var_wiggly_strong_corr)
-result <- plausible_bounds(estimates_wiggly_strong_corr, var_wiggly_strong_corr)
+result <- calculate_cumulative_bounds(estimates_wiggly_strong_corr, var_wiggly_strong_corr)
 create_plot(result)
 }
 \keyword{datasets}
