@@ -40,6 +40,6 @@ It can calculate both pointwise and simultaneous (sup-t) bounds.
 # Example with constant estimates and IID errors
 data(estimates_constant_iid)
 data(var_constant_iid)
-restr_bounds <- calculate_restricted_bounds(estimates_constant_iid, var_constant_iid)
+restr_bounds <- calculate_restricted_bounds(estimates_constant_iid[1:5], var_constant_iid[1:5, 1:5])
 
 }
