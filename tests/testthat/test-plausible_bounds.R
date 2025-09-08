@@ -1,10 +1,3 @@
-# Test plausible_bounds functions
-#
-# This file tests the functionality of the plausible_bounds package
-
-library(testthat)
-library(plausibounds)
-source(test_path("helpers.R"))
 
 # Test basic functionality
 test_that("plausible_bounds functions work with simple test data", {
