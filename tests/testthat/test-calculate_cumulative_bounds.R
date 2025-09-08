@@ -1,6 +1,3 @@
-# Test calculate_cumulative_bounds function
-# Following Hadley Wickham's R Packages testing guidelines
-
 test_that("calculate_cumulative_bounds works with real example data", {
   # Test with constant IID data
   data(estimates_constant_iid)

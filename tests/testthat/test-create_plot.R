@@ -211,19 +211,19 @@ test_that("plots can be modified with ggplot2 functions", {
   base_plot <- create_plot(result)
   
   # Add title
-  plot_with_title <- base_plot + ggtitle("Test Title")
+  plot_with_title <- base_plot + ggplot2::labs(title = "Test Title")
   expect_equal(plot_with_title$labels$title, "Test Title")
   
   # Change theme
-  plot_with_theme <- base_plot + theme_classic()
+  plot_with_theme <- base_plot + ggplot2::theme_classic()
   expect_s3_class(plot_with_theme$theme, "theme")
   
   # Add reference line
-  plot_with_line <- base_plot + geom_hline(yintercept = 0, linetype = "dashed")
+  plot_with_line <- base_plot + ggplot2::geom_hline(yintercept = 0, linetype = "dashed")
   expect_true(length(plot_with_line$layers) > length(base_plot$layers))
   
   # Modify axis labels
-  plot_with_labels <- base_plot + labs(x = "Time Period", y = "Effect Size")
+  plot_with_labels <- base_plot + ggplot2::labs(x = "Time Period", y = "Effect Size")
   expect_equal(plot_with_labels$labels$x, "Time Period")
   expect_equal(plot_with_labels$labels$y, "Effect Size")
 })
@@ -240,7 +240,7 @@ test_that("plot can be saved without errors", {
   
   # Save plot
   expect_error(
-    ggsave(temp_file, plot, width = 7, height = 5),
+    ggplot2::ggsave(temp_file, plot, width = 7, height = 5),
     NA
   )
   
@@ -495,7 +495,7 @@ test_that("y-axis limits include all data with appropriate buffer", {
   plot <- create_plot(cumul)
   
   # Extract y-limits from plot coordinates
-  y_range <- ggplot_build(plot)$layout$panel_params[[1]]$y.range
+  y_range <- ggplot2::ggplot_build(plot)$layout$panel_params[[1]]$y.range
   
   # Check that limits include data with buffer
   min_expected <- min(cumul$cumulative_bounds$lower)
@@ -548,7 +548,7 @@ test_that("legend is properly configured", {
   expect_equal(plot$theme$legend.position, "bottom")
   
   # Build plot to check legend content
-  built_plot <- ggplot_build(plot)
+  built_plot <- ggplot2::ggplot_build(plot)
   plot_data <- built_plot$plot
   
   # Check that color scale has appropriate labels

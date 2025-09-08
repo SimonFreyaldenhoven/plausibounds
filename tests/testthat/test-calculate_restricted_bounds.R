@@ -1,6 +1,3 @@
-# Test calculate_restricted_bounds function
-# Following Hadley Wickham's R Packages testing guidelines
-# Using smaller samples due to computational intensity
 
 test_that("calculate_restricted_bounds works with real example data", {
   # Use smaller subset for computational efficiency
@@ -91,7 +88,7 @@ test_that("calculate_restricted_bounds handles parallel parameter", {
   
   # Use small sample for speed
   set.seed(456)
-  n <- 6
+  n <- 10
   estimates <- rnorm(n)
   var <- diag(n) * 0.1
   
