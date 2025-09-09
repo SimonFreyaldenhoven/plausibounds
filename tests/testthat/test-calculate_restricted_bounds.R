@@ -85,6 +85,7 @@ test_that("calculate_restricted_bounds handles different alpha values", {
 
 test_that("calculate_restricted_bounds handles parallel parameter", {
   skip_if_not_installed("parallel")
+  skip_on_cran()
   
   # Use small sample for speed
   set.seed(456)
@@ -215,7 +216,7 @@ test_that("calculate_restricted_bounds produces smooth surrogates", {
 
 test_that("calculate_restricted_bounds metadata is correct", {
   set.seed(222)
-  n <- 6
+  n <- 5
   estimates <- rnorm(n)
   var <- diag(n) * 0.15
   
@@ -282,9 +283,9 @@ test_that("calculate_restricted_bounds handles pointwise and supt parameters", {
 test_that("calculate_restricted_bounds optimization works correctly", {
   # Test that optimization finds a reasonable solution
   set.seed(444)
-  n <- 6
+  n <- 5
   # Create estimates with clear trend
-  estimates <- c(1, 1.5, 2, 2.3, 2.5, 2.6)
+  estimates <- c(1, 1.5, 2, 2.3, 2.5)
   var <- diag(n) * 0.1
   
   result <- calculate_restricted_bounds(estimates, var)

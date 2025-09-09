@@ -1,4 +1,3 @@
-
 check_plot_structure <- function(plot) {
   expect_s3_class(plot, "ggplot")
   expect_s3_class(plot$theme, "theme")
@@ -21,7 +20,7 @@ has_aesthetic <- function(plot, aes_name) {
 
 test_that("create_plot produces valid ggplot with constant IID data", {
   # Use pre-computed fixture to avoid expensive computation
-  result <- readRDS("tests/testthat/fixtures/simple_plausible.rds")
+  result <- readRDS(test_path("fixtures", "simple_plausible.rds"))
   plot <- create_plot(result)
   
   check_plot_structure(plot)
@@ -36,7 +35,7 @@ test_that("create_plot produces valid ggplot with constant IID data", {
 
 test_that("create_plot produces valid ggplot with wiggly strong correlation data", {
   # Use pre-computed fixture instead of expensive computation
-  result <- readRDS("tests/testthat/fixtures/complex_plausible.rds")
+  result <- readRDS(test_path("fixtures", "complex_plausible.rds"))
   plot <- create_plot(result)
   
   check_plot_structure(plot)
@@ -52,13 +51,13 @@ test_that("create_plot produces valid ggplot with wiggly strong correlation data
 
 test_that("create_plot accepts different input types correctly", {
   # Test with cumulative_bounds only - use pre-computed fixture
-  cumul <- readRDS("tests/testthat/fixtures/simple_cumulative.rds")
+  cumul <- readRDS(test_path("fixtures", "simple_cumulative.rds"))
   plot_cumul <- create_plot(cumul)
   check_plot_structure(plot_cumul)
   expect_true(count_geom_type(plot_cumul, "GeomRibbon") >= 1)
   
   # Test with restricted_bounds only - use pre-computed fixture
-  restr <- readRDS("tests/testthat/fixtures/complex_restricted.rds")
+  restr <- readRDS(test_path("fixtures", "complex_restricted.rds"))
   plot_restr <- create_plot(restr)
   check_plot_structure(plot_restr)
   expect_true(count_geom_type(plot_restr, "GeomLine") >= 2)
@@ -84,8 +83,8 @@ test_that("create_plot rejects invalid inputs", {
   )
   
   # Mismatched object types - use pre-computed fixtures
-  cumul1 <- readRDS("tests/testthat/fixtures/simple_cumulative.rds")
-  cumul2 <- readRDS("tests/testthat/fixtures/simple_cumulative.rds")
+  cumul1 <- readRDS(test_path("fixtures", "simple_cumulative.rds"))
+  cumul2 <- readRDS(test_path("fixtures", "simple_cumulative.rds"))
   
   expect_error(
     create_plot(cumul1, cumul2),
@@ -97,7 +96,7 @@ test_that("create_plot rejects invalid inputs", {
 
 test_that("show parameters control visibility of plot elements", {
   # Use pre-computed fixture for testing parameters
-  pb <- readRDS("tests/testthat/fixtures/simple_plausible.rds")
+  pb <- readRDS(test_path("fixtures", "simple_plausible.rds"))
   
   # Test show_cumulative = FALSE
   plot_no_cumul <- create_plot(pb, show_cumulative = FALSE)
@@ -114,7 +113,7 @@ test_that("show parameters control visibility of plot elements", {
 
 test_that("show_supt and show_pointwise parameters work", {
   # Use pre-computed fixture instead of expensive computation
-  pb <- readRDS("tests/testthat/fixtures/complex_plausible.rds")
+  pb <- readRDS(test_path("fixtures", "complex_plausible.rds"))
   
   # Test with all bounds shown
   plot_all <- create_plot(pb, show_supt = TRUE, show_pointwise = TRUE)
@@ -136,7 +135,7 @@ test_that("show_supt and show_pointwise parameters work", {
 
 test_that("appropriate messages are shown for missing bounds", {
   # Use pre-computed fixture
-  cumul <- readRDS("tests/testthat/fixtures/simple_cumulative.rds")
+  cumul <- readRDS(test_path("fixtures", "simple_cumulative.rds"))
   
   # Requesting restricted bounds that don't exist should show message
   expect_message(
@@ -153,7 +152,7 @@ test_that("appropriate messages are shown for missing bounds", {
 
 test_that("warning is shown when no bounds can be plotted", {
   # Use pre-computed fixture
-  cumul <- readRDS("tests/testthat/fixtures/simple_cumulative.rds")
+  cumul <- readRDS(test_path("fixtures", "simple_cumulative.rds"))
   
   # Hide the only available bounds
   expect_error(
@@ -166,7 +165,7 @@ test_that("warning is shown when no bounds can be plotted", {
 
 test_that("plot has correct aesthetic mappings and scales", {
   # Use pre-computed fixture instead of expensive computation
-  pb <- readRDS("tests/testthat/fixtures/simple_plausible.rds")
+  pb <- readRDS(test_path("fixtures", "simple_plausible.rds"))
   plot <- create_plot(pb)
   
   # Check for color scale by examining scale aesthetics
@@ -207,7 +206,7 @@ test_that("plot handles different horizon lengths appropriately", {
 
 test_that("plots can be modified with ggplot2 functions", {
   # Use pre-computed fixture instead of expensive computation
-  result <- readRDS("tests/testthat/fixtures/simple_plausible.rds")
+  result <- readRDS(test_path("fixtures", "simple_plausible.rds"))
   base_plot <- create_plot(result)
   
   # Add title
@@ -232,7 +231,7 @@ test_that("plot can be saved without errors", {
   skip_on_cran()  # Skip file I/O on CRAN
   
   # Use pre-computed fixture instead of expensive computation
-  result <- readRDS("tests/testthat/fixtures/simple_plausible.rds")
+  result <- readRDS(test_path("fixtures", "simple_plausible.rds"))
   plot <- create_plot(result)
   
   # Create temporary file
@@ -303,7 +302,7 @@ test_that("create_plot performs efficiently with package data", {
   skip_on_cran()  # Skip timing tests on CRAN
   
   # Use pre-computed fixture instead of expensive computation
-  result <- readRDS("tests/testthat/fixtures/complex_plausible.rds")
+  result <- readRDS(test_path("fixtures", "complex_plausible.rds"))
   
   # Time plot creation
   time_taken <- system.time({
@@ -319,7 +318,7 @@ test_that("create_plot performs efficiently with package data", {
 
 test_that("extract_bounds_data works correctly", {
   # Use pre-computed fixture instead of expensive computation
-  pb <- readRDS("tests/testthat/fixtures/simple_plausible.rds")
+  pb <- readRDS(test_path("fixtures", "simple_plausible.rds"))
   
   # Test extraction from plausible_bounds
   bounds_data <- extract_bounds_data(
@@ -353,7 +352,7 @@ test_that("extract_bounds_data works correctly", {
 
 test_that("check_bounds_availability identifies available bounds", {
   # Use pre-computed fixture instead of expensive computation
-  pb <- readRDS("tests/testthat/fixtures/simple_plausible.rds")
+  pb <- readRDS(test_path("fixtures", "simple_plausible.rds"))
   
   bounds_data <- extract_bounds_data(
     list(pb),
@@ -423,7 +422,7 @@ test_that("merge_bounds_data correctly merges additional bounds", {
   skip_on_cran()
   
   # Use pre-computed fixture instead of expensive computation
-  pb <- readRDS("tests/testthat/fixtures/complex_plausible.rds")
+  pb <- readRDS(test_path("fixtures", "complex_plausible.rds"))
   
   # Create mock result structure
   result <- list(
@@ -454,7 +453,7 @@ test_that("merge_bounds_data correctly merges additional bounds", {
 
 test_that("create_bounds_plot generates correct plot structure", {
   # Use pre-computed fixture instead of expensive computation
-  pb <- readRDS("tests/testthat/fixtures/simple_plausible.rds")
+  pb <- readRDS(test_path("fixtures", "simple_plausible.rds"))
   
   # Extract and prepare data
   bounds_data <- extract_bounds_data(
@@ -522,7 +521,7 @@ test_that("plotting both cumulative and restricted bounds works correctly", {
   check_plot_structure(plot_both_sep)
   
   # Plot with both bounds from plausible_bounds object - use pre-computed fixture
-  pb <- readRDS("tests/testthat/fixtures/complex_plausible.rds")
+  pb <- readRDS(test_path("fixtures", "complex_plausible.rds"))
   plot_both_pb <- create_plot(pb)
   check_plot_structure(plot_both_pb)
   
@@ -541,7 +540,7 @@ test_that("plotting both cumulative and restricted bounds works correctly", {
 
 test_that("legend is properly configured", {
   # Use pre-computed fixture instead of expensive computation
-  pb <- readRDS("tests/testthat/fixtures/simple_plausible.rds")
+  pb <- readRDS(test_path("fixtures", "simple_plausible.rds"))
   plot <- create_plot(pb)
   
   # Check legend position

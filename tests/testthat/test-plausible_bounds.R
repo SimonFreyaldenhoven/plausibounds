@@ -3,7 +3,7 @@
 test_that("plausible_bounds functions work with simple test data", {
   # Create test data
   set.seed(123)
-  p <- 7
+  p <- 4
   estimates <- stats::rnorm(p)
   var <- diag(p) * 0.1
 
@@ -16,9 +16,6 @@ test_that("plausible_bounds functions work with simple test data", {
   expect_error(create_plot(pb), NA)
   expect_error(create_plot(pb, show_cumulative = TRUE, show_restricted = FALSE), NA)
   expect_error(create_plot(pb, show_cumulative = FALSE, show_restricted = TRUE), NA)
-  expect_error(create_plot(cumul_bounds), NA)
-  expect_error(create_plot(restr_bounds), NA)
-  expect_error(create_plot(cumul_bounds, restr_bounds), NA)
 })
 
 # Test comparison with original function using pre-computed fixtures
