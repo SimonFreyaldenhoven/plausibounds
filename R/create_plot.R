@@ -379,7 +379,7 @@ create_bounds_plot <- function(bounds_data, availability) {
     }
     
     p <- ggplot2::ggplot(df, ggplot2::aes(x = horizon)) +
-      ggplot2::geom_ribbon(ggplot2::aes(ymin = lower, ymax = upper, fill = "cumulative"), alpha = 0.2) +
+      ggplot2::geom_ribbon(ggplot2::aes(ymin = lower, ymax = upper, fill = "cumulative"), alpha = 0.5) +
       ggplot2::geom_point(ggplot2::aes(y = coef, color = "estimate")) +
       ggplot2::geom_line(ggplot2::aes(y = surrogate, color = "surrogate", linetype = "surrogate")) +
       ggplot2::geom_line(ggplot2::aes(y = restricted_lower, color = "surrogate_bounds", linetype = "surrogate_bounds")) +
@@ -390,7 +390,7 @@ create_bounds_plot <- function(bounds_data, availability) {
     df <- bounds_data$cumulative 
     p <- ggplot2::ggplot(df, ggplot2::aes(x = horizon)) +
       ggplot2::geom_point(ggplot2::aes(y = coef, color = "estimate")) +
-      ggplot2::geom_ribbon(ggplot2::aes(ymin = lower, ymax = upper, fill = "cumulative"), alpha = 0.2)
+      ggplot2::geom_ribbon(ggplot2::aes(ymin = lower, ymax = upper, fill = "cumulative"), alpha = 0.5)
     
   } else if (availability$show_restricted) {
     # Plot only restricted bounds
