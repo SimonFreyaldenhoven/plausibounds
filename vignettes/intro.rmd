@@ -1,0 +1,299 @@
+---
+title: "Introduction to plausiblebounds: Computing Plausible Bounds for Treatment Path Estimates"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Introduction to plausiblebounds}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+
+
+
+``` r
+library(plausibounds)
+library(ggplot2)
+```
+
+## Overview
+
+The `plausibounds` package provides tools for calculating and visualizing plausible bounds for treatment path estimates in event study designs. This methodology addresses a fundamental challenge in empirical research: how to construct confidence bands that properly account for the uncertainty in dynamic treatment effects while maintaining computational tractability.
+
+The package implements the methodology described in Freyaldenhoven and Hansen (2025), which introduces a novel approach to constructing confidence bands that are both theoretically justified and practically useful. The key innovation is the use of two types of plausible bounds: cumulative bounds that target the average treatment effect, and restricted bounds that leverage data-driven smoothness properties of the underlying treatment path to provide tighter confidence intervals than traditional pointwise or simultaneous confidence bands.
+
+## Key Concepts
+
+### Treatment Path Estimation
+
+In event study designs, researchers often estimate the dynamic effects of a treatment over multiple time horizons. These estimates form a "treatment path" that shows how the effect evolves over time. However, these estimates come with uncertainty, and properly quantifying this uncertainty is crucial for valid inference.
+
+The package assumes access to point estimates $\hat{\beta}_h$ for horizons $h = 1, \ldots, H$ that follow $\hat{\beta} \sim N(\beta, V_\beta)$, where $\hat{\beta}$ collects the estimated dynamic treatment effect path and $V_\beta$ is the known covariance matrix.
+
+### Types of Bounds
+
+The package implements several types of confidence bounds:
+
+1. **Pointwise bounds**: Traditional confidence intervals calculated separately for each horizon
+2. **Simultaneous (sup-t) bounds**: Uniform confidence bands that cover the entire path with a specified probability
+3. **Cumulative bounds**: Bounds that target the average treatment effect rather than the entire path
+4. **Restricted bounds**: Novel bounds that use data-driven model selection with smoothness assumptions, providing uniform coverage for a selected surrogate path
+
+## Basic Usage
+
+### Example 1: Simple Case with IID Errors
+
+Let's start with a simple example using constant estimates with independent and identically distributed (IID) errors:
+
+
+``` r
+# Display the first few estimates of built in dataset `estimates_constant_iid`
+head(estimates_constant_iid)
+#> [1] -0.5399318 -0.4827816 -0.4466255 -0.5618378 -0.2556507 -0.2608547
+
+simple_pb <- plausible_bounds(
+  estimates = estimates_constant_iid,
+  var = var_constant_iid,
+  alpha = 0.05
+)
+#> Calculating restricted bounds: ■■■■■■                           K = 2/11 [ 18%]Calculating restricted bounds: ■■■■■■■■■                        K = 3/11 [ 27%]Calculating restricted bounds: ■■■■■■■■■■■■                     K = 4/11 [ 36%]Calculating restricted bounds: ■■■■■■■■■■■■■■■                  K = 5/11 [ 45%]Calculating restricted bounds: ■■■■■■■■■■■■■■■■■                K = 6/11 [ 55%]Calculating restricted bounds: ■■■■■■■■■■■■■■■■■■■■             K = 7/11 [ 64%]Calculating restricted bounds: ■■■■■■■■■■■■■■■■■■■■■■■          K = 8/11 [ 73%]Calculating restricted bounds: ■■■■■■■■■■■■■■■■■■■■■■■■■■       K = 9/11 [ 82%]Calculating restricted bounds: ■■■■■■■■■■■■■■■■■■■■■■■■■■■■     K = 10/11 [ 91%]Calculating restricted bounds: ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■  K = 11/11 [100%]
+
+summary(simple_pb)
+#> Summary of Plausible Bounds Results
+#> ----------------------------------
+#> 
+#> Bounds data.frame:
+#>    horizon       coef cumul_lower cumul_upper  surrogate restr_lower restr_upper
+#> 1        1 -0.5399318  -0.4787285  -0.3360597 -0.4110322  -0.5258702  -0.2961942
+#> 2        2 -0.4827816  -0.4787285  -0.3360597 -0.4110322  -0.5258702  -0.2961942
+#> 3        3 -0.4466255  -0.4787285  -0.3360597 -0.4110322  -0.5258702  -0.2961942
+#> 4        4 -0.5618378  -0.4787285  -0.3360597 -0.4110322  -0.5258702  -0.2961942
+#> 5        5 -0.2556507  -0.4787285  -0.3360597 -0.4110322  -0.5258702  -0.2961942
+#> 6        6 -0.2608547  -0.4787285  -0.3360597 -0.4110322  -0.5258702  -0.2961942
+#> 7        7 -0.4524304  -0.4787285  -0.3360597 -0.4110322  -0.5258702  -0.2961942
+#> 8        8 -0.6157351  -0.4787285  -0.3360597 -0.4110322  -0.5258702  -0.2961942
+#> 9        9 -0.2923537  -0.4787285  -0.3360597 -0.4110322  -0.5258702  -0.2961942
+#> 10      10 -0.3125616  -0.4787285  -0.3360597 -0.4110322  -0.5258702  -0.2961942
+#> 11      11 -0.3243322  -0.4787285  -0.3360597 -0.4110322  -0.5258702  -0.2961942
+#> 12      12 -0.3436341  -0.4787285  -0.3360597 -0.4110322  -0.5258702  -0.2961942
+```
+
+The `plausible_bounds()` function returns both cumulative and restricted bounds. The cumulative bounds show the uncertainty in the average effect (not the sum), while the restricted bounds use data-driven model selection to choose an appropriate surrogate path and provide uniform coverage for that surrogate.
+
+### Visualizing the Results
+
+The package provides a flexible plotting function to visualize the bounds:
+
+
+``` r
+create_plot(simple_pb)
+```
+
+<div class="figure" style="text-align: center">
+<img src="figs/plot-simple-1.png" alt="Plausible bounds for constant estimates with IID errors"  />
+<p class="caption">Plausible bounds for constant estimates with IID errors</p>
+</div>
+
+The plot shows:
+
+- **Black points**: Original point estimates
+
+- **Orange shaded area**: Cumulative bounds (targeting average effect)
+
+- **Blue line**: Restricted (data-selected surrogate) estimate
+
+- **Blue dashed lines**: Restricted bounds
+
+and the more traditional bounds:
+
+- **Grey vertical bars**: Sup-t intervals
+
+- **Grey horizontal bars**: Pointwise intervals
+
+## Example 2: Complex Case with Correlated Errors
+
+Let's examine a case with wiggly estimates and strongly correlated errors:
+
+
+``` r
+
+# Calculate bounds
+wiggly_pb <- plausible_bounds(
+  estimates = estimates_wiggly_strong_corr,
+  var = var_wiggly_strong_corr,
+  alpha = 0.05
+)
+#> Calculating restricted bounds: ■■■■■■                           K = 2/11 [ 18%]Calculating restricted bounds: ■■■■■■■■■                        K = 3/11 [ 27%]Calculating restricted bounds: ■■■■■■■■■■■■                     K = 4/11 [ 36%]Calculating restricted bounds: ■■■■■■■■■■■■■■■                  K = 5/11 [ 45%]Calculating restricted bounds: ■■■■■■■■■■■■■■■■■                K = 6/11 [ 55%]Calculating restricted bounds: ■■■■■■■■■■■■■■■■■■■■             K = 7/11 [ 64%]Calculating restricted bounds: ■■■■■■■■■■■■■■■■■■■■■■■          K = 8/11 [ 73%]Calculating restricted bounds: ■■■■■■■■■■■■■■■■■■■■■■■■■■       K = 9/11 [ 82%]Calculating restricted bounds: ■■■■■■■■■■■■■■■■■■■■■■■■■■■■     K = 10/11 [ 91%]Calculating restricted bounds: ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■  K = 11/11 [100%]
+
+# Create visualization
+create_plot(wiggly_pb)
+```
+
+<div class="figure" style="text-align: center">
+<img src="figs/complex-example-1.png" alt="plot of chunk complex-example"  />
+<p class="caption">plot of chunk complex-example</p>
+</div>
+
+Notice how the restricted bounds (blue dashed lines) adapt to the underlying smoothness while still providing meaningful uncertainty quantification. The cumulative bounds (orange area) reflect the uncertainty in the average treatment effect across all horizons.
+
+## Additional Features
+
+You can also choose which types of bounds to calculate:
+
+
+``` r
+# Calculate only cumulative bounds
+cumul_only <- calculate_cumulative_bounds(
+  estimates = estimates_constant_iid,
+  var = var_constant_iid,
+  alpha = 0.05,
+  include_pointwise = TRUE,
+  include_supt = TRUE
+)
+
+# Calculate only restricted bounds
+restr_only <- calculate_restricted_bounds(
+  estimates = estimates_constant_iid,
+  var = var_constant_iid,
+  alpha = 0.05
+)
+#> Calculating restricted bounds: ■■■■■■                           K = 2/11 [ 18%]Calculating restricted bounds: ■■■■■■■■■                        K = 3/11 [ 27%]Calculating restricted bounds: ■■■■■■■■■■■■                     K = 4/11 [ 36%]Calculating restricted bounds: ■■■■■■■■■■■■■■■                  K = 5/11 [ 45%]Calculating restricted bounds: ■■■■■■■■■■■■■■■■■                K = 6/11 [ 55%]Calculating restricted bounds: ■■■■■■■■■■■■■■■■■■■■             K = 7/11 [ 64%]Calculating restricted bounds: ■■■■■■■■■■■■■■■■■■■■■■■          K = 8/11 [ 73%]Calculating restricted bounds: ■■■■■■■■■■■■■■■■■■■■■■■■■■       K = 9/11 [ 82%]Calculating restricted bounds: ■■■■■■■■■■■■■■■■■■■■■■■■■■■■     K = 10/11 [ 91%]Calculating restricted bounds: ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■  K = 11/11 [100%]
+
+# Plot them together
+create_plot(cumul_only, restr_only)
+```
+
+<div class="figure" style="text-align: center">
+<img src="figs/selective-bounds-1.png" alt="plot of chunk selective-bounds"  />
+<p class="caption">plot of chunk selective-bounds</p>
+</div>
+
+By default, `plausible_bounds()` computes the pointwise and sup-t bounds for comparison. However, you can choose not to calculate or display them by setting `include_pointwise` to `FALSE`. This option is available across all functions. 
+
+### Adjusting Visualizations
+
+The plotting function offers control over which bounds to display:
+
+
+``` r
+# Hide cumulative bounds
+create_plot(wiggly_pb, show_cumulative = FALSE)
+```
+
+<div class="figure" style="text-align: center">
+<img src="figs/custom-plot-1.png" alt="plot of chunk custom-plot"  />
+<p class="caption">plot of chunk custom-plot</p>
+</div>
+
+``` r
+
+# Hide sup-t and restricted bounds
+create_plot(wiggly_pb, show_supt = FALSE, show_restricted = FALSE)
+```
+
+<div class="figure" style="text-align: center">
+<img src="figs/custom-plot-2.png" alt="plot of chunk custom-plot"  />
+<p class="caption">plot of chunk custom-plot</p>
+</div>
+
+### Parallel Processing
+
+The restricted bounds calculation can be computationally intensive so the package supports parallel processing via the `parallel` and `n_cores` arguments in `plausible_bounds()` and `calculate_restricted_bounds()`:
+
+
+``` r
+# Enable parallel processing for restricted bounds
+parallel_pb <- plausible_bounds(
+  estimates = estimates_wiggly_strong_corr,
+  var = var_wiggly_strong_corr,
+  alpha = 0.05,
+  parallel = TRUE
+)
+```
+
+## Theoretical Background
+
+### Cumulative Bounds
+
+The cumulative bounds target the average treatment effect rather than uniform coverage of the entire path. They are constructed as:
+
+$$(U, L)_{1-\alpha} = \{w'\hat{\beta}/H \pm z_{1-\alpha/2}(w'V_\beta w)^{1/2}/H\}_{h=1}^H$$
+
+where $w$ is a vector of ones and the bounds are constant across all horizons $h$. These bounds satisfy:
+
+$$P\left(\sum_{h=1}^H L_{h}^{1-\alpha} < \sum_{h=1}^H \beta_h < \sum_{h=1}^H U_{h}^{1-\alpha}\right) = (1-\alpha)$$
+
+This means the true treatment path will **on average** be within these bounds for $(1-\alpha)$ of all realizations.
+
+### Restricted Bounds and Model Selection
+
+The restricted bounds use data-driven model selection from a pre-specified universe of candidate models. The procedure:
+
+1. **Model Universe**: Includes constant, linear, quadratic, and cubic models, plus models based on shrinkage of first and third differences motivated by smoothness and eventual decay
+
+2. **Selection Criterion**: Uses a BIC-type criterion to select model $\hat{M}$
+
+3. **Post-Selection Inference**: Applies Berk et al. (2013) to provide uniform coverage for the selected surrogate $\beta_{\hat{M}} = P(\hat{M})\beta$
+
+The key innovation is that the restricted bounds provide uniform coverage for the **selected surrogate path**, not the true path. This surrogate represents a data-driven approximation that captures key features while being potentially simpler than the true path.
+
+### Coverage Properties
+
+- **Cumulative bounds**: Cover the sum/average of the true treatment effects with probability $(1-\alpha)$
+- **Restricted bounds**: Cover the selected surrogate path with probability $\geq (1-\alpha)$ via post-selection inference
+- **Traditional bounds**: Pointwise bounds lack joint coverage; sup-t bounds provide uniform coverage but can be very wide
+
+## Practical Recommendations
+
+### Interpreting the Results
+
+1. **Cumulative bounds**: Show plausible range for the average treatment effect
+2. **Restricted bounds**: Show uncertainty around a data-selected smooth approximation
+3. **Width comparisons**: Restricted bounds are often much narrower than sup-t bounds
+4. **Different inferential targets**: Remember that cumulative and restricted bounds target different objects than the true path
+
+### Key Insights from the Methodology
+
+The paper demonstrates several important points:
+
+1. **Volume differences**: Sup-t regions can have volumes orders of magnitude larger than Wald regions, meaning most paths within sup-t bands would be rejected by joint tests
+2. **Correlation matters**: Strong correlation in estimates can lead to counterintuitive results where joint tests and visual inspection disagree
+3. **Surrogate interpretation**: Restricted bounds cover approximations that may be more policy-relevant than the exact true path
+4. **Efficiency gains**: Both cumulative and restricted bounds can be much more informative than traditional approaches
+
+## Working with Your Own Data
+
+To use the package with your own estimates:
+
+
+``` r
+# Prepare your data
+my_estimates <- c(0.5, 0.7, 0.9, 1.1, 1.0, 0.8)  # Your point estimates
+my_var <- diag(c(0.1, 0.12, 0.15, 0.18, 0.20, 0.22))  # Your variance-covariance matrix
+
+# Calculate bounds
+my_result <- plausible_bounds(
+  estimates = my_estimates,
+  var = my_var,
+  alpha = 0.05
+)
+
+# Visualize
+create_plot(my_result)
+```
+
+### Data Requirements
+
+Your data must satisfy:
+1. `estimates`: A numeric vector of point estimates $\hat{\beta}_h$
+
+2. `var`: A symmetric, positive semi-definite variance-covariance matrix $V_\beta$
+
+3. The dimension of `var` must match the length of `estimates`
+
+4. The estimates should be approximately jointly normal: $\hat{\beta} \sim N(\beta, V_\beta)$
+
+## References
+
+Freyaldenhoven, S. and Hansen, C. (2025). "(Visualizing) Plausible Treatment Effect Paths." Federal Reserve Bank of Philadelphia and University of Chicago.
+
+Berk, R., Brown, L., Buja, A., Zhang, K., and Zhao, L. (2013). "Valid post-selection inference." The Annals of Statistics, 41(2):802-837.
