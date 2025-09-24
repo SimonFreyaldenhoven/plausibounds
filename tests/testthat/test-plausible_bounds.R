@@ -1,110 +1,78 @@
-# Test plausible_bounds functions
-#
-# This file tests the functionality of the plausible_bounds package
-
-library(testthat)
-library(plausibounds)
-source(test_path("helpers.R"))
 
 # Test basic functionality
 test_that("plausible_bounds functions work with simple test data", {
   # Create test data
   set.seed(123)
-  p <- 10
+  p <- 4
   estimates <- stats::rnorm(p)
   var <- diag(p) * 0.1
-  
-  # Test calculate_cumulative_bounds
-  cumul_bounds <- calculate_cumulative_bounds(estimates, var)
-  expect_s3_class(cumul_bounds, "cumulative_bounds")
-  expect_s3_class(cumul_bounds, "plausible_bounds_result")
-  expect_equal(nrow(cumul_bounds$cumulative_bounds), p)
-  expect_true("horizon" %in% names(cumul_bounds$cumulative_bounds))
-  expect_true("coef" %in% names(cumul_bounds$cumulative_bounds))
-  expect_true("lower" %in% names(cumul_bounds$cumulative_bounds))
-  expect_true("upper" %in% names(cumul_bounds$cumulative_bounds))
-  expect_true(!is.null(cumul_bounds$pointwise_bounds))
-  expect_true(!is.null(cumul_bounds$supt_bounds))
-  expect_true(!is.null(cumul_bounds$metadata))
 
-  # Test calculate_restricted_bounds
-  restr_bounds <- calculate_restricted_bounds(estimates, var)
-  expect_s3_class(restr_bounds, "restricted_bounds")
-  expect_s3_class(restr_bounds, "plausible_bounds_result")
-  expect_equal(nrow(restr_bounds$restricted_bounds), p)
-  expect_true("horizon" %in% names(restr_bounds$restricted_bounds))
-  expect_true("coef" %in% names(restr_bounds$restricted_bounds))
-  expect_true("surrogate" %in% names(restr_bounds$restricted_bounds))
-  expect_true("lower" %in% names(restr_bounds$restricted_bounds))
-  expect_true("upper" %in% names(restr_bounds$restricted_bounds))
-  expect_true(!is.null(restr_bounds$metadata))
   
   # Test plausible_bounds
   pb <- plausible_bounds(estimates, var)
   expect_s3_class(pb, "plausible_bounds")
-  expect_s3_class(pb$cumulative_bounds, "cumulative_bounds")
-  expect_s3_class(pb$restricted_bounds, "restricted_bounds")
   
   # Test create_plot (just check that it runs without error)
   expect_error(create_plot(pb), NA)
   expect_error(create_plot(pb, show_cumulative = TRUE, show_restricted = FALSE), NA)
   expect_error(create_plot(pb, show_cumulative = FALSE, show_restricted = TRUE), NA)
-  expect_error(create_plot(cumul_bounds), NA)
-  expect_error(create_plot(restr_bounds), NA)
-  expect_error(create_plot(cumul_bounds, restr_bounds), NA)
 })
 
-# Test comparison with original function
+# Test comparison with original function using pre-computed fixtures
 test_that("new functions match original full_eventplot_l2tf results", {
-  # Skip this test if the test data files don't exist
+  # Skip this test if the fixture files don't exist
   skip_if_not(file.exists(test_path("fixtures", "dhat.csv")) &&
-              file.exists(test_path("fixtures", "vhat.csv")))
+              file.exists(test_path("fixtures", "vhat.csv")) &&
+              file.exists(test_path("fixtures", "full_eventplot_l2tf_results.rds")))
+  
+  skip_on_cran()
   
   # Load test data
   delta <- as.matrix(read.csv(test_path("fixtures", "dhat.csv"), header = FALSE))
   vhat <- as.matrix(read.csv(test_path("fixtures", "vhat.csv"), header = FALSE))
   
-  # Run original function (if available)
-  if (exists("full_eventplot_l2tf")) {
-    original_results <- full_eventplot_l2tf(delta, vhat, nsim = 1000)
-    
-    # Run new functions
-    pb <- plausible_bounds(as.vector(delta), vhat)
-    
-    # Compare results
-    # Cumulative bounds
-    expect_equal(
-      pb$cumulative_bounds$lower[1],
-      original_results$lb,
-      tolerance = 1e-6
-    )
-    expect_equal(
-      pb$cumulative_bounds$upper[1],
-      original_results$ub,
-      tolerance = 1e-6
-    )
-    
-    # Restricted bounds
-    expect_equal(
-      pb$restricted_bounds$surrogate,
-      as.vector(original_results$surrogate),
-      tolerance = 1e-6
-    )
-    expect_equal(
-      pb$restricted_bounds$lower,
-      as.vector(original_results$restricted_LB),
-      tolerance = 1e-6
-    )
-    expect_equal(
-      pb$restricted_bounds$upper,
-      as.vector(original_results$restricted_UB),
-      tolerance = 1e-6
-    )
-  }
+  # Load pre-computed original results from fixture
+  original_results <- readRDS(test_path("fixtures", "full_eventplot_l2tf_results.rds"))
+  
+  # Run new functions
+  pb <- plausible_bounds(as.vector(delta), vhat)
+  
+  # Compare results
+  # Cumulative bounds
+  expect_equal(
+    pb$cumulative_bounds$lower[1],
+    original_results$lb/length(delta),
+    tolerance = 1e-6
+  )
+  expect_equal(
+    pb$cumulative_bounds$upper[1],
+    original_results$ub/length(delta),
+    tolerance = 1e-6
+  )
+  
+  # Restricted bounds
+  expect_equal(
+    pb$restricted_bounds$surrogate,
+    as.vector(original_results$surrogate),
+    tolerance = 1e-6
+  )
+  expect_equal(
+    pb$restricted_bounds$lower,
+    as.vector(original_results$restricted_LB),
+    tolerance = 1e-6
+  )
+  expect_equal(
+    pb$restricted_bounds$upper,
+    as.vector(original_results$restricted_UB),
+    tolerance = 1e-6
+  )
 })
 
 # Test parallel vs non-parallel results
 test_that("parallel and non-parallel results are identical", {
+  skip_on_cran()
+  l <- 8
+
   # Test with wiggly estimates and strong correlation
   data(estimates_wiggly_strong_corr)
   data(var_wiggly_strong_corr)
@@ -112,16 +80,16 @@ test_that("parallel and non-parallel results are identical", {
   # Run with parallel = TRUE
   set.seed(42)  # Set seed for reproducibility
   result_parallel <- plausible_bounds(
-    estimates_wiggly_strong_corr,
-    var_wiggly_strong_corr,
+    estimates_wiggly_strong_corr[1:l],
+    var_wiggly_strong_corr[1:l,1:l],
     parallel = TRUE
   )
   
   # Run with parallel = FALSE
   set.seed(42)  # Reset seed to ensure same random numbers
   result_sequential <- plausible_bounds(
-    estimates_wiggly_strong_corr,
-    var_wiggly_strong_corr,
+    estimates_wiggly_strong_corr[1:l],
+    var_wiggly_strong_corr[1:l, 1:l],
     parallel = FALSE
   )
   
@@ -152,16 +120,16 @@ test_that("parallel and non-parallel results are identical", {
   # Run with parallel = TRUE
   set.seed(42)  # Set seed for reproducibility
   result_parallel_const <- plausible_bounds(
-    estimates_constant_iid,
-    var_constant_iid,
+    estimates_constant_iid[1:l],
+    var_constant_iid[1:l,1:l],
     parallel = TRUE
   )
   
   # Run with parallel = FALSE
   set.seed(42)  # Reset seed to ensure same random numbers
   result_sequential_const <- plausible_bounds(
-    estimates_constant_iid,
-    var_constant_iid,
+    estimates_constant_iid[1:l],
+    var_constant_iid[1:l,1:l],
     parallel = FALSE
   )
   

@@ -18,14 +18,9 @@
 #' # Example with constant estimates and IID errors (simple case)
 #' data(estimates_constant_iid)
 #' data(var_constant_iid)
-#' result1 <- plausible_bounds(estimates_constant_iid, var_constant_iid)
+#' result1 <- plausible_bounds(estimates_constant_iid[1:4], var_constant_iid[1:4, 1:4])
 #' print(result1)
 #'
-#' # Example with wiggly estimates and strong correlation (complex case)
-#' data(estimates_wiggly_strong_corr)
-#' data(var_wiggly_strong_corr)
-#' result2 <- plausible_bounds(estimates_wiggly_strong_corr, var_wiggly_strong_corr)
-#' print(result2)
 #'
 #' @export
 plausible_bounds <- function(estimates, var, alpha = 0.05,

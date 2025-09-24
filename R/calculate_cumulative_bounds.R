@@ -49,10 +49,22 @@ calculate_cumulative_bounds <- function(estimates, var, alpha = 0.05,
   if (!is.numeric(estimates) || !is.vector(estimates)) {
     stop("estimates must be a numeric vector")
   }
+  if (any(is.na(estimates))) {
+    stop("estimates cannot contain NA values")
+  }
+  if (any(!is.finite(estimates))) {
+    stop("estimates cannot contain infinite values")
+  }
   if (!is.matrix(var) || nrow(var) != length(estimates) || ncol(var) != length(estimates)) {
     stop("var must be a square matrix with dimensions matching the length of estimates")
   }
-  if (!is.numeric(alpha) || alpha <= 0 || alpha >= 1) {
+  if (any(is.na(var))) {
+    stop("var cannot contain NA values")
+  }
+  if (any(!is.finite(var))) {
+    stop("var cannot contain infinite values")
+  }
+  if (!is.numeric(alpha) || length(alpha) != 1 || alpha <= 0 || alpha >= 1) {
     stop("alpha must be a number between 0 and 1")
   }
   

@@ -20,7 +20,7 @@
 #' # Example with constant estimates and IID errors
 #' data(estimates_constant_iid)
 #' data(var_constant_iid)
-#' restr_bounds <- calculate_restricted_bounds(estimates_constant_iid, var_constant_iid)
+#' restr_bounds <- calculate_restricted_bounds(estimates_constant_iid[1:5], var_constant_iid[1:5, 1:5])
 #'
 #' @export
 
@@ -30,10 +30,25 @@ calculate_restricted_bounds <- function(estimates, var, alpha = 0.05,
   if (!is.numeric(estimates) || !is.vector(estimates)) {
     stop("estimates must be a numeric vector")
   }
+  if (length(estimates) < 2) {
+    stop("calculate_restricted_bounds requires at least 2 estimates")
+  }
+  if (any(is.na(estimates))) {
+    stop("estimates cannot contain NA values")
+  }
+  if (any(!is.finite(estimates))) {
+    stop("estimates cannot contain infinite values")
+  }
   if (!is.matrix(var) || nrow(var) != length(estimates) || ncol(var) != length(estimates)) {
     stop("var must be a square matrix with dimensions matching the length of estimates")
   }
-  if (!is.numeric(alpha) || alpha <= 0 || alpha >= 1) {
+  if (any(is.na(var))) {
+    stop("var cannot contain NA values")
+  }
+  if (any(!is.finite(var))) {
+    stop("var cannot contain infinite values")
+  }
+  if (!is.numeric(alpha) || length(alpha) != 1 || alpha <= 0 || alpha >= 1) {
     stop("alpha must be a number between 0 and 1")
   }
   
@@ -76,8 +91,14 @@ calculate_restricted_bounds <- function(estimates, var, alpha = 0.05,
   best_bic <- bic
   mbhsf <- apply(abs(rd %*% best_J), 1, max)
   
-  for (degree in 1:3) {
+  # Limit polynomial degree based on number of observations
+  max_degree <- min(3, p - 1)
+  for (degree in 1:max_degree) {
     Xtmp <- cbind(Xtmp, (1:p)^degree)
+    # Skip if we have more columns than rows (would be singular)
+    if (ncol(Xtmp) > p) {
+      break
+    }
     res <- MDproj2(estimates, var, Xtmp)
     bic <- res$MD + log(p) * ncol(Xtmp)
     if (bic < best_bic) {
