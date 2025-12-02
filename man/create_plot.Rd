@@ -6,22 +6,22 @@
 \usage{
 create_plot(
   ...,
-  show_cumulative = TRUE,
   show_restricted = TRUE,
   show_supt = TRUE,
-  show_pointwise = TRUE
+  show_pointwise = TRUE,
+  show_annotations = TRUE
 )
 }
 \arguments{
 \item{...}{One or two objects: either a plausible_bounds object or individual bounds objects}
-
-\item{show_cumulative}{Whether to show cumulative bounds (default: TRUE)}
 
 \item{show_restricted}{Whether to show restricted bounds (default: TRUE)}
 
 \item{show_supt}{Whether to show sup-t bounds (default: TRUE)}
 
 \item{show_pointwise}{Whether to show pointwise bounds (default: TRUE)}
+
+\item{show_annotations}{Whether to show annotations with test statistics and ATE (default: TRUE)}
 }
 \value{
 A ggplot2 object
@@ -29,16 +29,14 @@ A ggplot2 object
 \description{
 This function creates a plot of plausible bounds from the results of plausible_bounds,
 calculate_cumulative_bounds, or calculate_restricted_bounds functions.
+Supports event study designs with pre-treatment periods.
 }
 \examples{
 
 # Example with wiggly estimates and strong correlation
-data(estimates_wiggly_strong_corr)
-data(var_wiggly_strong_corr)
-result_complex <- plausible_bounds(estimates_wiggly_strong_corr[1:4], var_wiggly_strong_corr[1:4, 1:4])
+data(estimates_wiggly_corr)
+data(var_wiggly_corr)
+result_complex <- plausible_bounds(estimates_wiggly_corr[1:4], var_wiggly_corr[1:4, 1:4])
 plot_complex <- create_plot(result_complex)
-
-# Example showing only restricted bounds
-plot_restricted <- create_plot(result_complex, show_cumulative = FALSE)
 
 }

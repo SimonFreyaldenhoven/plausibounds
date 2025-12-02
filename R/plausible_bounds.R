@@ -2,10 +2,14 @@
 #'
 #' This function calculates both cumulative and restricted bounds for a vector of estimates.
 #' It calls both calculate_cumulative_bounds and calculate_restricted_bounds functions.
+#' Supports pre-treatment periods for event study designs.
 #'
-#' @param estimates A vector of point estimates
+#' @param estimates A vector of point estimates. If preperiods > 0, the first preperiods
+#'   elements are pre-treatment estimates, followed by post-treatment estimates.
 #' @param var The variance-covariance matrix of the estimates
 #' @param alpha Significance level (default: 0.05)
+#' @param preperiods Number of pre-treatment periods (default: 0). Period 0 is assumed
+#'   to be normalized and not included in estimates.
 #' @param include_pointwise Whether to include pointwise bounds (default: TRUE)
 #' @param include_supt Whether to include sup-t bounds (default: TRUE)
 #' @param parallel Whether to use parallel processing for restricted bounds calculation (default: FALSE)
@@ -13,6 +17,9 @@
 #' @return A list containing:
 #'   \item{cumulative_bounds}{Results from calculate_cumulative_bounds}
 #'   \item{restricted_bounds}{Results from calculate_restricted_bounds}
+#'   \item{ate}{Average treatment effect with standard error}
+#'   \item{Wpre}{Wald test for pre-trends (if preperiods > 0)}
+#'   \item{Wpost}{Wald test for no treatment effect}
 #'
 #' @examples
 #' # Example with constant estimates and IID errors (simple case)
@@ -24,6 +31,7 @@
 #'
 #' @export
 plausible_bounds <- function(estimates, var, alpha = 0.05,
+                            preperiods = 0,
                             include_pointwise = TRUE, include_supt = TRUE,
                             parallel = FALSE) {
   # Check inputs
@@ -36,32 +44,48 @@ plausible_bounds <- function(estimates, var, alpha = 0.05,
   if (!is.numeric(alpha) || alpha <= 0 || alpha >= 1) {
     stop("alpha must be a number between 0 and 1")
   }
-  
+  if (!is.numeric(preperiods) || length(preperiods) != 1 || preperiods < 0 || preperiods != floor(preperiods)) {
+    stop("preperiods must be a non-negative integer")
+  }
+  if (preperiods >= length(estimates)) {
+    stop("preperiods must be less than the length of estimates")
+  }
+
   # Calculate cumulative bounds
-  cumul_bd <- calculate_cumulative_bounds(estimates, var, alpha, 
+  cumul_bd <- calculate_cumulative_bounds(estimates, var, alpha,
+                                         preperiods = preperiods,
                                          include_pointwise, include_supt)
-  
+
   # Calculate restricted bounds
   restr_bd <- calculate_restricted_bounds(estimates, var, alpha,
+                                         preperiods = preperiods,
                                          include_pointwise = FALSE, include_supt = FALSE,
                                          parallel = parallel)
-  
+
   # Return combined results
   result <- list(
     cumulative_bounds = cumul_bd$cumulative_bounds,
     restricted_bounds = restr_bd$restricted_bounds,
+    ate = cumul_bd$ate,
+    Wpost = restr_bd$Wpost,
     cumulative_metadata = cumul_bd$metadata,
     restricted_metadata = restr_bd$metadata
   )
 
-  if(include_pointwise) {
+  # Add Wpre if preperiods > 0
+
+  if (!is.null(restr_bd$Wpre)) {
+    result$Wpre <- restr_bd$Wpre
+  }
+
+  if (include_pointwise) {
     result$pointwise_bounds <- cumul_bd$pointwise_bounds
   }
 
-  if(include_supt) {
+  if (include_supt) {
     result$supt_bounds <- cumul_bd$supt_bounds
   }
-  
+
   class(result) <- "plausible_bounds"
   return(result)
 }

@@ -1,19 +1,25 @@
 #' Calculate Restricted Bounds
 #'
 #' This function calculates restricted bounds for a vector of estimates using model selection.
-#' It can calculate both pointwise and simultaneous (sup-t) bounds.
-#' 
-#' 
-#' @param estimates A vector of point estimates
+#' It can calculate both pointwise and simultaneous (sup-t) bounds. Supports pre-treatment
+#' periods for event study designs.
+#'
+#'
+#' @param estimates A vector of point estimates. If preperiods > 0, the first preperiods
+#'   elements are pre-treatment estimates, followed by post-treatment estimates.
 #' @param var The variance-covariance matrix of the estimates
 #' @param alpha Significance level (default: 0.05)
+#' @param preperiods Number of pre-treatment periods (default: 0). Period 0 is assumed
+#'   to be normalized and not included in estimates.
 #' @param include_pointwise Whether to include pointwise bounds (default: TRUE)
 #' @param include_supt Whether to include sup-t bounds (default: TRUE)
 #' @param parallel Whether to use parallel processing (default: FALSE)
 #'
 #' @return A list containing:
-#'   \item{bounds}{A data frame with columns for horizon, coefficients, surrogate values, and bounds}
-#'   \item{type}{The type of bounds ("restricted")}
+#'   \item{restricted_bounds}{A data frame with columns for horizon (event time),
+#'     coefficients, surrogate values, and bounds}
+#'   \item{Wpre}{Wald test for pre-trends (statistic and p-value), if preperiods > 0}
+#'   \item{Wpost}{Wald test for no treatment effect (statistic and p-value)}
 #'   \item{metadata}{A list with metadata about the calculation}
 #'
 #' @examples
@@ -25,6 +31,7 @@
 #' @export
 
 calculate_restricted_bounds <- function(estimates, var, alpha = 0.05,
+                                       preperiods = 0,
                                        include_pointwise = TRUE, include_supt = TRUE,
                                        parallel = FALSE) {
   if (!is.numeric(estimates) || !is.vector(estimates)) {
@@ -51,26 +58,59 @@ calculate_restricted_bounds <- function(estimates, var, alpha = 0.05,
   if (!is.numeric(alpha) || length(alpha) != 1 || alpha <= 0 || alpha >= 1) {
     stop("alpha must be a number between 0 and 1")
   }
+  if (!is.numeric(preperiods) || length(preperiods) != 1 || preperiods < 0 || preperiods != floor(preperiods)) {
+    stop("preperiods must be a non-negative integer")
+  }
+  if (preperiods >= length(estimates)) {
+    stop("preperiods must be less than the length of estimates")
+  }
+
+  # Store full data
+  estimatesAll <- estimates
+  varAll <- var
+  n_all <- length(estimatesAll)
+
+
+  # Extract post-period data (smoothing is done only on post-periods)
+  if (preperiods > 0) {
+    estimates_pre <- estimatesAll[1:preperiods]
+    var_pre <- varAll[1:preperiods, 1:preperiods, drop = FALSE]
+    estimates <- estimatesAll[(preperiods + 1):n_all]
+    var <- varAll[(preperiods + 1):n_all, (preperiods + 1):n_all, drop = FALSE]
+  }
+
+  p <- length(estimates)  # p is now the number of POST-periods
   
-  p <- length(estimates)
-  
+  # Ensure variance matrices are positive definite
+
+  # For post-period variance
   eigs <- eigen(var, symmetric = TRUE)
   if (min(eigs$values) < 0) {
     var <- eigs$vectors %*% (diag(eigs$values) + (abs(min(eigs$values)) + 1e-8) * diag(length(eigs$values))) %*% t(eigs$vectors)
   }
-  
-  stdv <- sqrt(diag(var))
-  cV <- diag(1 / stdv) %*% var %*% diag(1 / stdv)
-  
+
+  # For full variance matrix (used for sup-t)
+  eigs_all <- eigen(varAll, symmetric = TRUE)
+  if (min(eigs_all$values) < 0) {
+    varAll <- eigs_all$vectors %*% (diag(eigs_all$values) + (abs(min(eigs_all$values)) + 1e-8) * diag(length(eigs_all$values))) %*% t(eigs_all$vectors)
+  }
+
+  # Compute sup-t critical value using ALL periods (pre + post)
+  stdv_all <- sqrt(diag(varAll))
+  d_nonzero <- stdv_all > .Machine$double.eps
+  cV_all <- diag(1 / stdv_all[d_nonzero]) %*% varAll[d_nonzero, d_nonzero] %*% diag(1 / stdv_all[d_nonzero])
+
   set.seed(42)
   kk <- 10000
-  rd <- matrix(stats::rnorm(kk * p), nrow = kk)
-  
-  Corrmat <- cV
+
+  Corrmat <- cV_all
   eig_c <- eigen(Corrmat, symmetric = TRUE)
   Corrmat_sqrt <- eig_c$vectors %*% diag(sqrt(pmax(eig_c$values, 0))) %*% t(eig_c$vectors)
-  t_stat <- abs(rd %*% Corrmat_sqrt)
+  t_stat <- abs(matrix(stats::rnorm(kk * sum(d_nonzero)), nrow = kk) %*% Corrmat_sqrt)
   supt_critval <- as.numeric(stats::quantile(apply(t_stat, 1, max), 1 - alpha))
+
+  # Random draws for POSI critical value (post-periods only)
+  rd <- matrix(stats::rnorm(kk * p), nrow = kk)
   
   best_bic <- Inf
   best_fit <- NULL
@@ -242,40 +282,103 @@ calculate_restricted_bounds <- function(estimates, var, alpha = 0.05,
   }
   
   suptb <- as.numeric(stats::quantile(mbhsf, 1 - alpha))
-  
+
+  # Restricted bounds (post-periods only)
   restricted_LB <- best_fit$d - suptb * sqrt(diag(best_fit$Vd))
   restricted_UB <- best_fit$d + suptb * sqrt(diag(best_fit$Vd))
-  
-  # Create data frame with horizon and coefficients
-  bounds_df <- data.frame(
-    horizon = 1:p,
-    coef = estimates,
-    surrogate = best_fit$d,
-    lower = restricted_LB,
-    upper = restricted_UB
-  )
-  
-  # Calculate width
-  restricted_width <- mean(bounds_df$upper - bounds_df$lower)
-  
+
+  # Wald test for pre-trends (H0: no pre-treatment effects)
+  Wpre <- NULL
+  if (preperiods > 0) {
+    Wpre_stat <- as.numeric(t(estimates_pre) %*% solve(var_pre) %*% estimates_pre)
+    Wpre_pval <- 1 - stats::pchisq(Wpre_stat, df = preperiods)
+    Wpre <- c(statistic = Wpre_stat, pvalue = Wpre_pval)
+  }
+
+  # Wald test for no treatment effect (H0: no post-treatment effects)
+  Wpost_stat <- as.numeric(t(estimates) %*% solve(var) %*% estimates)
+  Wpost_pval <- 1 - stats::pchisq(Wpost_stat, df = p)
+  Wpost <- c(statistic = Wpost_stat, pvalue = Wpost_pval)
+
+  # Create data frame with event time
+  # Pre-periods: -preperiods to -1, Post-periods: 1 to p
+  if (preperiods > 0) {
+    # Post-period bounds
+    bounds_df_post <- data.frame(
+      horizon = 1:p,
+      coef = estimates,
+      surrogate = best_fit$d,
+      lower = restricted_LB,
+      upper = restricted_UB
+    )
+    # Pre-period bounds (no surrogate for pre-periods)
+    bounds_df_pre <- data.frame(
+      horizon = -preperiods:-1,
+      coef = estimates_pre,
+      surrogate = NA_real_,
+      lower = NA_real_,
+      upper = NA_real_
+    )
+    bounds_df <- rbind(bounds_df_pre, bounds_df_post)
+  } else {
+    bounds_df <- data.frame(
+      horizon = 1:p,
+      coef = estimates,
+      surrogate = best_fit$d,
+      lower = restricted_LB,
+      upper = restricted_UB
+    )
+  }
+
+  # Calculate width (post-periods only)
+  restricted_width <- mean(restricted_UB - restricted_LB)
+
   # Create result list with restricted bounds
   result <- list(
     restricted_bounds = bounds_df
   )
-  
-  # Calculate pointwise bounds if requested
+
+  # Add Wald tests
+  if (!is.null(Wpre)) {
+    result$Wpre <- Wpre
+  }
+
+  result$Wpost <- Wpost
+
+  # Calculate pointwise bounds if requested (for ALL periods)
   if (include_pointwise) {
-    result$pointwise_bounds <- calculate_pointwise_bounds(estimates, var, alpha)
+    if (preperiods > 0) {
+      pw_pre <- calculate_pointwise_bounds(estimates_pre, var_pre, alpha)
+      pw_post <- calculate_pointwise_bounds(estimates, var, alpha)
+      result$pointwise_bounds <- list(
+        lower = c(pw_pre$lower, pw_post$lower),
+        upper = c(pw_pre$upper, pw_post$upper)
+      )
+    } else {
+      result$pointwise_bounds <- calculate_pointwise_bounds(estimates, var, alpha)
+    }
   }
-  
-  # Calculate sup-t bounds if requested
+
+  # Calculate sup-t bounds if requested (for ALL periods, using full variance)
   if (include_supt) {
-    result$supt_bounds <- calculate_supt_bounds(estimates, var, alpha)
+    if (preperiods > 0) {
+      # Use the sup-t critical value computed from ALL periods
+      supt_lower_all <- estimatesAll - supt_critval * sqrt(diag(varAll))
+      supt_upper_all <- estimatesAll + supt_critval * sqrt(diag(varAll))
+      result$supt_bounds <- list(
+        lower = supt_lower_all,
+        upper = supt_upper_all
+      )
+    } else {
+      result$supt_bounds <- calculate_supt_bounds(estimates, var, alpha)
+    }
   }
-  
+
   # Add metadata
   result$metadata <- list(
     alpha = alpha,
+    preperiods = preperiods,
+    supt_critval = supt_critval,
     suptb = suptb,
     df = best_df,
     K = bestK,
@@ -287,7 +390,7 @@ calculate_restricted_bounds <- function(estimates, var, alpha = 0.05,
     individual_lower = restricted_LB,
     best_fit_model = best_fit
   )
-  
+
   class(result) <- c("restricted_bounds", "plausible_bounds_result")
   return(result)
 }

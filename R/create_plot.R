@@ -2,51 +2,70 @@
 #'
 #' This function creates a plot of plausible bounds from the results of plausible_bounds,
 #' calculate_cumulative_bounds, or calculate_restricted_bounds functions.
+#' Supports event study designs with pre-treatment periods.
 #'
 #' @param ... One or two objects: either a plausible_bounds object or individual bounds objects
-#' @param show_cumulative Whether to show cumulative bounds (default: TRUE)
 #' @param show_restricted Whether to show restricted bounds (default: TRUE)
 #' @param show_supt Whether to show sup-t bounds (default: TRUE)
 #' @param show_pointwise Whether to show pointwise bounds (default: TRUE)
+#' @param show_annotations Whether to show annotations with test statistics and ATE (default: TRUE)
 #'
 #' @return A ggplot2 object
 #'
 #' @examples
 #'
 #' # Example with wiggly estimates and strong correlation
-#' data(estimates_wiggly_strong_corr)
-#' data(var_wiggly_strong_corr)
-#' result_complex <- plausible_bounds(estimates_wiggly_strong_corr[1:4], var_wiggly_strong_corr[1:4, 1:4])
+#' data(estimates_wiggly_corr)
+#' data(var_wiggly_corr)
+#' result_complex <- plausible_bounds(estimates_wiggly_corr[1:4], var_wiggly_corr[1:4, 1:4])
 #' plot_complex <- create_plot(result_complex)
-#'
-#' # Example showing only restricted bounds
-#' plot_restricted <- create_plot(result_complex, show_cumulative = FALSE)
 #'
 #' @importFrom magrittr %>%
 #' @export
-create_plot <- function(..., 
-                       show_cumulative = TRUE,
+create_plot <- function(...,
                        show_restricted = TRUE,
                        show_supt = TRUE,
-                       show_pointwise = TRUE) {
+                       show_pointwise = TRUE,
+                       show_annotations = TRUE) {
   
   # Collect all arguments
   args <- list(...)
-  
+
   # Handle different input patterns and extract bounds data
-  bounds_data <- extract_bounds_data(args, show_cumulative, show_restricted, show_supt, show_pointwise)
+  bounds_data <- extract_bounds_data(args, show_restricted, show_supt, show_pointwise)
   # Check what's available and what's requested
-  availability <- check_bounds_availability(bounds_data, show_cumulative, show_restricted, show_supt, show_pointwise)
-  
-  if (!availability$show_cumulative && !availability$show_restricted) {
+  availability <- check_bounds_availability(bounds_data, show_restricted, show_supt, show_pointwise)
+
+  if (!availability$show_restricted) {
     stop("No bounds available to plot. Check your input data and parameters.")
   }
-  
+
   # Display informative messages about missing bounds
   display_availability_messages(availability)
-  
+
+  # Extract test statistics for annotations
+  annotations <- NULL
+  if (show_annotations && length(args) >= 1) {
+    x <- args[[1]]
+    annotations <- list()
+    if (!is.null(x$ate)) {
+      annotations$ate <- x$ate
+    }
+    if (!is.null(x$Wpre)) {
+      annotations$Wpre <- x$Wpre
+    }
+    if (!is.null(x$Wpost)) {
+      annotations$Wpost <- x$Wpost
+    }
+    # Also check metadata for lb/ub
+    if (!is.null(x$cumulative_metadata)) {
+      annotations$lb <- x$cumulative_metadata$lb
+      annotations$ub <- x$cumulative_metadata$ub
+    }
+  }
+
   # Create the plot with available data
-  create_bounds_plot(bounds_data, availability)
+  create_bounds_plot(bounds_data, availability, annotations)
 }
 
 # Helper function to merge pointwise and supt bounds with main bounds data frames
@@ -326,8 +345,8 @@ display_availability_messages <- function(availability) {
 
 
 # Helper function to create the actual plot
-create_bounds_plot <- function(bounds_data, availability) {
-  
+create_bounds_plot <- function(bounds_data, availability, annotations = NULL) {
+
   colors <- c(
       estimate = "black",
       surrogate = "cornflowerblue",
@@ -337,7 +356,7 @@ create_bounds_plot <- function(bounds_data, availability) {
       restricted = "cornflowerblue",
       cumulative = "orange"
     )
-  
+
   line_types <- c(
       estimate = "solid",
       surrogate = "solid",
@@ -347,11 +366,19 @@ create_bounds_plot <- function(bounds_data, availability) {
       restricted = "solid",
       cumulative = "solid"
   )
-  
+
 
   p <- NULL
   df <- NULL
-  
+
+  # Check if we have pre-periods (negative horizon values)
+  has_preperiods <- FALSE
+  if (!is.null(bounds_data$restricted)) {
+    has_preperiods <- any(bounds_data$restricted$horizon < 0)
+  } else if (!is.null(bounds_data$cumulative)) {
+    has_preperiods <- any(bounds_data$cumulative$horizon < 0)
+  }
+
   # Determine which data to use for the base plot
   if (availability$show_cumulative && availability$show_restricted) {
     # Plot both cumulative and restricted bounds
@@ -361,13 +388,13 @@ create_bounds_plot <- function(bounds_data, availability) {
     if (!identical(df_c$horizon, df_r$horizon)) {
       stop("Cumulative and restricted bounds must have the same horizon length.")
     }
-    
+
     # Create a combined data frame
     df <- df_c
     df$surrogate <- df_r$surrogate
     df$restricted_lower <- df_r$lower
     df$restricted_upper <- df_r$upper
-    
+
     # Copy pointwise and supt bounds from restricted to combined if they exist
     if ("pointwise_lower" %in% names(df_r) && "pointwise_upper" %in% names(df_r)) {
       df$pointwise_lower <- df_r$pointwise_lower
@@ -377,31 +404,53 @@ create_bounds_plot <- function(bounds_data, availability) {
       df$supt_lower <- df_r$supt_lower
       df$supt_upper <- df_r$supt_upper
     }
-    
+
+    # Separate post-period data for surrogate and bounds (only post-periods have surrogate)
+    df_post <- df[df$horizon > 0, ]
+
     p <- ggplot2::ggplot(df, ggplot2::aes(x = horizon)) +
-      ggplot2::geom_ribbon(ggplot2::aes(ymin = lower, ymax = upper, fill = "cumulative"), alpha = 0.5) +
-      ggplot2::geom_point(ggplot2::aes(y = coef, color = "estimate")) +
-      ggplot2::geom_line(ggplot2::aes(y = surrogate, color = "surrogate", linetype = "surrogate")) +
-      ggplot2::geom_line(ggplot2::aes(y = restricted_lower, color = "surrogate_bounds", linetype = "surrogate_bounds")) +
-      ggplot2::geom_line(ggplot2::aes(y = restricted_upper, color = "surrogate_bounds", linetype = "surrogate_bounds"))
-    
+      ggplot2::geom_hline(yintercept = 0, linetype = "dotted", color = "black") +
+      ggplot2::geom_point(ggplot2::aes(y = coef, color = "estimate"))
+
+    # Add surrogate and restricted bounds only for post-periods (where they exist)
+    if (nrow(df_post) > 0 && !all(is.na(df_post$surrogate))) {
+      p <- p +
+        ggplot2::geom_line(data = df_post, ggplot2::aes(y = surrogate, color = "surrogate", linetype = "surrogate")) +
+        ggplot2::geom_line(data = df_post, ggplot2::aes(y = restricted_lower, color = "surrogate_bounds", linetype = "surrogate_bounds")) +
+        ggplot2::geom_line(data = df_post, ggplot2::aes(y = restricted_upper, color = "surrogate_bounds", linetype = "surrogate_bounds"))
+    }
+
   } else if (availability$show_cumulative) {
     # Plot only cumulative bounds
-    df <- bounds_data$cumulative 
+    df <- bounds_data$cumulative
     p <- ggplot2::ggplot(df, ggplot2::aes(x = horizon)) +
-      ggplot2::geom_point(ggplot2::aes(y = coef, color = "estimate")) +
-      ggplot2::geom_ribbon(ggplot2::aes(ymin = lower, ymax = upper, fill = "cumulative"), alpha = 0.5)
-    
+      ggplot2::geom_hline(yintercept = 0, linetype = "dotted", color = "black") +
+      ggplot2::geom_point(ggplot2::aes(y = coef, color = "estimate"))
+
   } else if (availability$show_restricted) {
     # Plot only restricted bounds
     df <- bounds_data$restricted
-    
+
+    # Separate post-period data for surrogate and bounds
+    df_post <- df[df$horizon > 0, ]
+
     p <- ggplot2::ggplot(df, ggplot2::aes(x = horizon)) +
-      ggplot2::geom_point(ggplot2::aes(y = coef, color = "estimate")) +
-      ggplot2::geom_line(ggplot2::aes(y = surrogate, color = "surrogate", linetype = "surrogate")) +
-      ggplot2::geom_line(ggplot2::aes(y = lower, color = "surrogate_bounds", linetype = "surrogate_bounds")) +
-      ggplot2::geom_line(ggplot2::aes(y = upper, color = "surrogate_bounds", linetype = "surrogate_bounds"))
-    
+      ggplot2::geom_hline(yintercept = 0, linetype = "dotted", color = "black") +
+      ggplot2::geom_point(ggplot2::aes(y = coef, color = "estimate"))
+
+    # Add surrogate and bounds only for post-periods
+    if (nrow(df_post) > 0 && !all(is.na(df_post$surrogate))) {
+      p <- p +
+        ggplot2::geom_line(data = df_post, ggplot2::aes(y = surrogate, color = "surrogate", linetype = "surrogate")) +
+        ggplot2::geom_line(data = df_post, ggplot2::aes(y = lower, color = "surrogate_bounds", linetype = "surrogate_bounds")) +
+        ggplot2::geom_line(data = df_post, ggplot2::aes(y = upper, color = "surrogate_bounds", linetype = "surrogate_bounds"))
+    }
+
+  }
+
+  # Add vertical line at event time 0 if we have pre-periods
+  if (has_preperiods) {
+    p <- p + ggplot2::geom_vline(xintercept = 0, linetype = "dashed", color = "gray50", alpha = 0.7)
   }
   
   # Add pointwise bounds if requested and available
@@ -455,7 +504,7 @@ create_bounds_plot <- function(bounds_data, availability) {
   # Add theme and labels
   p <- p +
     ggplot2::labs(
-      x = "Horizon",
+      x = "Event time",
       y = "Estimate"
     ) +
     # Set y-axis limits to include all bounds
@@ -483,19 +532,40 @@ create_bounds_plot <- function(bounds_data, availability) {
     ) +
     # Hide linetype from legend
     ggplot2::guides(linetype = "none")
-    
-  # Only add fill scale if cumulative bounds are shown
-  if (availability$show_cumulative) {
-    p <- p + ggplot2::scale_fill_manual(
-      name = NULL,
-      values = colors,
-      breaks = c("cumulative"),
-      labels = c("Cumulative")
-    )
+
+  p <- p + ggplot2::theme_minimal() + ggplot2::theme(legend.position = "bottom")
+
+  # Add annotations if provided
+  if (!is.null(annotations) && length(annotations) > 0) {
+    annotation_parts <- c()
+
+    # Add pretrends p-value if available
+    if (!is.null(annotations$Wpre)) {
+      annotation_parts <- c(annotation_parts,
+        sprintf("Pretrends p-value: %.2f", annotations$Wpre["pvalue"]))
+    }
+
+    # Add no effect p-value if available
+    if (!is.null(annotations$Wpost)) {
+      annotation_parts <- c(annotation_parts,
+        sprintf("No effect p-value: %.2f", annotations$Wpost["pvalue"]))
+    }
+
+    # Add ATE with CI if available
+    if (!is.null(annotations$ate) && !is.null(annotations$lb) && !is.null(annotations$ub)) {
+      annotation_parts <- c(annotation_parts,
+        sprintf("Average effect [CI]: %.3g [%.3g, %.3g]",
+                annotations$ate["estimate"], annotations$lb, annotations$ub))
+    }
+
+    if (length(annotation_parts) > 0) {
+      annotation_text <- paste(annotation_parts, collapse = " --- ")
+      p <- p + ggplot2::labs(caption = annotation_text) +
+        ggplot2::theme(
+          plot.caption = ggplot2::element_text(hjust = 0.5, size = 8)
+        )
+    }
   }
-    
-  p <- p + ggplot2::theme_minimal() + ggplot2::theme(legend.position = "bottom") 
-  
-  
+
   return(p)
 }

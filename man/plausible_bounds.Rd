@@ -8,17 +8,22 @@ plausible_bounds(
   estimates,
   var,
   alpha = 0.05,
+  preperiods = 0,
   include_pointwise = TRUE,
   include_supt = TRUE,
   parallel = FALSE
 )
 }
 \arguments{
-\item{estimates}{A vector of point estimates}
+\item{estimates}{A vector of point estimates. If preperiods > 0, the first preperiods
+elements are pre-treatment estimates, followed by post-treatment estimates.}
 
 \item{var}{The variance-covariance matrix of the estimates}
 
 \item{alpha}{Significance level (default: 0.05)}
+
+\item{preperiods}{Number of pre-treatment periods (default: 0). Period 0 is assumed
+to be normalized and not included in estimates.}
 
 \item{include_pointwise}{Whether to include pointwise bounds (default: TRUE)}
 
@@ -30,10 +35,14 @@ plausible_bounds(
 A list containing:
 \item{cumulative_bounds}{Results from calculate_cumulative_bounds}
 \item{restricted_bounds}{Results from calculate_restricted_bounds}
+\item{ate}{Average treatment effect with standard error}
+\item{Wpre}{Wald test for pre-trends (if preperiods > 0)}
+\item{Wpost}{Wald test for no treatment effect}
 }
 \description{
 This function calculates both cumulative and restricted bounds for a vector of estimates.
 It calls both calculate_cumulative_bounds and calculate_restricted_bounds functions.
+Supports pre-treatment periods for event study designs.
 }
 \examples{
 # Example with constant estimates and IID errors (simple case)
