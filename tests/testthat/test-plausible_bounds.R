@@ -74,22 +74,22 @@ test_that("parallel and non-parallel results are identical", {
   l <- 8
 
   # Test with wiggly estimates and strong correlation
-  data(estimates_wiggly_strong_corr)
-  data(var_wiggly_strong_corr)
+  data(estimates_wiggly)
+  data(var_corr)
   
   # Run with parallel = TRUE
   set.seed(42)  # Set seed for reproducibility
   result_parallel <- plausible_bounds(
-    estimates_wiggly_strong_corr[1:l],
-    var_wiggly_strong_corr[1:l,1:l],
+    estimates_wiggly[1:l],
+    var_corr[1:l,1:l],
     parallel = TRUE
   )
   
   # Run with parallel = FALSE
   set.seed(42)  # Reset seed to ensure same random numbers
   result_sequential <- plausible_bounds(
-    estimates_wiggly_strong_corr[1:l],
-    var_wiggly_strong_corr[1:l, 1:l],
+    estimates_wiggly[1:l],
+    var_corr[1:l, 1:l],
     parallel = FALSE
   )
   
@@ -114,22 +114,22 @@ test_that("parallel and non-parallel results are identical", {
   )
   
   # Test with constant estimates and IID errors
-  data(estimates_constant_iid)
-  data(var_constant_iid)
+  data(estimates_constant)
+  data(var_iid)
   
   # Run with parallel = TRUE
   set.seed(42)  # Set seed for reproducibility
   result_parallel_const <- plausible_bounds(
-    estimates_constant_iid[1:l],
-    var_constant_iid[1:l,1:l],
+    estimates_constant[1:l],
+    var_iid[1:l,1:l],
     parallel = TRUE
   )
   
   # Run with parallel = FALSE
   set.seed(42)  # Reset seed to ensure same random numbers
   result_sequential_const <- plausible_bounds(
-    estimates_constant_iid[1:l],
-    var_constant_iid[1:l,1:l],
+    estimates_constant[1:l],
+    var_iid[1:l,1:l],
     parallel = FALSE
   )
   

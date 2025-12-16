@@ -1,9 +1,9 @@
 test_that("calculate_cumulative_bounds works with real example data", {
   # Test with constant IID data
-  data(estimates_constant_iid)
-  data(var_constant_iid)
+  data(estimates_constant)
+  data(var_iid)
   
-  result <- calculate_cumulative_bounds(estimates_constant_iid, var_constant_iid)
+  result <- calculate_cumulative_bounds(estimates_constant, var_iid)
   
   expect_s3_class(result, "cumulative_bounds")
   expect_s3_class(result, "plausible_bounds_result")
@@ -15,9 +15,9 @@ test_that("calculate_cumulative_bounds works with real example data", {
   
   # Check cumulative bounds data frame
   expect_s3_class(result$cumulative_bounds, "data.frame")
-  expect_equal(nrow(result$cumulative_bounds), length(estimates_constant_iid))
+  expect_equal(nrow(result$cumulative_bounds), length(estimates_constant))
   expect_named(result$cumulative_bounds, c("horizon", "coef", "lower", "upper"))
-  expect_equal(result$cumulative_bounds$coef, estimates_constant_iid)
+  expect_equal(result$cumulative_bounds$coef, estimates_constant)
   
   # Check that bounds contain the estimates (for constant case)
   expect_true(all(result$cumulative_bounds$lower <= result$cumulative_bounds$upper))
@@ -31,14 +31,14 @@ test_that("calculate_cumulative_bounds works with real example data", {
 
 test_that("calculate_cumulative_bounds works with wiggly correlated data", {
   # Test with wiggly strong correlation data
-  data(estimates_wiggly_strong_corr)
-  data(var_wiggly_strong_corr)
+  data(estimates_wiggly)
+  data(var_corr)
   
-  result <- calculate_cumulative_bounds(estimates_wiggly_strong_corr, 
-                                       var_wiggly_strong_corr)
+  result <- calculate_cumulative_bounds(estimates_wiggly, 
+                                       var_corr)
   
   expect_s3_class(result, "cumulative_bounds")
-  expect_equal(nrow(result$cumulative_bounds), length(estimates_wiggly_strong_corr))
+  expect_equal(nrow(result$cumulative_bounds), length(estimates_wiggly))
   
   # Check that all bounds are properly ordered
   expect_true(all(result$cumulative_bounds$lower <= result$cumulative_bounds$upper))
@@ -49,18 +49,18 @@ test_that("calculate_cumulative_bounds works with wiggly correlated data", {
 })
 
 test_that("calculate_cumulative_bounds handles different alpha values", {
-  data(estimates_constant_iid)
-  data(var_constant_iid)
+  data(estimates_constant)
+  data(var_iid)
   
   # Test with different confidence levels
-  result_99 <- calculate_cumulative_bounds(estimates_constant_iid, 
-                                          var_constant_iid, 
+  result_99 <- calculate_cumulative_bounds(estimates_constant, 
+                                          var_iid, 
                                           alpha = 0.01)
-  result_95 <- calculate_cumulative_bounds(estimates_constant_iid, 
-                                          var_constant_iid, 
+  result_95 <- calculate_cumulative_bounds(estimates_constant, 
+                                          var_iid, 
                                           alpha = 0.05)
-  result_90 <- calculate_cumulative_bounds(estimates_constant_iid, 
-                                          var_constant_iid, 
+  result_90 <- calculate_cumulative_bounds(estimates_constant, 
+                                          var_iid, 
                                           alpha = 0.10)
   
   # Check alpha is stored correctly
@@ -181,17 +181,17 @@ test_that("calculate_cumulative_bounds handles different variance structures", {
 })
 
 test_that("calculate_cumulative_bounds produces reproducible results", {
-  data(estimates_constant_iid)
-  data(var_constant_iid)
+  data(estimates_constant)
+  data(var_iid)
   
   # Set seed for reproducibility
   set.seed(999)
-  result1 <- calculate_cumulative_bounds(estimates_constant_iid, 
-                                        var_constant_iid)
+  result1 <- calculate_cumulative_bounds(estimates_constant, 
+                                        var_iid)
   
   set.seed(999)
-  result2 <- calculate_cumulative_bounds(estimates_constant_iid, 
-                                        var_constant_iid)
+  result2 <- calculate_cumulative_bounds(estimates_constant, 
+                                        var_iid)
   
   # Results should be identical
   expect_identical(result1$cumulative_bounds, result2$cumulative_bounds)
@@ -221,11 +221,11 @@ test_that("Wald_bounds internal function works correctly", {
 })
 
 test_that("calculate_cumulative_bounds metadata is correct", {
-  data(estimates_wiggly_strong_corr)
-  data(var_wiggly_strong_corr)
+  data(estimates_wiggly)
+  data(var_corr)
   
-  result <- calculate_cumulative_bounds(estimates_wiggly_strong_corr,
-                                       var_wiggly_strong_corr,
+  result <- calculate_cumulative_bounds(estimates_wiggly,
+                                       var_corr,
                                        alpha = 0.10)
   
   # Check metadata structure

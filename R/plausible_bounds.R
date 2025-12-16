@@ -23,9 +23,9 @@
 #'
 #' @examples
 #' # Example with constant estimates and IID errors (simple case)
-#' data(estimates_constant_iid)
-#' data(var_constant_iid)
-#' result1 <- plausible_bounds(estimates_constant_iid[1:4], var_constant_iid[1:4, 1:4])
+#' data(estimates_constant)
+#' data(var_iid)
+#' result1 <- plausible_bounds(estimates_constant[1:4], var_iid[1:4, 1:4])
 #' print(result1)
 #'
 #'

@@ -9,39 +9,39 @@ if (!dir.exists(fixtures_dir)) {
 }
 
 # Load required data
-data(estimates_constant_iid, envir = environment())
-data(var_constant_iid, envir = environment())
-data(estimates_wiggly_strong_corr, envir = environment())
-data(var_wiggly_strong_corr, envir = environment())
+data(estimates_constant, envir = environment())
+data(var_iid, envir = environment())
+data(estimates_wiggly, envir = environment())
+data(var_corr, envir = environment())
 
 # Generate and save fixtures
 
 # Simple cumulative bounds
 simple_cumulative <- calculate_cumulative_bounds(
-  estimates_constant_iid, var_constant_iid
+  estimates_constant, var_iid
 )
 saveRDS(simple_cumulative, file.path(fixtures_dir, "simple_cumulative.rds"))
 
 # Simple plausible bounds
 simple_plausible <- plausible_bounds(
-  estimates_constant_iid, var_constant_iid
+  estimates_constant, var_iid
 )
 saveRDS(simple_plausible, file.path(fixtures_dir, "simple_plausible.rds"))
 
 # Complex cumulative bounds
 complex_cumulative <- calculate_cumulative_bounds(
-  estimates_wiggly_strong_corr, var_wiggly_strong_corr
+  estimates_wiggly, var_corr
 )
 saveRDS(complex_cumulative, file.path(fixtures_dir, "complex_cumulative.rds"))
 
 # Complex restricted bounds (expensive computation)
 complex_restricted <- calculate_restricted_bounds(
-  estimates_wiggly_strong_corr, var_wiggly_strong_corr
+  estimates_wiggly, var_corr
 )
 saveRDS(complex_restricted, file.path(fixtures_dir, "complex_restricted.rds"))
 
 # Complex plausible bounds
 complex_plausible <- plausible_bounds(
-  estimates_wiggly_strong_corr, var_wiggly_strong_corr
+  estimates_wiggly, var_corr
 )
 saveRDS(complex_plausible, file.path(fixtures_dir, "complex_plausible.rds"))

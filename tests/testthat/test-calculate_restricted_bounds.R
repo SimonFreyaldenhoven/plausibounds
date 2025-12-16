@@ -1,13 +1,13 @@
 
 test_that("calculate_restricted_bounds works with real example data", {
   # Use smaller subset for computational efficiency
-  data(estimates_constant_iid)
-  data(var_constant_iid)
-  
+  data(estimates_constant)
+  data(var_iid)
+
   # Use first 10 observations for faster testing
-  n_test <- min(10, length(estimates_constant_iid))
-  estimates_subset <- estimates_constant_iid[1:n_test]
-  var_subset <- var_constant_iid[1:n_test, 1:n_test]
+  n_test <- min(10, length(estimates_constant))
+  estimates_subset <- estimates_constant[1:n_test]
+  var_subset <- var_iid[1:n_test, 1:n_test]
   
   result <- calculate_restricted_bounds(estimates_subset, var_subset)
   
@@ -33,13 +33,13 @@ test_that("calculate_restricted_bounds works with real example data", {
 
 test_that("calculate_restricted_bounds works with wiggly correlated data", {
   # Test with smaller subset of wiggly strong correlation data
-  data(estimates_wiggly_strong_corr)
-  data(var_wiggly_strong_corr)
-  
+  data(estimates_wiggly)
+  data(var_corr)
+
   # Use first 8 observations for faster testing
-  n_test <- min(8, length(estimates_wiggly_strong_corr))
-  estimates_subset <- estimates_wiggly_strong_corr[1:n_test]
-  var_subset <- var_wiggly_strong_corr[1:n_test, 1:n_test]
+  n_test <- min(8, length(estimates_wiggly))
+  estimates_subset <- estimates_wiggly[1:n_test]
+  var_subset <- var_corr[1:n_test, 1:n_test]
   
   result <- calculate_restricted_bounds(estimates_subset, var_subset)
   

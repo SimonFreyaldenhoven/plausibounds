@@ -18,16 +18,16 @@
 #'
 #' @examples
 #' # Example with constant estimates and IID errors
-#' data(estimates_constant_iid)
-#' data(var_constant_iid)
-#' cumul_bounds <- calculate_cumulative_bounds(estimates_constant_iid, var_constant_iid)
+#' data(estimates_constant)
+#' data(var_iid)
+#' cumul_bounds <- calculate_cumulative_bounds(estimates_constant, var_iid)
 #'
 #' # Example with wiggly estimates and strong correlation
-#' data(estimates_wiggly_strong_corr)
-#' data(var_wiggly_strong_corr)
+#' data(estimates_wiggly)
+#' data(var_corr)
 #' cumul_bounds_complex <- calculate_cumulative_bounds(
-#'   estimates_wiggly_strong_corr,
-#'   var_wiggly_strong_corr
+#'   estimates_wiggly,
+#'   var_corr
 #' )
 #'
 calculate_cumulative_bounds <- function(estimates, var, alpha = 0.05,

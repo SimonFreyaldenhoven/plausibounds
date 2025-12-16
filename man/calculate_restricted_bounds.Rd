@@ -46,8 +46,8 @@ periods for event study designs.
 }
 \examples{
 # Example with constant estimates and IID errors
-data(estimates_constant_iid)
-data(var_constant_iid)
-restr_bounds <- calculate_restricted_bounds(estimates_constant_iid[1:5], var_constant_iid[1:5, 1:5])
+data(estimates_constant)
+data(var_iid)
+restr_bounds <- calculate_restricted_bounds(estimates_constant[1:5], var_iid[1:5, 1:5])
 
 }

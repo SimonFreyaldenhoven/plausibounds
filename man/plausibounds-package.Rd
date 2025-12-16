@@ -23,9 +23,9 @@ bounds calculations, as well as visualization tools.
 
 The package includes example datasets to demonstrate the functionality:
 \itemize{
-\item \code{\link{estimates_constant_iid}} and \code{\link{var_constant_iid}}:
+\item \code{\link{estimates_constant}} and \code{\link{var_iid}}:
 A simple case with constant estimates and independent errors
-\item \code{\link{estimates_wiggly_strong_corr}} and \code{\link{var_wiggly_strong_corr}}:
+\item \code{\link{estimates_wiggly}} and \code{\link{var_corr}}:
 A complex case with wiggly estimates and strongly correlated errors
 }
 }
