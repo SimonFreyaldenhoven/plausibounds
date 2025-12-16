@@ -10,8 +10,8 @@ test_that("calculate_cumulative_bounds works with real example data", {
   expect_type(result, "list")
   
   # Check structure
-  expect_named(result, c("cumulative_bounds", "pointwise_bounds", 
-                        "supt_bounds", "metadata"))
+  expect_named(result, c("cumulative_bounds", 
+                         "metadata"))
   
   # Check cumulative bounds data frame
   expect_s3_class(result$cumulative_bounds, "data.frame")
@@ -75,53 +75,6 @@ test_that("calculate_cumulative_bounds handles different alpha values", {
   
   expect_true(width_99 > width_95)
   expect_true(width_95 > width_90)
-})
-
-test_that("calculate_cumulative_bounds handles pointwise and supt parameters", {
-  data(estimates_constant_iid)
-  data(var_constant_iid)
-  
-  # Test with both FALSE
-  result_none <- calculate_cumulative_bounds(estimates_constant_iid, 
-                                            var_constant_iid,
-                                            include_pointwise = FALSE,
-                                            include_supt = FALSE)
-  expect_null(result_none$pointwise_bounds)
-  expect_null(result_none$supt_bounds)
-  
-  # Test with pointwise only
-  result_pw <- calculate_cumulative_bounds(estimates_constant_iid, 
-                                          var_constant_iid,
-                                          include_pointwise = TRUE,
-                                          include_supt = FALSE)
-  expect_type(result_pw$pointwise_bounds, "list")
-  expect_named(result_pw$pointwise_bounds, c("lower", "upper", "critval"))
-  expect_equal(length(result_pw$pointwise_bounds$lower), length(estimates_constant_iid))
-  expect_equal(length(result_pw$pointwise_bounds$upper), length(estimates_constant_iid))
-  expect_true(is.numeric(result_pw$pointwise_bounds$critval))
-  expect_null(result_pw$supt_bounds)
-  
-  # Test with supt only
-  result_supt <- calculate_cumulative_bounds(estimates_constant_iid, 
-                                            var_constant_iid,
-                                            include_pointwise = FALSE,
-                                            include_supt = TRUE)
-  expect_null(result_supt$pointwise_bounds)
-  expect_type(result_supt$supt_bounds, "list")
-  expect_named(result_supt$supt_bounds, c("lower", "upper", "critval"))
-  expect_equal(length(result_supt$supt_bounds$lower), length(estimates_constant_iid))
-  expect_equal(length(result_supt$supt_bounds$upper), length(estimates_constant_iid))
-  expect_true(is.numeric(result_supt$supt_bounds$critval))
-  
-  # Test with both TRUE (default)
-  result_both <- calculate_cumulative_bounds(estimates_constant_iid, 
-                                            var_constant_iid)
-  expect_type(result_both$pointwise_bounds, "list")
-  expect_type(result_both$supt_bounds, "list")
-  
-  # Sup-t bounds should be wider than pointwise
-  expect_true(all(result_both$supt_bounds$lower <= result_both$pointwise_bounds$lower))
-  expect_true(all(result_both$supt_bounds$upper >= result_both$pointwise_bounds$upper))
 })
 
 test_that("calculate_cumulative_bounds validates inputs correctly", {
@@ -242,8 +195,6 @@ test_that("calculate_cumulative_bounds produces reproducible results", {
   
   # Results should be identical
   expect_identical(result1$cumulative_bounds, result2$cumulative_bounds)
-  expect_identical(result1$pointwise_bounds, result2$pointwise_bounds)
-  expect_equal(result1$supt_bounds, result2$supt_bounds, tolerance = 1e-10)
   expect_identical(result1$metadata, result2$metadata)
 })
 

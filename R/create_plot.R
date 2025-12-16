@@ -1,11 +1,11 @@
 #' Create Plot for Plausible Bounds
 #'
-#' This function creates a plot of plausible bounds from the results of plausible_bounds,
-#' calculate_cumulative_bounds, or calculate_restricted_bounds functions.
+#' This function creates a plot of plausible bounds from a plausible_bounds object.
+#' The plot displays restricted bounds as the main visualization, with optional
+#' pointwise and sup-t bounds overlays. Cumulative bounds are shown as annotations.
 #' Supports event study designs with pre-treatment periods.
 #'
-#' @param ... One or two objects: either a plausible_bounds object or individual bounds objects
-#' @param show_restricted Whether to show restricted bounds (default: TRUE)
+#' @param result A plausible_bounds object returned by the plausible_bounds() function
 #' @param show_supt Whether to show sup-t bounds (default: TRUE)
 #' @param show_pointwise Whether to show pointwise bounds (default: TRUE)
 #' @param show_annotations Whether to show annotations with test statistics and ATE (default: TRUE)
@@ -22,45 +22,50 @@
 #'
 #' @importFrom magrittr %>%
 #' @export
-create_plot <- function(...,
-                       show_restricted = TRUE,
+create_plot <- function(result,
                        show_supt = TRUE,
                        show_pointwise = TRUE,
                        show_annotations = TRUE) {
-  
-  # Collect all arguments
-  args <- list(...)
 
-  # Handle different input patterns and extract bounds data
-  bounds_data <- extract_bounds_data(args, show_restricted, show_supt, show_pointwise)
-  # Check what's available and what's requested
-  availability <- check_bounds_availability(bounds_data, show_restricted, show_supt, show_pointwise)
-
-  if (!availability$show_restricted) {
-    stop("No bounds available to plot. Check your input data and parameters.")
+  # Validate input
+  if (!inherits(result, "plausible_bounds")) {
+    stop("create_plot() requires a plausible_bounds object. Use plausible_bounds() to create one.")
   }
 
-  # Display informative messages about missing bounds
+  # Check that restricted bounds are available
+  if (is.null(result$restricted_bounds)) {
+    stop("No restricted bounds available in the plausible_bounds object.")
+  }
+
+  # Prepare bounds data
+  bounds_data <- list(
+    restricted = result$restricted_bounds,
+    has_restricted = TRUE
+  )
+
+  # Check availability of optional bounds
+  availability <- check_bounds_availability(bounds_data, result, show_supt, show_pointwise)
+
+  # Display informative messages about missing optional bounds
   display_availability_messages(availability)
 
   # Extract test statistics for annotations
   annotations <- NULL
-  if (show_annotations && length(args) >= 1) {
-    x <- args[[1]]
+  if (show_annotations) {
     annotations <- list()
-    if (!is.null(x$ate)) {
-      annotations$ate <- x$ate
+    if (!is.null(result$ate)) {
+      annotations$ate <- result$ate
     }
-    if (!is.null(x$Wpre)) {
-      annotations$Wpre <- x$Wpre
+    if (!is.null(result$Wpre)) {
+      annotations$Wpre <- result$Wpre
     }
-    if (!is.null(x$Wpost)) {
-      annotations$Wpost <- x$Wpost
+    if (!is.null(result$Wpost)) {
+      annotations$Wpost <- result$Wpost
     }
-    # Also check metadata for lb/ub
-    if (!is.null(x$cumulative_metadata)) {
-      annotations$lb <- x$cumulative_metadata$lb
-      annotations$ub <- x$cumulative_metadata$ub
+    # Also check metadata for lb/ub (cumulative bounds)
+    if (!is.null(result$cumulative_metadata)) {
+      annotations$lb <- result$cumulative_metadata$lb
+      annotations$ub <- result$cumulative_metadata$ub
     }
   }
 
@@ -68,278 +73,60 @@ create_plot <- function(...,
   create_bounds_plot(bounds_data, availability, annotations)
 }
 
-# Helper function to merge pointwise and supt bounds with main bounds data frames
-merge_bounds_data <- function(result, x, type) {
-  # Process cumulative bounds if available
-  if (result$has_cumulative && !is.null(result$cumulative)) {
-    df <- result$cumulative
-    
-    if (!is.null(x$pointwise_bounds) &&
-        length(x$pointwise_bounds$lower) == nrow(df)) {
-      df$pointwise_lower <- x$pointwise_bounds$lower
-      df$pointwise_upper <- x$pointwise_bounds$upper
-    }
-    
-    if (!is.null(x$supt_bounds) &&
-        length(x$supt_bounds$lower) == nrow(df)) {
-      df$supt_lower <- x$supt_bounds$lower
-      df$supt_upper <- x$supt_bounds$upper
-    }
-    
-    result$cumulative <- df
-  }
-  
-  if (result$has_restricted && !is.null(result$restricted)) {
-    df <- result$restricted
-    
-    if (type == "plausible_bounds") {
-      # Check if pointwise bounds are available and have compatible dimensions
-      if (!is.null(x$pointwise_bounds) &&
-          length(x$pointwise_bounds$lower) == nrow(df)) {
-        df$pointwise_lower <- x$pointwise_bounds$lower
-        df$pointwise_upper <- x$pointwise_bounds$upper
-      }
-      
-      if (!is.null(x$supt_bounds) &&
-          length(x$supt_bounds$lower) == nrow(df)) {
-        df$supt_lower <- x$supt_bounds$lower
-        df$supt_upper <- x$supt_bounds$upper
-      }
-    } else {
-      # For restricted_bounds objects
-      # Check if pointwise bounds are available and have compatible dimensions
-      if (!is.null(x$pointwise_bounds) &&
-          length(x$pointwise_bounds$lower) == nrow(df)) {
-        df$pointwise_lower <- x$pointwise_bounds$lower
-        df$pointwise_upper <- x$pointwise_bounds$upper
-      }
-      
-      # Check if supt bounds are available and have compatible dimensions
-      if (!is.null(x$supt_bounds) &&
-          length(x$supt_bounds$lower) == nrow(df)) {
-        df$supt_lower <- x$supt_bounds$lower
-        df$supt_upper <- x$supt_bounds$upper
-      }
-    }
-    
-    result$restricted <- df
-  }
-  
-  return(result)
-}
-
-# Helper function to extract bounds data from input arguments
-extract_bounds_data <- function(args, show_cumulative, show_restricted, show_supt, show_pointwise) {
-  if (length(args) == 1) {
-    x <- args[[1]]
-    
-    if (inherits(x, "plausible_bounds")) {
-      # Extract from plausible_bounds object
-      result <- list(type = "plausible_bounds")
-      
-      if (show_cumulative && !is.null(x$cumulative_bounds)) {
-        result$cumulative <- x$cumulative_bounds  # Direct access, not $bounds
-        result$has_cumulative <- TRUE
-      } else {
-        result$has_cumulative <- FALSE
-      }
-      
-      if (show_restricted && !is.null(x$restricted_bounds)) {
-        result$restricted <- x$restricted_bounds  # Direct access, not $bounds
-        result$has_restricted <- TRUE
-      } else {
-        result$has_restricted <- FALSE
-      }
-      
-      # Merge pointwise and supt bounds if requested
-      if ((show_pointwise || show_supt) && 
-          (!is.null(x$pointwise_bounds) || !is.null(x$supt_bounds))) {
-        result <- merge_bounds_data(result, x, "plausible_bounds")
-      }
-      
-      return(result)
-      
-    } else if (inherits(x, "cumulative_bounds")) {
-      # Extract from cumulative_bounds object
-      result <- list(
-        type = "cumulative_only",
-        has_cumulative = TRUE,
-        has_restricted = FALSE
-      )
-      
-      if (show_cumulative) {
-        result$cumulative <- x$cumulative_bounds  # Direct access to cumulative_bounds
-      }
-      
-      # Merge pointwise and supt bounds if requested
-      if ((show_pointwise || show_supt) && 
-          (!is.null(x$pointwise_bounds) || !is.null(x$supt_bounds))) {
-        result <- merge_bounds_data(result, x, "cumulative_bounds")
-      }
-      
-      return(result)
-      
-    } else if (inherits(x, "restricted_bounds")) {
-      # Extract from restricted_bounds object
-      result <- list(
-        type = "restricted_only",
-        has_cumulative = FALSE,
-        has_restricted = TRUE
-      )
-      
-      if (show_restricted) {
-        result$restricted <- x$restricted_bounds  # Direct access to restricted_bounds
-      }
-      
-      # Merge pointwise and supt bounds if requested
-      if ((show_pointwise || show_supt) && 
-          (!is.null(x$pointwise_bounds) || !is.null(x$supt_bounds))) {
-        result <- merge_bounds_data(result, x, "restricted_bounds")
-      }
-      
-      return(result)
-      
-    } else {
-      stop("Unrecognized input type. Expected plausible_bounds, cumulative_bounds, or restricted_bounds object.")
-    }
-    
-  } else if (length(args) == 2) {
-    # Handle two separate bounds objects
-    # First validate that both arguments are valid bounds objects
-    arg1 <- args[[1]]
-    arg2 <- args[[2]]
-    
-    # Check that both are valid bounds objects
-    if (!inherits(arg1, c("cumulative_bounds", "restricted_bounds")) ||
-        !inherits(arg2, c("cumulative_bounds", "restricted_bounds"))) {
-      stop("When providing two arguments, both must be either cumulative_bounds or restricted_bounds objects.")
-    }
-    
-    # Check that they are different types
-    if ((inherits(arg1, "cumulative_bounds") && inherits(arg2, "cumulative_bounds")) ||
-        (inherits(arg1, "restricted_bounds") && inherits(arg2, "restricted_bounds"))) {
-      stop("When providing two arguments, both must be either cumulative_bounds or restricted_bounds objects, but not the same type.")
-    }
-    
-    result <- list(type = "combined")
-    result$has_cumulative <- FALSE
-    result$has_restricted <- FALSE
-    
-    for (arg in args) {
-      if (inherits(arg, "cumulative_bounds")) {
-        if (show_cumulative) {
-          result$cumulative <- arg$cumulative_bounds  # Direct access to cumulative_bounds
-        }
-        result$has_cumulative <- TRUE
-        
-        # Merge pointwise and supt bounds if requested
-        if ((show_pointwise || show_supt) &&
-            (!is.null(arg$pointwise_bounds) || !is.null(arg$supt_bounds))) {
-          result <- merge_bounds_data(result, arg, "cumulative_bounds")
-        }
-      } else if (inherits(arg, "restricted_bounds")) {
-        if (show_restricted) {
-          result$restricted <- arg$restricted_bounds  # Direct access to restricted_bounds
-        }
-        result$has_restricted <- TRUE
-        
-        # Merge pointwise and supt bounds if requested
-        if ((show_pointwise || show_supt) &&
-            (!is.null(arg$pointwise_bounds) || !is.null(arg$supt_bounds))) {
-          result <- merge_bounds_data(result, arg, "restricted_bounds")
-        }
-      }
-    }
-    
-    if (!result$has_cumulative && !result$has_restricted) {
-      stop("At least one valid bounds object must be provided.")
-    }
-    
-    return(result)
-    
-  } else {
-    stop("create_plot() accepts 1 or 2 arguments")
-  }
-}
-
 # Helper function to check what bounds are available and requested
-check_bounds_availability <- function(bounds_data, show_cumulative, show_restricted, show_supt, show_pointwise) {
+check_bounds_availability <- function(bounds_data, result, show_supt, show_pointwise) {
   availability <- list(
-    cumulative_requested = show_cumulative,
-    cumulative_available = bounds_data$has_cumulative && !is.null(bounds_data$cumulative),
-    restricted_requested = show_restricted,
-    restricted_available = bounds_data$has_restricted && !is.null(bounds_data$restricted),
+    show_restricted = TRUE,  # Restricted bounds are always shown
     supt_requested = show_supt,
-    supt_available = FALSE,
+    supt_available = !is.null(result$supt_bounds),
     pointwise_requested = show_pointwise,
-    pointwise_available = FALSE
+    pointwise_available = !is.null(result$pointwise_bounds)
   )
-  
-  # Check for sup-t availability in the merged data
-  if (availability$cumulative_available && !is.null(bounds_data$cumulative)) {
-    if ("supt_lower" %in% names(bounds_data$cumulative) && "supt_upper" %in% names(bounds_data$cumulative)) {
-      availability$supt_available <- TRUE
-    }
+
+  # Add pointwise bounds to restricted data if available
+  if (availability$pointwise_available &&
+      length(result$pointwise_bounds$lower) == nrow(bounds_data$restricted)) {
+    bounds_data$restricted$pointwise_lower <- result$pointwise_bounds$lower
+    bounds_data$restricted$pointwise_upper <- result$pointwise_bounds$upper
   }
-  if (availability$restricted_available && !is.null(bounds_data$restricted)) {
-    if ("supt_lower" %in% names(bounds_data$restricted) && "supt_upper" %in% names(bounds_data$restricted)) {
-      availability$supt_available <- TRUE
-    }
+
+  # Add sup-t bounds to restricted data if available
+  if (availability$supt_available &&
+      length(result$supt_bounds$lower) == nrow(bounds_data$restricted)) {
+    bounds_data$restricted$supt_lower <- result$supt_bounds$lower
+    bounds_data$restricted$supt_upper <- result$supt_bounds$upper
   }
-  
-  # Check for pointwise availability in the merged data
-  if (availability$cumulative_available && !is.null(bounds_data$cumulative)) {
-    if ("pointwise_lower" %in% names(bounds_data$cumulative) && "pointwise_upper" %in% names(bounds_data$cumulative)) {
-      availability$pointwise_available <- TRUE
-    }
-  }
-  if (availability$restricted_available && !is.null(bounds_data$restricted)) {
-    if ("pointwise_lower" %in% names(bounds_data$restricted) && "pointwise_upper" %in% names(bounds_data$restricted)) {
-      availability$pointwise_available <- TRUE
-    }
-  }
-  
+
   # Determine what will actually be shown
-  availability$show_cumulative <- availability$cumulative_requested && availability$cumulative_available
-  availability$show_restricted <- availability$restricted_requested && availability$restricted_available
   availability$show_supt <- availability$supt_requested && availability$supt_available
   availability$show_pointwise <- availability$pointwise_requested && availability$pointwise_available
-  
+
   return(availability)
 }
 
-# Helper function to display informative messages about missing bounds
+# Helper function to display informative messages about missing optional bounds
 display_availability_messages <- function(availability) {
   missing_types <- c()
-  
-  # Check for requested but unavailable bounds
-  if (availability$cumulative_requested && !availability$cumulative_available) {
-    missing_types <- c(missing_types, "cumulative")
-  }
-  
-  if (availability$restricted_requested && !availability$restricted_available) {
-    missing_types <- c(missing_types, "restricted")
-  }
-  
+
+  # Check for requested but unavailable optional bounds
   if (availability$supt_requested && !availability$supt_available) {
     missing_types <- c(missing_types, "sup-t")
   }
-  
+
   if (availability$pointwise_requested && !availability$pointwise_available) {
     missing_types <- c(missing_types, "pointwise")
   }
-  
+
   # Display message if any requested bounds are not available
   if (length(missing_types) > 0) {
     msg <- paste("Note:", paste(missing_types, collapse = ", "), "bounds not available in data.")
 
     param_names <- gsub("sup-t", "supt", missing_types)
     param_names <- paste0("show_", param_names, " = FALSE")
-    
-    msg <- paste(msg, "Set", paste(param_names, collapse = " and "), "to silence this message.")
-    
-    message(msg)
 
+    msg <- paste(msg, "Set", paste(param_names, collapse = " and "), "to silence this message.")
+
+    message(msg)
   }
 }
 
@@ -352,9 +139,7 @@ create_bounds_plot <- function(bounds_data, availability, annotations = NULL) {
       surrogate = "cornflowerblue",
       surrogate_bounds = "cornflowerblue",
       pointwise = "darkgray",
-      supt = "gray",
-      restricted = "cornflowerblue",
-      cumulative = "orange"
+      supt = "gray"
     )
 
   line_types <- c(
@@ -362,90 +147,29 @@ create_bounds_plot <- function(bounds_data, availability, annotations = NULL) {
       surrogate = "solid",
       surrogate_bounds = "dashed",
       pointwise = "solid",
-      supt = "solid",
-      restricted = "solid",
-      cumulative = "solid"
+      supt = "solid"
   )
 
-
-  p <- NULL
-  df <- NULL
+  # Use restricted bounds data
+  df <- bounds_data$restricted
 
   # Check if we have pre-periods (negative horizon values)
-  has_preperiods <- FALSE
-  if (!is.null(bounds_data$restricted)) {
-    has_preperiods <- any(bounds_data$restricted$horizon < 0)
-  } else if (!is.null(bounds_data$cumulative)) {
-    has_preperiods <- any(bounds_data$cumulative$horizon < 0)
-  }
+  has_preperiods <- any(df$horizon < 0)
 
-  # Determine which data to use for the base plot
-  if (availability$show_cumulative && availability$show_restricted) {
-    # Plot both cumulative and restricted bounds
-    df_c <- bounds_data$cumulative
-    df_r <- bounds_data$restricted
-    # Ensure both data frames have the same horizon values
-    if (!identical(df_c$horizon, df_r$horizon)) {
-      stop("Cumulative and restricted bounds must have the same horizon length.")
-    }
+  # Separate post-period data for surrogate and bounds
+  df_post <- df[df$horizon > 0, ]
 
-    # Create a combined data frame
-    df <- df_c
-    df$surrogate <- df_r$surrogate
-    df$restricted_lower <- df_r$lower
-    df$restricted_upper <- df_r$upper
+  # Create base plot
+  p <- ggplot2::ggplot(df, ggplot2::aes(x = horizon)) +
+    ggplot2::geom_hline(yintercept = 0, linetype = "dotted", color = "black") +
+    ggplot2::geom_point(ggplot2::aes(y = coef, color = "estimate"))
 
-    # Copy pointwise and supt bounds from restricted to combined if they exist
-    if ("pointwise_lower" %in% names(df_r) && "pointwise_upper" %in% names(df_r)) {
-      df$pointwise_lower <- df_r$pointwise_lower
-      df$pointwise_upper <- df_r$pointwise_upper
-    }
-    if ("supt_lower" %in% names(df_r) && "supt_upper" %in% names(df_r)) {
-      df$supt_lower <- df_r$supt_lower
-      df$supt_upper <- df_r$supt_upper
-    }
-
-    # Separate post-period data for surrogate and bounds (only post-periods have surrogate)
-    df_post <- df[df$horizon > 0, ]
-
-    p <- ggplot2::ggplot(df, ggplot2::aes(x = horizon)) +
-      ggplot2::geom_hline(yintercept = 0, linetype = "dotted", color = "black") +
-      ggplot2::geom_point(ggplot2::aes(y = coef, color = "estimate"))
-
-    # Add surrogate and restricted bounds only for post-periods (where they exist)
-    if (nrow(df_post) > 0 && !all(is.na(df_post$surrogate))) {
-      p <- p +
-        ggplot2::geom_line(data = df_post, ggplot2::aes(y = surrogate, color = "surrogate", linetype = "surrogate")) +
-        ggplot2::geom_line(data = df_post, ggplot2::aes(y = restricted_lower, color = "surrogate_bounds", linetype = "surrogate_bounds")) +
-        ggplot2::geom_line(data = df_post, ggplot2::aes(y = restricted_upper, color = "surrogate_bounds", linetype = "surrogate_bounds"))
-    }
-
-  } else if (availability$show_cumulative) {
-    # Plot only cumulative bounds
-    df <- bounds_data$cumulative
-    p <- ggplot2::ggplot(df, ggplot2::aes(x = horizon)) +
-      ggplot2::geom_hline(yintercept = 0, linetype = "dotted", color = "black") +
-      ggplot2::geom_point(ggplot2::aes(y = coef, color = "estimate"))
-
-  } else if (availability$show_restricted) {
-    # Plot only restricted bounds
-    df <- bounds_data$restricted
-
-    # Separate post-period data for surrogate and bounds
-    df_post <- df[df$horizon > 0, ]
-
-    p <- ggplot2::ggplot(df, ggplot2::aes(x = horizon)) +
-      ggplot2::geom_hline(yintercept = 0, linetype = "dotted", color = "black") +
-      ggplot2::geom_point(ggplot2::aes(y = coef, color = "estimate"))
-
-    # Add surrogate and bounds only for post-periods
-    if (nrow(df_post) > 0 && !all(is.na(df_post$surrogate))) {
-      p <- p +
-        ggplot2::geom_line(data = df_post, ggplot2::aes(y = surrogate, color = "surrogate", linetype = "surrogate")) +
-        ggplot2::geom_line(data = df_post, ggplot2::aes(y = lower, color = "surrogate_bounds", linetype = "surrogate_bounds")) +
-        ggplot2::geom_line(data = df_post, ggplot2::aes(y = upper, color = "surrogate_bounds", linetype = "surrogate_bounds"))
-    }
-
+  # Add surrogate and bounds only for post-periods
+  if (nrow(df_post) > 0 && !all(is.na(df_post$surrogate))) {
+    p <- p +
+      ggplot2::geom_line(data = df_post, ggplot2::aes(y = surrogate, color = "surrogate", linetype = "surrogate")) +
+      ggplot2::geom_line(data = df_post, ggplot2::aes(y = lower, color = "surrogate_bounds", linetype = "surrogate_bounds")) +
+      ggplot2::geom_line(data = df_post, ggplot2::aes(y = upper, color = "surrogate_bounds", linetype = "surrogate_bounds"))
   }
 
   # Add vertical line at event time 0 if we have pre-periods

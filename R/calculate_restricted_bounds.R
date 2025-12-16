@@ -1,8 +1,7 @@
 #' Calculate Restricted Bounds
 #'
 #' This function calculates restricted bounds for a vector of estimates using model selection.
-#' It can calculate both pointwise and simultaneous (sup-t) bounds. Supports pre-treatment
-#' periods for event study designs.
+#' Supports pre-treatment periods for event study designs.
 #'
 #'
 #' @param estimates A vector of point estimates. If preperiods > 0, the first preperiods
@@ -11,8 +10,6 @@
 #' @param alpha Significance level (default: 0.05)
 #' @param preperiods Number of pre-treatment periods (default: 0). Period 0 is assumed
 #'   to be normalized and not included in estimates.
-#' @param include_pointwise Whether to include pointwise bounds (default: TRUE)
-#' @param include_supt Whether to include sup-t bounds (default: TRUE)
 #' @param parallel Whether to use parallel processing (default: FALSE)
 #'
 #' @return A list containing:
@@ -28,11 +25,10 @@
 #' data(var_constant_iid)
 #' restr_bounds <- calculate_restricted_bounds(estimates_constant_iid[1:5], var_constant_iid[1:5, 1:5])
 #'
-#' @export
+#' @keywords internal
 
 calculate_restricted_bounds <- function(estimates, var, alpha = 0.05,
                                        preperiods = 0,
-                                       include_pointwise = TRUE, include_supt = TRUE,
                                        parallel = FALSE) {
   if (!is.numeric(estimates) || !is.vector(estimates)) {
     stop("estimates must be a numeric vector")
@@ -344,35 +340,6 @@ calculate_restricted_bounds <- function(estimates, var, alpha = 0.05,
   }
 
   result$Wpost <- Wpost
-
-  # Calculate pointwise bounds if requested (for ALL periods)
-  if (include_pointwise) {
-    if (preperiods > 0) {
-      pw_pre <- calculate_pointwise_bounds(estimates_pre, var_pre, alpha)
-      pw_post <- calculate_pointwise_bounds(estimates, var, alpha)
-      result$pointwise_bounds <- list(
-        lower = c(pw_pre$lower, pw_post$lower),
-        upper = c(pw_pre$upper, pw_post$upper)
-      )
-    } else {
-      result$pointwise_bounds <- calculate_pointwise_bounds(estimates, var, alpha)
-    }
-  }
-
-  # Calculate sup-t bounds if requested (for ALL periods, using full variance)
-  if (include_supt) {
-    if (preperiods > 0) {
-      # Use the sup-t critical value computed from ALL periods
-      supt_lower_all <- estimatesAll - supt_critval * sqrt(diag(varAll))
-      supt_upper_all <- estimatesAll + supt_critval * sqrt(diag(varAll))
-      result$supt_bounds <- list(
-        lower = supt_lower_all,
-        upper = supt_upper_all
-      )
-    } else {
-      result$supt_bounds <- calculate_supt_bounds(estimates, var, alpha)
-    }
-  }
 
   # Add metadata
   result$metadata <- list(

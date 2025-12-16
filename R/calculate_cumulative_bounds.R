@@ -1,7 +1,7 @@
 #' Calculate Cumulative Bounds (Average Treatment Effect)
 #'
 #' This function calculates bounds for the average treatment effect (ATE) from
-#' a vector of estimates. It can calculate both pointwise and simultaneous (sup-t) bounds.
+#' a vector of estimates. 
 #' Supports pre-treatment periods for event study designs.
 #'
 #' @param estimates A vector of point estimates. If preperiods > 0, the first preperiods
@@ -10,8 +10,6 @@
 #' @param alpha Significance level (default: 0.05)
 #' @param preperiods Number of pre-treatment periods (default: 0). Period 0 is assumed
 #'   to be normalized and not included in estimates.
-#' @param include_pointwise Whether to include pointwise bounds (default: TRUE)
-#' @param include_supt Whether to include sup-t bounds (default: TRUE)
 #'
 #' @return A list containing:
 #'   \item{cumulative_bounds}{A data frame with columns for horizon (event time), coefficients, and bounds}
@@ -32,10 +30,8 @@
 #'   var_wiggly_strong_corr
 #' )
 #'
-#' @export
 calculate_cumulative_bounds <- function(estimates, var, alpha = 0.05,
-                                       preperiods = 0,
-                                       include_pointwise = TRUE, include_supt = TRUE) {
+                                       preperiods = 0) {
   # Check inputs
   if (!is.numeric(estimates) || !is.vector(estimates)) {
     stop("estimates must be a numeric vector")
@@ -127,46 +123,6 @@ calculate_cumulative_bounds <- function(estimates, var, alpha = 0.05,
     cumulative_bounds = bounds_df,
     ate = ate
   )
-
-  # Calculate pointwise bounds if requested (for ALL periods)
-  if (include_pointwise) {
-    if (preperiods > 0) {
-      pw_pre <- calculate_pointwise_bounds(estimates_pre, var_pre, alpha)
-      pw_post <- calculate_pointwise_bounds(estimates_post, var_post, alpha)
-      result$pointwise_bounds <- list(
-        lower = c(pw_pre$lower, pw_post$lower),
-        upper = c(pw_pre$upper, pw_post$upper)
-      )
-    } else {
-      result$pointwise_bounds <- calculate_pointwise_bounds(estimates_post, var_post, alpha)
-    }
-  }
-
-  # Calculate sup-t bounds if requested (for ALL periods)
-  if (include_supt) {
-    if (preperiods > 0) {
-      # Compute sup-t critical value using ALL periods
-      stdv_all <- sqrt(diag(varAll))
-      d_nonzero <- stdv_all > .Machine$double.eps
-      cV_all <- diag(1 / stdv_all[d_nonzero]) %*% varAll[d_nonzero, d_nonzero] %*% diag(1 / stdv_all[d_nonzero])
-
-      set.seed(42)
-      kk <- 10000
-      eig_c <- eigen(cV_all, symmetric = TRUE)
-      Corrmat_sqrt <- eig_c$vectors %*% diag(sqrt(pmax(eig_c$values, 0))) %*% t(eig_c$vectors)
-      t_stat <- abs(matrix(stats::rnorm(kk * sum(d_nonzero)), nrow = kk) %*% Corrmat_sqrt)
-      supt_critval <- as.numeric(stats::quantile(apply(t_stat, 1, max), 1 - alpha))
-
-      supt_lower_all <- estimatesAll - supt_critval * sqrt(diag(varAll))
-      supt_upper_all <- estimatesAll + supt_critval * sqrt(diag(varAll))
-      result$supt_bounds <- list(
-        lower = supt_lower_all,
-        upper = supt_upper_all
-      )
-    } else {
-      result$supt_bounds <- calculate_supt_bounds(estimates_post, var_post, alpha)
-    }
-  }
 
   result$metadata <- list(
     alpha = alpha,

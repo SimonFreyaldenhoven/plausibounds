@@ -53,13 +53,11 @@ plausible_bounds <- function(estimates, var, alpha = 0.05,
 
   # Calculate cumulative bounds
   cumul_bd <- calculate_cumulative_bounds(estimates, var, alpha,
-                                         preperiods = preperiods,
-                                         include_pointwise, include_supt)
+                                         preperiods = preperiods)
 
   # Calculate restricted bounds
   restr_bd <- calculate_restricted_bounds(estimates, var, alpha,
                                          preperiods = preperiods,
-                                         include_pointwise = FALSE, include_supt = FALSE,
                                          parallel = parallel)
 
   # Return combined results
@@ -73,17 +71,44 @@ plausible_bounds <- function(estimates, var, alpha = 0.05,
   )
 
   # Add Wpre if preperiods > 0
-
   if (!is.null(restr_bd$Wpre)) {
     result$Wpre <- restr_bd$Wpre
   }
 
+  # Calculate pointwise bounds if requested (for ALL periods)
   if (include_pointwise) {
-    result$pointwise_bounds <- cumul_bd$pointwise_bounds
+    if (preperiods > 0) {
+      # Split estimates and var for pre and post periods
+      estimates_pre <- estimates[1:preperiods]
+      estimates_post <- estimates[(preperiods + 1):length(estimates)]
+      var_pre <- var[1:preperiods, 1:preperiods, drop = FALSE]
+      var_post <- var[(preperiods + 1):nrow(var), (preperiods + 1):ncol(var), drop = FALSE]
+
+      pw_pre <- calculate_pointwise_bounds(estimates_pre, var_pre, alpha)
+      pw_post <- calculate_pointwise_bounds(estimates_post, var_post, alpha)
+      result$pointwise_bounds <- list(
+        lower = c(pw_pre$lower, pw_post$lower),
+        upper = c(pw_pre$upper, pw_post$upper)
+      )
+    } else {
+      result$pointwise_bounds <- calculate_pointwise_bounds(estimates, var, alpha)
+    }
   }
 
+  # Calculate sup-t bounds if requested (for ALL periods, using full variance)
   if (include_supt) {
-    result$supt_bounds <- cumul_bd$supt_bounds
+    if (preperiods > 0) {
+      # Use the sup-t critical value computed from ALL periods (from restricted metadata)
+      supt_critval <- restr_bd$metadata$supt_critval
+      supt_lower_all <- estimates - supt_critval * sqrt(diag(var))
+      supt_upper_all <- estimates + supt_critval * sqrt(diag(var))
+      result$supt_bounds <- list(
+        lower = supt_lower_all,
+        upper = supt_upper_all
+      )
+    } else {
+      result$supt_bounds <- calculate_supt_bounds(estimates, var, alpha)
+    }
   }
 
   class(result) <- "plausible_bounds"
