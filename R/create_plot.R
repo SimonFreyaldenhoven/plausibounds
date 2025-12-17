@@ -53,19 +53,14 @@ create_plot <- function(result,
   annotations <- NULL
   if (show_annotations) {
     annotations <- list()
-    if (!is.null(result$ate)) {
-      annotations$ate <- result$ate
+    if (!is.null(result$avg_treatment_effect)) {
+      annotations$ate <- result$avg_treatment_effect
     }
-    if (!is.null(result$Wpre)) {
-      annotations$Wpre <- result$Wpre
+    if (!is.null(result$wald_test$pre)) {
+      annotations$Wpre <- result$wald_test$pre
     }
-    if (!is.null(result$Wpost)) {
-      annotations$Wpost <- result$Wpost
-    }
-    # Also check metadata for lb/ub (cumulative bounds)
-    if (!is.null(result$cumulative_metadata)) {
-      annotations$lb <- result$cumulative_metadata$lb
-      annotations$ub <- result$cumulative_metadata$ub
+    if (!is.null(result$wald_test$post)) {
+      annotations$Wpost <- result$wald_test$post
     }
   }
 
@@ -266,20 +261,22 @@ create_bounds_plot <- function(bounds_data, availability, annotations = NULL) {
     # Add pretrends p-value if available
     if (!is.null(annotations$Wpre)) {
       annotation_parts <- c(annotation_parts,
-        sprintf("Pretrends p-value: %.2f", annotations$Wpre["pvalue"]))
+        sprintf("Pretrends p-value: %.2f", annotations$Wpre$p_value))
     }
 
     # Add no effect p-value if available
     if (!is.null(annotations$Wpost)) {
       annotation_parts <- c(annotation_parts,
-        sprintf("No effect p-value: %.2f", annotations$Wpost["pvalue"]))
+        sprintf("No effect p-value: %.2f", annotations$Wpost$p_value))
     }
 
     # Add ATE with CI if available
-    if (!is.null(annotations$ate) && !is.null(annotations$lb) && !is.null(annotations$ub)) {
+    if (!is.null(annotations$ate)) {
       annotation_parts <- c(annotation_parts,
         sprintf("Average effect [CI]: %.3g [%.3g, %.3g]",
-                annotations$ate["estimate"], annotations$lb, annotations$ub))
+                annotations$ate$estimate,
+                annotations$ate$bounds$lb,
+                annotations$ate$bounds$ub))
     }
 
     if (length(annotation_parts) > 0) {

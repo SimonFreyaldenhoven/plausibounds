@@ -33,15 +33,18 @@ to be normalized and not included in estimates.}
 }
 \value{
 A list containing:
-\item{cumulative_bounds}{Results from calculate_cumulative_bounds}
-\item{restricted_bounds}{Results from calculate_restricted_bounds}
-\item{ate}{Average treatment effect with standard error}
-\item{Wpre}{Wald test for pre-trends (if preperiods > 0)}
-\item{Wpost}{Wald test for no treatment effect}
+\item{preperiods}{Number of pre-treatment periods}
+\item{wald_test}{List with post (and pre if preperiods > 0) Wald test results}
+\item{restricted_bounds}{Data frame with horizon, coef, surrogate, lower, upper}
+\item{restricted_bounds_metadata}{List with alpha, width, supt_critval, supt_b,
+degrees_of_freedom, K, lambda1, lambda2, surrogate_class, best_fit_model}
+\item{avg_treatment_effect}{List with estimate, se, bounds, alpha, width}
+\item{pointwise_bounds}{List with lower and upper vectors (if include_pointwise = TRUE)}
+\item{supt_bounds}{List with lower and upper vectors (if include_supt = TRUE)}
 }
 \description{
-This function calculates both cumulative and restricted bounds for a vector of estimates.
-It calls both calculate_cumulative_bounds and calculate_restricted_bounds functions.
+This function calculates restricted bounds for a vector of estimates along with
+average treatment effect, Wald tests, and optional pointwise/sup-t bounds.
 Supports pre-treatment periods for event study designs.
 }
 \examples{

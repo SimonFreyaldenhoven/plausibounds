@@ -1,7 +1,7 @@
 #' Calculate Plausible Bounds
 #'
-#' This function calculates both cumulative and restricted bounds for a vector of estimates.
-#' It calls both calculate_cumulative_bounds and calculate_restricted_bounds functions.
+#' This function calculates restricted bounds for a vector of estimates along with
+#' average treatment effect, Wald tests, and optional pointwise/sup-t bounds.
 #' Supports pre-treatment periods for event study designs.
 #'
 #' @param estimates A vector of point estimates. If preperiods > 0, the first preperiods
@@ -15,11 +15,14 @@
 #' @param parallel Whether to use parallel processing for restricted bounds calculation (default: FALSE)
 #'
 #' @return A list containing:
-#'   \item{cumulative_bounds}{Results from calculate_cumulative_bounds}
-#'   \item{restricted_bounds}{Results from calculate_restricted_bounds}
-#'   \item{ate}{Average treatment effect with standard error}
-#'   \item{Wpre}{Wald test for pre-trends (if preperiods > 0)}
-#'   \item{Wpost}{Wald test for no treatment effect}
+#'   \item{preperiods}{Number of pre-treatment periods}
+#'   \item{wald_test}{List with post (and pre if preperiods > 0) Wald test results}
+#'   \item{restricted_bounds}{Data frame with horizon, coef, surrogate, lower, upper}
+#'   \item{restricted_bounds_metadata}{List with alpha, width, supt_critval, supt_b,
+#'     degrees_of_freedom, K, lambda1, lambda2, surrogate_class, best_fit_model}
+#'   \item{avg_treatment_effect}{List with estimate, se, bounds, alpha, width}
+#'   \item{pointwise_bounds}{List with lower and upper vectors (if include_pointwise = TRUE)}
+#'   \item{supt_bounds}{List with lower and upper vectors (if include_supt = TRUE)}
 #'
 #' @examples
 #' # Example with constant estimates and IID errors (simple case)
@@ -51,7 +54,7 @@ plausible_bounds <- function(estimates, var, alpha = 0.05,
     stop("preperiods must be less than the length of estimates")
   }
 
-  # Calculate cumulative bounds
+  # Calculate cumulative bounds (for ATE)
   cumul_bd <- calculate_cumulative_bounds(estimates, var, alpha,
                                          preperiods = preperiods)
 
@@ -60,20 +63,55 @@ plausible_bounds <- function(estimates, var, alpha = 0.05,
                                          preperiods = preperiods,
                                          parallel = parallel)
 
-  # Return combined results
-  result <- list(
-    cumulative_bounds = cumul_bd$cumulative_bounds,
-    restricted_bounds = restr_bd$restricted_bounds,
-    ate = cumul_bd$ate,
-    Wpost = restr_bd$Wpost,
-    cumulative_metadata = cumul_bd$metadata,
-    restricted_metadata = restr_bd$metadata
+  # Build wald_test
+  wald_test <- list(
+    post = list(
+      statistic = unname(restr_bd$Wpost["statistic"]),
+      p_value = unname(restr_bd$Wpost["pvalue"])
+    )
+  )
+  if (!is.null(restr_bd$Wpre)) {
+    wald_test$pre <- list(
+      statistic = unname(restr_bd$Wpre["statistic"]),
+      p_value = unname(restr_bd$Wpre["pvalue"])
+    )
+  }
+
+  # Build restricted_bounds_metadata
+  restricted_bounds_metadata <- list(
+    alpha = restr_bd$metadata$alpha,
+    width = restr_bd$metadata$width,
+    supt_critval = restr_bd$metadata$supt_critval,
+    supt_b = restr_bd$metadata$suptb,
+    degrees_of_freedom = restr_bd$metadata$df,
+    K = restr_bd$metadata$K,
+    lambda1 = restr_bd$metadata$lambda1,
+    lambda2 = restr_bd$metadata$lambda2,
+    surrogate_class = restr_bd$metadata$surrogate_class,
+    best_fit_model = restr_bd$metadata$best_fit_model
   )
 
-  # Add Wpre if preperiods > 0
-  if (!is.null(restr_bd$Wpre)) {
-    result$Wpre <- restr_bd$Wpre
-  }
+  # Build avg_treatment_effect
+  avg_treatment_effect <- list(
+    estimate = unname(cumul_bd$ate["estimate"]),
+    se = unname(cumul_bd$ate["se"]),
+    bounds = list(
+      lb = cumul_bd$metadata$lb,
+      ub = cumul_bd$metadata$ub
+    ),
+    alpha = cumul_bd$metadata$alpha,
+    width = cumul_bd$metadata$width
+  )
+
+  # Build result list
+
+  result <- list(
+    preperiods = preperiods,
+    wald_test = wald_test,
+    restricted_bounds = restr_bd$restricted_bounds,
+    restricted_bounds_metadata = restricted_bounds_metadata,
+    avg_treatment_effect = avg_treatment_effect
+  )
 
   # Calculate pointwise bounds if requested (for ALL periods)
   if (include_pointwise) {
@@ -122,18 +160,51 @@ plausible_bounds <- function(estimates, var, alpha = 0.05,
 #'
 #' @export
 summary.plausible_bounds <- function(object, ...) {
+  # Build summary from restricted_bounds (which has coef, surrogate, lower, upper)
+  result <- object$restricted_bounds %>%
+    dplyr::rename(restr_lower = lower, restr_upper = upper)
 
-  cumul_df <- object$cumulative_bounds %>%
-    dplyr::rename(cumul_lower = lower, cumul_upper = upper) 
-
-  restr_df <- object$restricted_bounds %>%
-    dplyr::rename(restr_lower = lower, restr_upper = upper) %>%
-    dplyr::select(-coef)
-
-  result <- dplyr::left_join(cumul_df, restr_df, by = "horizon")
-  
   class(result) <- c("summary.plausible_bounds", class(result))
   return(result)
+}
+
+#' Print method for plausible_bounds objects
+#'
+#' @param x A plausible_bounds object
+#' @param ... Additional arguments passed to print
+#'
+#' @export
+print.plausible_bounds <- function(x, ...) {
+  cat("Plausible Bounds Results\n")
+  cat("========================\n\n")
+
+  # Wald tests
+  cat("Wald Tests:\n")
+  cat(sprintf("  Post-treatment (H0: no effect): stat = %.3f, p = %.4f\n",
+              x$wald_test$post$statistic, x$wald_test$post$p_value))
+  if (!is.null(x$wald_test$pre)) {
+    cat(sprintf("  Pre-treatment (H0: no pre-trends): stat = %.3f, p = %.4f\n",
+                x$wald_test$pre$statistic, x$wald_test$pre$p_value))
+  }
+
+  # ATE
+  cat("\nAverage Treatment Effect:\n")
+  cat(sprintf("  Estimate: %.4f (SE: %.4f)\n",
+              x$avg_treatment_effect$estimate, x$avg_treatment_effect$se))
+  cat(sprintf("  %.0f%% CI: [%.4f, %.4f]\n",
+              (1 - x$avg_treatment_effect$alpha) * 100,
+              x$avg_treatment_effect$bounds$lb, x$avg_treatment_effect$bounds$ub))
+
+  # Restricted bounds info
+  cat("\nRestricted Bounds:\n")
+  cat(sprintf("  Surrogate class: %s\n", x$restricted_bounds_metadata$surrogate_class))
+  cat(sprintf("  Degrees of freedom: %.2f\n", x$restricted_bounds_metadata$degrees_of_freedom))
+  cat(sprintf("  Average width: %.4f\n", x$restricted_bounds_metadata$width))
+
+  cat("\nBounds by horizon:\n")
+  print(x$restricted_bounds, row.names = FALSE)
+
+  invisible(x)
 }
 
 #' Print method for summary.plausible_bounds objects
@@ -144,12 +215,10 @@ summary.plausible_bounds <- function(object, ...) {
 #' @export
 print.summary.plausible_bounds <- function(x, ...) {
   cat("Summary of Plausible Bounds Results\n")
-  cat("----------------------------------\n")
-  
-  cat("\nBounds data.frame:\n")
+  cat("-----------------------------------\n\n")
+
   class(x) <- setdiff(class(x), "summary.plausible_bounds")
-  print(x)
+  print(x, row.names = FALSE)
 
   invisible(x)
-
 }

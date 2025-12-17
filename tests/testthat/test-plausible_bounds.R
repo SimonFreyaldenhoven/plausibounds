@@ -14,8 +14,8 @@ test_that("plausible_bounds functions work with simple test data", {
   
   # Test create_plot (just check that it runs without error)
   expect_error(create_plot(pb), NA)
-  expect_error(create_plot(pb, show_cumulative = TRUE, show_restricted = FALSE), NA)
-  expect_error(create_plot(pb, show_cumulative = FALSE, show_restricted = TRUE), NA)
+  expect_error(create_plot(pb, show_supt = TRUE, show_pointwise = FALSE), NA)
+  expect_error(create_plot(pb, show_supt = FALSE, show_pointwise = TRUE), NA)
 })
 
 # Test comparison with original function using pre-computed fixtures
@@ -38,14 +38,14 @@ test_that("new functions match original full_eventplot_l2tf results", {
   pb <- plausible_bounds(as.vector(delta), vhat)
   
   # Compare results
-  # Cumulative bounds
+  # Average treatment effect bounds
   expect_equal(
-    pb$cumulative_bounds$lower[1],
+    pb$avg_treatment_effect$bounds$lb,
     original_results$lb/length(delta),
     tolerance = 1e-2
   )
   expect_equal(
-    pb$cumulative_bounds$upper[1],
+    pb$avg_treatment_effect$bounds$ub,
     original_results$ub/length(delta),
     tolerance = 1e-2
   )
@@ -102,14 +102,14 @@ test_that("parallel and non-parallel results are identical", {
   
   # Compare metadata
   expect_equal(
-    result_parallel$restricted_metadata,
-    result_sequential$restricted_metadata,
+    result_parallel$restricted_bounds_metadata,
+    result_sequential$restricted_bounds_metadata,
     tolerance = 1e-10
   )
-  
+
   expect_equal(
-    result_parallel$restricted_metadata$width,
-    result_sequential$restricted_metadata$width,
+    result_parallel$restricted_bounds_metadata$width,
+    result_sequential$restricted_bounds_metadata$width,
     tolerance = 1e-10
   )
   
@@ -142,14 +142,14 @@ test_that("parallel and non-parallel results are identical", {
   
   # Compare metadata
   expect_equal(
-    result_parallel_const$restricted_metadata,
-    result_sequential_const$restricted_metadata,
+    result_parallel_const$restricted_bounds_metadata,
+    result_sequential_const$restricted_bounds_metadata,
     tolerance = 1e-10
   )
-  
+
   expect_equal(
-    result_parallel_const$restricted_metadata$width,
-    result_sequential_const$restricted_metadata$width,
+    result_parallel_const$restricted_bounds_metadata$width,
+    result_sequential_const$restricted_bounds_metadata$width,
     tolerance = 1e-10
   )
 })
