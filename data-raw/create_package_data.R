@@ -79,20 +79,20 @@ simulate_dgp <- function(design_name, rho = 0.0, se = 0.014, p = 12) {
 # Set seed for reproducibility
 set.seed(916)
 
-# Generate smooth, eventually flat estimates with IID errors (rho = 0)
-sim_eventually_flat <- simulate_dgp("quadratic", rho = 0, se = 0.014, p = 12)
-estimates_smooth_iid <- sim_eventually_flat$dhat
-var_smooth_iid <- sim_eventually_flat$Vhat
+# Generate constant estimates with IID errors (rho = 0)
+sim_constant <- simulate_dgp("constant", rho = 0, se = 0.014, p = 12)
+estimates_constant <- sim_constant$dhat
+var_iid <- sim_constant$Vhat
 
-# Generate wiggly estimates with moderate correlation (rho = 0.8)
-sim_wiggly_corr <- simulate_dgp("wiggly", rho = 0.8, se = 0.014, p = 12)
-estimates_wiggly_corr <- sim_wiggly_corr$dhat
-var_wiggly_corr <- sim_wiggly_corr$Vhat
+# Generate wiggly estimates with correlated errors (rho = 0.8)
+sim_wiggly <- simulate_dgp("wiggly", rho = 0.8, se = 0.014, p = 12)
+estimates_wiggly <- sim_wiggly$dhat
+var_corr <- sim_wiggly$Vhat
 
 # Save datasets to data/ directory -----------------------------------------
 
-usethis::use_data(estimates_smooth_iid, overwrite = TRUE)
-usethis::use_data(var_smooth_iid, overwrite = TRUE)
-usethis::use_data(estimates_wiggly_corr, overwrite = TRUE)
-usethis::use_data(var_wiggly_corr, overwrite = TRUE)
+usethis::use_data(estimates_constant, overwrite = TRUE)
+usethis::use_data(var_iid, overwrite = TRUE)
+usethis::use_data(estimates_wiggly, overwrite = TRUE)
+usethis::use_data(var_corr, overwrite = TRUE)
 

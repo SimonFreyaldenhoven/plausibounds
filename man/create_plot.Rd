@@ -5,17 +5,14 @@
 \title{Create Plot for Plausible Bounds}
 \usage{
 create_plot(
-  ...,
-  show_restricted = TRUE,
+  result,
   show_supt = TRUE,
   show_pointwise = TRUE,
   show_annotations = TRUE
 )
 }
 \arguments{
-\item{...}{One or two objects: either a plausible_bounds object or individual bounds objects}
-
-\item{show_restricted}{Whether to show restricted bounds (default: TRUE)}
+\item{result}{A plausible_bounds object returned by the plausible_bounds() function}
 
 \item{show_supt}{Whether to show sup-t bounds (default: TRUE)}
 
@@ -27,16 +24,17 @@ create_plot(
 A ggplot2 object
 }
 \description{
-This function creates a plot of plausible bounds from the results of plausible_bounds,
-calculate_cumulative_bounds, or calculate_restricted_bounds functions.
+This function creates a plot of plausible bounds from a plausible_bounds object.
+The plot displays restricted bounds as the main visualization, with optional
+pointwise and sup-t bounds overlays. Cumulative bounds are shown as annotations.
 Supports event study designs with pre-treatment periods.
 }
 \examples{
 
-# Example with wiggly estimates and strong correlation
-data(estimates_wiggly_corr)
-data(var_wiggly_corr)
-result_complex <- plausible_bounds(estimates_wiggly_corr[1:4], var_wiggly_corr[1:4, 1:4])
+# Example with wiggly estimates and correlated errors
+data(estimates_wiggly)
+data(var_corr)
+result_complex <- plausible_bounds(estimates_wiggly[1:4], var_corr[1:4, 1:4])
 plot_complex <- create_plot(result_complex)
 
 }
