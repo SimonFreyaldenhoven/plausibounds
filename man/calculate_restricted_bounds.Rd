@@ -9,8 +9,6 @@ calculate_restricted_bounds(
   var,
   alpha = 0.05,
   preperiods = 0,
-  include_pointwise = TRUE,
-  include_supt = TRUE,
   parallel = FALSE
 )
 }
@@ -25,10 +23,6 @@ elements are pre-treatment estimates, followed by post-treatment estimates.}
 \item{preperiods}{Number of pre-treatment periods (default: 0). Period 0 is assumed
 to be normalized and not included in estimates.}
 
-\item{include_pointwise}{Whether to include pointwise bounds (default: TRUE)}
-
-\item{include_supt}{Whether to include sup-t bounds (default: TRUE)}
-
 \item{parallel}{Whether to use parallel processing (default: FALSE)}
 }
 \value{
@@ -41,8 +35,7 @@ coefficients, surrogate values, and bounds}
 }
 \description{
 This function calculates restricted bounds for a vector of estimates using model selection.
-It can calculate both pointwise and simultaneous (sup-t) bounds. Supports pre-treatment
-periods for event study designs.
+Supports pre-treatment periods for event study designs.
 }
 \examples{
 # Example with constant estimates and IID errors
@@ -51,3 +44,4 @@ data(var_iid)
 restr_bounds <- calculate_restricted_bounds(estimates_constant[1:5], var_iid[1:5, 1:5])
 
 }
+\keyword{internal}

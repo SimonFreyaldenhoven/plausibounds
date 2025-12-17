@@ -4,14 +4,7 @@
 \alias{calculate_cumulative_bounds}
 \title{Calculate Cumulative Bounds (Average Treatment Effect)}
 \usage{
-calculate_cumulative_bounds(
-  estimates,
-  var,
-  alpha = 0.05,
-  preperiods = 0,
-  include_pointwise = TRUE,
-  include_supt = TRUE
-)
+calculate_cumulative_bounds(estimates, var, alpha = 0.05, preperiods = 0)
 }
 \arguments{
 \item{estimates}{A vector of point estimates. If preperiods > 0, the first preperiods
@@ -23,10 +16,6 @@ elements are pre-treatment estimates, followed by post-treatment estimates.}
 
 \item{preperiods}{Number of pre-treatment periods (default: 0). Period 0 is assumed
 to be normalized and not included in estimates.}
-
-\item{include_pointwise}{Whether to include pointwise bounds (default: TRUE)}
-
-\item{include_supt}{Whether to include sup-t bounds (default: TRUE)}
 }
 \value{
 A list containing:
@@ -36,7 +25,7 @@ A list containing:
 }
 \description{
 This function calculates bounds for the average treatment effect (ATE) from
-a vector of estimates. It can calculate both pointwise and simultaneous (sup-t) bounds.
+a vector of estimates.
 Supports pre-treatment periods for event study designs.
 }
 \examples{
