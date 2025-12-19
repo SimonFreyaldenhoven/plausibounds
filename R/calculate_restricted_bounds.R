@@ -11,6 +11,8 @@
 #' @param preperiods Number of pre-treatment periods (default: 0). Period 0 is assumed
 #'   to be normalized and not included in estimates.
 #' @param parallel Whether to use parallel processing (default: FALSE)
+#' @param n_cores Number of cores to use for parallel processing (default: NULL, which uses
+#'   detectCores() - 1). Only used when parallel = TRUE.
 #'
 #' @return A list containing:
 #'   \item{restricted_bounds}{A data frame with columns for horizon (event time),
@@ -29,7 +31,8 @@
 
 calculate_restricted_bounds <- function(estimates, var, alpha = 0.05,
                                        preperiods = 0,
-                                       parallel = FALSE) {
+                                       parallel = FALSE,
+                                       n_cores = NULL) {
   if (!is.numeric(estimates) || !is.vector(estimates)) {
     stop("estimates must be a numeric vector")
   }
@@ -184,9 +187,18 @@ calculate_restricted_bounds <- function(estimates, var, alpha = 0.05,
         warning("Package 'doParallel' is required for parallel processing but not installed. Falling back to sequential processing.")
       } else {
         use_parallel <- TRUE
-        # Determine number of cores to use (leave one core free)
-        num_cores <- max(1, parallel::detectCores() - 1)
-        
+        # Determine number of cores to use
+        if (is.null(n_cores)) {
+          # Default: leave one core free
+          num_cores <- max(1, parallel::detectCores() - 1)
+        } else {
+          # Validate n_cores
+          if (!is.numeric(n_cores) || length(n_cores) != 1 || n_cores < 1 || n_cores != floor(n_cores)) {
+            stop("n_cores must be a positive integer")
+          }
+          num_cores <- n_cores
+        }
+
         `%dopar%` <- foreach::`%dopar%`     
         
         tryCatch({

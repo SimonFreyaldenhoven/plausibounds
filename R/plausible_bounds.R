@@ -13,6 +13,8 @@
 #' @param include_pointwise Whether to include pointwise bounds (default: TRUE)
 #' @param include_supt Whether to include sup-t bounds (default: TRUE)
 #' @param parallel Whether to use parallel processing for restricted bounds calculation (default: FALSE)
+#' @param n_cores Number of cores to use for parallel processing (default: NULL, which uses
+#'   detectCores() - 1). Only used when parallel = TRUE.
 #'
 #' @return A list containing:
 #'   \item{preperiods}{Number of pre-treatment periods}
@@ -36,7 +38,7 @@
 plausible_bounds <- function(estimates, var, alpha = 0.05,
                             preperiods = 0,
                             include_pointwise = TRUE, include_supt = TRUE,
-                            parallel = FALSE) {
+                            parallel = FALSE, n_cores = NULL) {
   # Check inputs
   if (!is.numeric(estimates) || !is.vector(estimates)) {
     stop("estimates must be a numeric vector")
@@ -61,7 +63,8 @@ plausible_bounds <- function(estimates, var, alpha = 0.05,
   # Calculate restricted bounds
   restr_bd <- calculate_restricted_bounds(estimates, var, alpha,
                                          preperiods = preperiods,
-                                         parallel = parallel)
+                                         parallel = parallel,
+                                         n_cores = n_cores)
 
   # Build wald_test
   wald_test <- list(
