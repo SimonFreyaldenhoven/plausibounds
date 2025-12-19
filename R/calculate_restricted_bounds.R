@@ -33,7 +33,7 @@ calculate_restricted_bounds <- function(estimates, var, alpha = 0.05,
   if (!is.numeric(estimates) || !is.vector(estimates)) {
     stop("estimates must be a numeric vector")
   }
-  if (length(estimates) < 2) {
+  if (length(estimates) - preperiods < 2) {
     stop("calculate_restricted_bounds requires at least 2 estimates")
   }
   if (any(is.na(estimates))) {
