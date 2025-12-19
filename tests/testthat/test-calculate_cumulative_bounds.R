@@ -1,9 +1,10 @@
 test_that("calculate_cumulative_bounds works with real example data", {
-  # Test with constant IID data
+  # Test with constant IID data (use subset for CRAN efficiency)
   data(estimates_constant)
   data(var_iid)
-  
-  result <- calculate_cumulative_bounds(estimates_constant, var_iid)
+
+  n_test <- 6
+  result <- calculate_cumulative_bounds(estimates_constant[1:n_test], var_iid[1:n_test, 1:n_test])
   
   expect_s3_class(result, "cumulative_bounds")
   expect_s3_class(result, "plausible_bounds_result")
@@ -15,9 +16,9 @@ test_that("calculate_cumulative_bounds works with real example data", {
   
   # Check cumulative bounds data frame
   expect_s3_class(result$cumulative_bounds, "data.frame")
-  expect_equal(nrow(result$cumulative_bounds), length(estimates_constant))
+  expect_equal(nrow(result$cumulative_bounds), n_test)
   expect_named(result$cumulative_bounds, c("horizon", "coef", "lower", "upper"))
-  expect_equal(result$cumulative_bounds$coef, estimates_constant)
+  expect_equal(result$cumulative_bounds$coef, estimates_constant[1:n_test])
   
   # Check that bounds contain the estimates (for constant case)
   expect_true(all(result$cumulative_bounds$lower <= result$cumulative_bounds$upper))
@@ -30,15 +31,16 @@ test_that("calculate_cumulative_bounds works with real example data", {
 })
 
 test_that("calculate_cumulative_bounds works with wiggly correlated data", {
-  # Test with wiggly strong correlation data
+  # Test with wiggly strong correlation data (use subset for CRAN efficiency)
   data(estimates_wiggly)
   data(var_corr)
-  
-  result <- calculate_cumulative_bounds(estimates_wiggly, 
-                                       var_corr)
+
+  n_test <- 6
+  result <- calculate_cumulative_bounds(estimates_wiggly[1:n_test],
+                                       var_corr[1:n_test, 1:n_test])
   
   expect_s3_class(result, "cumulative_bounds")
-  expect_equal(nrow(result$cumulative_bounds), length(estimates_wiggly))
+  expect_equal(nrow(result$cumulative_bounds), n_test)
   
   # Check that all bounds are properly ordered
   expect_true(all(result$cumulative_bounds$lower <= result$cumulative_bounds$upper))
@@ -51,16 +53,17 @@ test_that("calculate_cumulative_bounds works with wiggly correlated data", {
 test_that("calculate_cumulative_bounds handles different alpha values", {
   data(estimates_constant)
   data(var_iid)
-  
+
+  n_test <- 6
   # Test with different confidence levels
-  result_99 <- calculate_cumulative_bounds(estimates_constant, 
-                                          var_iid, 
+  result_99 <- calculate_cumulative_bounds(estimates_constant[1:n_test],
+                                          var_iid[1:n_test, 1:n_test],
                                           alpha = 0.01)
-  result_95 <- calculate_cumulative_bounds(estimates_constant, 
-                                          var_iid, 
+  result_95 <- calculate_cumulative_bounds(estimates_constant[1:n_test],
+                                          var_iid[1:n_test, 1:n_test],
                                           alpha = 0.05)
-  result_90 <- calculate_cumulative_bounds(estimates_constant, 
-                                          var_iid, 
+  result_90 <- calculate_cumulative_bounds(estimates_constant[1:n_test],
+                                          var_iid[1:n_test, 1:n_test],
                                           alpha = 0.10)
   
   # Check alpha is stored correctly

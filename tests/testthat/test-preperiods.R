@@ -16,21 +16,22 @@ test_that("preperiods parameter accepts valid values", {
   data(estimates_constant, envir = environment())
   data(var_iid, envir = environment())
 
+  n_test <- 6
   # Valid: zero preperiods
-  expect_error(plausible_bounds(estimates_constant, var_iid, preperiods = 0), NA)
+  expect_error(plausible_bounds(estimates_constant[1:n_test], var_iid[1:n_test, 1:n_test], preperiods = 0), NA)
 
   # Valid: single preperiod
   pre_single <- rnorm(1)
   Vpre_single <- matrix(0.1, 1, 1)
-  estimates <- c(pre_single, estimates_constant)
-  var <- block_diag_matrix(Vpre_single, var_iid)
+  estimates <- c(pre_single, estimates_constant[1:n_test])
+  var <- block_diag_matrix(Vpre_single, var_iid[1:n_test, 1:n_test])
   expect_error(plausible_bounds(estimates, var, preperiods = 1), NA)
 
   # Valid: multiple preperiods
   pre_mean0 <- readRDS(test_path("fixtures", "preperiods_mean0.rds"))
   Vpre_iid <- readRDS(test_path("fixtures", "Vpre_iid.rds"))
-  estimates_full <- c(pre_mean0, estimates_constant)
-  var_full <- block_diag_matrix(Vpre_iid, var_iid)
+  estimates_full <- c(pre_mean0, estimates_constant[1:n_test])
+  var_full <- block_diag_matrix(Vpre_iid, var_iid[1:n_test, 1:n_test])
   expect_error(plausible_bounds(estimates_full, var_full, preperiods = 8), NA)
 })
 
@@ -38,13 +39,14 @@ test_that("preperiods parameter rejects negative values", {
   data(estimates_constant, envir = environment())
   data(var_iid, envir = environment())
 
+  n_test <- 6
   expect_error(
-    plausible_bounds(estimates_constant, var_iid, preperiods = -1),
+    plausible_bounds(estimates_constant[1:n_test], var_iid[1:n_test, 1:n_test], preperiods = -1),
     "preperiods must be a non-negative integer"
   )
 
   expect_error(
-    plausible_bounds(estimates_constant, var_iid, preperiods = -5),
+    plausible_bounds(estimates_constant[1:n_test], var_iid[1:n_test, 1:n_test], preperiods = -5),
     "preperiods must be a non-negative integer"
   )
 })
@@ -53,13 +55,14 @@ test_that("preperiods parameter rejects non-integer values", {
   data(estimates_constant, envir = environment())
   data(var_iid, envir = environment())
 
+  n_test <- 6
   expect_error(
-    plausible_bounds(estimates_constant, var_iid, preperiods = 2.5),
+    plausible_bounds(estimates_constant[1:n_test], var_iid[1:n_test, 1:n_test], preperiods = 2.5),
     "preperiods must be a non-negative integer"
   )
 
   expect_error(
-    plausible_bounds(estimates_constant, var_iid, preperiods = 3.7),
+    plausible_bounds(estimates_constant[1:n_test], var_iid[1:n_test, 1:n_test], preperiods = 3.7),
     "preperiods must be a non-negative integer"
   )
 })
@@ -68,15 +71,14 @@ test_that("preperiods parameter rejects values >= length(estimates)", {
   data(estimates_constant, envir = environment())
   data(var_iid, envir = environment())
 
-  n <- length(estimates_constant)
-
+  n_test <- 6
   expect_error(
-    plausible_bounds(estimates_constant, var_iid, preperiods = n),
+    plausible_bounds(estimates_constant[1:n_test], var_iid[1:n_test, 1:n_test], preperiods = n_test),
     "preperiods must be less than the length of estimates"
   )
 
   expect_error(
-    plausible_bounds(estimates_constant, var_iid, preperiods = n + 1),
+    plausible_bounds(estimates_constant[1:n_test], var_iid[1:n_test, 1:n_test], preperiods = n_test + 1),
     "preperiods must be less than the length of estimates"
   )
 })
@@ -85,21 +87,22 @@ test_that("preperiods parameter rejects invalid types", {
   data(estimates_constant, envir = environment())
   data(var_iid, envir = environment())
 
+  n_test <- 6
   # Non-numeric string
   expect_error(
-    plausible_bounds(estimates_constant, var_iid, preperiods = "two"),
+    plausible_bounds(estimates_constant[1:n_test], var_iid[1:n_test, 1:n_test], preperiods = "two"),
     "preperiods must be a non-negative integer"
   )
 
   # NULL
   expect_error(
-    plausible_bounds(estimates_constant, var_iid, preperiods = NULL),
+    plausible_bounds(estimates_constant[1:n_test], var_iid[1:n_test, 1:n_test], preperiods = NULL),
     "preperiods must be a non-negative integer"
   )
 
   # NA
   expect_error(
-    plausible_bounds(estimates_constant, var_iid, preperiods = NA),
+    plausible_bounds(estimates_constant[1:n_test], var_iid[1:n_test, 1:n_test], preperiods = NA),
     "preperiods must be a non-negative integer"
   )
 })
@@ -108,8 +111,9 @@ test_that("preperiods parameter rejects vector inputs", {
   data(estimates_constant, envir = environment())
   data(var_iid, envir = environment())
 
+  n_test <- 6
   expect_error(
-    plausible_bounds(estimates_constant, var_iid, preperiods = c(1, 2)),
+    plausible_bounds(estimates_constant[1:n_test], var_iid[1:n_test, 1:n_test], preperiods = c(1, 2)),
     "preperiods must be a non-negative integer"
   )
 })

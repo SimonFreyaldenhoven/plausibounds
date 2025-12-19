@@ -71,12 +71,12 @@ test_that("new functions match original full_eventplot_l2tf results", {
 # Test parallel vs non-parallel results
 test_that("parallel and non-parallel results are identical", {
   skip_on_cran()
-  l <- 8
+  l <- 6
 
   # Test with wiggly estimates and strong correlation
   data(estimates_wiggly)
   data(var_corr)
-  
+
   # Run with parallel = TRUE
   set.seed(42)  # Set seed for reproducibility
   result_parallel <- plausible_bounds(
@@ -84,7 +84,7 @@ test_that("parallel and non-parallel results are identical", {
     var_corr[1:l,1:l],
     parallel = TRUE
   )
-  
+
   # Run with parallel = FALSE
   set.seed(42)  # Reset seed to ensure same random numbers
   result_sequential <- plausible_bounds(
@@ -152,4 +152,80 @@ test_that("parallel and non-parallel results are identical", {
     result_sequential_const$restricted_bounds_metadata$width,
     tolerance = 1e-10
   )
+})
+
+# Test n_cores parameter validation and edge cases
+test_that("plausible_bounds validates n_cores parameter", {
+  skip_if_not_installed("parallel")
+  skip_on_cran()
+
+  set.seed(123)
+  p <- 6
+  estimates <- stats::rnorm(p)
+  var <- diag(p) * 0.1
+
+  # Invalid: non-numeric
+  expect_error(
+    plausible_bounds(estimates, var, parallel = TRUE, n_cores = "two"),
+    "n_cores must be a positive integer"
+  )
+
+  # Invalid: negative
+  expect_error(
+    plausible_bounds(estimates, var, parallel = TRUE, n_cores = -1),
+    "n_cores must be a positive integer"
+  )
+
+  # Invalid: zero
+  expect_error(
+    plausible_bounds(estimates, var, parallel = TRUE, n_cores = 0),
+    "n_cores must be a positive integer"
+  )
+
+  # Invalid: non-integer
+  expect_error(
+    plausible_bounds(estimates, var, parallel = TRUE, n_cores = 3.5),
+    "n_cores must be a positive integer"
+  )
+
+  # Invalid: vector
+  expect_error(
+    plausible_bounds(estimates, var, parallel = TRUE, n_cores = c(2, 4)),
+    "n_cores must be a positive integer"
+  )
+})
+
+test_that("plausible_bounds works with specific n_cores values", {
+  skip_if_not_installed("parallel")
+  skip_on_cran()
+
+  set.seed(456)
+  p <- 6
+  estimates <- stats::rnorm(p)
+  var <- diag(p) * 0.1
+
+  # Test with n_cores = 1
+  set.seed(42)
+  result_1core <- plausible_bounds(estimates, var, parallel = TRUE, n_cores = 1)
+
+  # Test with n_cores = 2
+  set.seed(42)
+  result_2cores <- plausible_bounds(estimates, var, parallel = TRUE, n_cores = 2)
+
+  # Test with parallel = FALSE for comparison
+  set.seed(42)
+  result_seq <- plausible_bounds(estimates, var, parallel = FALSE)
+
+  # All should produce valid results
+  expect_s3_class(result_1core, "plausible_bounds")
+  expect_s3_class(result_2cores, "plausible_bounds")
+
+  # Results should be very similar across different n_cores
+  expect_equal(result_1core$restricted_bounds$horizon,
+               result_2cores$restricted_bounds$horizon)
+  expect_equal(result_1core$restricted_bounds$coef,
+               result_2cores$restricted_bounds$coef)
+  expect_equal(result_1core$restricted_bounds$surrogate,
+               result_2cores$restricted_bounds$surrogate,
+               tolerance = 0.01)
 })

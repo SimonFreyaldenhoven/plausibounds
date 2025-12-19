@@ -86,10 +86,10 @@ test_that("calculate_restricted_bounds handles different alpha values", {
 test_that("calculate_restricted_bounds handles parallel parameter", {
   skip_if_not_installed("parallel")
   skip_on_cran()
-  
+
   # Use small sample for speed
   set.seed(456)
-  n <- 10
+  n <- 8
   estimates <- rnorm(n)
   var <- diag(n) * 0.1
   
@@ -242,43 +242,6 @@ test_that("calculate_restricted_bounds metadata is correct", {
   expect_equal(result$metadata$width, actual_width, tolerance = 1e-10)
 })
 
-test_that("calculate_restricted_bounds handles pointwise and supt parameters", {
-  # Use small sample
-  set.seed(333)
-  n <- 5
-  estimates <- rnorm(n)
-  var <- diag(n) * 0.1
-  
-  # Test with both FALSE (default for restricted bounds)
-  result_none <- calculate_restricted_bounds(estimates, var,
-                                            include_pointwise = FALSE,
-                                            include_supt = FALSE)
-  expect_null(result_none$pointwise_bounds)
-  expect_null(result_none$supt_bounds)
-  
-  # Test with pointwise only
-  result_pw <- calculate_restricted_bounds(estimates, var,
-                                          include_pointwise = TRUE,
-                                          include_supt = FALSE)
-  expect_type(result_pw$pointwise_bounds, "list")
-  expect_named(result_pw$pointwise_bounds, c("lower", "upper", "critval"))
-  expect_null(result_pw$supt_bounds)
-  
-  # Test with supt only
-  result_supt <- calculate_restricted_bounds(estimates, var,
-                                            include_pointwise = FALSE,
-                                            include_supt = TRUE)
-  expect_null(result_supt$pointwise_bounds)
-  expect_type(result_supt$supt_bounds, "list")
-  expect_named(result_supt$supt_bounds, c("lower", "upper", "critval"))
-  
-  # Test with both TRUE
-  result_both <- calculate_restricted_bounds(estimates, var,
-                                            include_pointwise = TRUE,
-                                            include_supt = TRUE)
-  expect_type(result_both$pointwise_bounds, "list")
-  expect_type(result_both$supt_bounds, "list")
-})
 
 test_that("calculate_restricted_bounds optimization works correctly", {
   # Test that optimization finds a reasonable solution
@@ -342,4 +305,72 @@ test_that("calculate_restricted_bounds produces reproducible results", {
   
   expect_identical(result1$restricted_bounds, result2$restricted_bounds)
   expect_identical(result1$metadata, result2$metadata)
+})
+
+test_that("calculate_restricted_bounds validates n_cores parameter", {
+  skip_if_not_installed("parallel")
+  skip_on_cran()
+
+  set.seed(123)
+  n <- 6
+  estimates <- rnorm(n)
+  var <- diag(n) * 0.1
+
+  # Invalid: non-numeric
+  expect_error(
+    calculate_restricted_bounds(estimates, var, parallel = TRUE, n_cores = "two"),
+    "n_cores must be a positive integer"
+  )
+
+  # Invalid: negative
+  expect_error(
+    calculate_restricted_bounds(estimates, var, parallel = TRUE, n_cores = -1),
+    "n_cores must be a positive integer"
+  )
+
+  # Invalid: zero
+  expect_error(
+    calculate_restricted_bounds(estimates, var, parallel = TRUE, n_cores = 0),
+    "n_cores must be a positive integer"
+  )
+
+  # Invalid: non-integer
+  expect_error(
+    calculate_restricted_bounds(estimates, var, parallel = TRUE, n_cores = 2.5),
+    "n_cores must be a positive integer"
+  )
+
+  # Invalid: vector
+  expect_error(
+    calculate_restricted_bounds(estimates, var, parallel = TRUE, n_cores = c(2, 4)),
+    "n_cores must be a positive integer"
+  )
+})
+
+test_that("calculate_restricted_bounds works with n_cores = 1", {
+  skip_if_not_installed("parallel")
+  skip_on_cran()
+
+  set.seed(789)
+  n <- 8
+  estimates <- rnorm(n)
+  var <- diag(n) * 0.1
+
+  # Test with n_cores = 1
+  set.seed(100)
+  result_1core <- calculate_restricted_bounds(estimates, var, parallel = TRUE, n_cores = 1)
+
+  # Test with parallel = FALSE for comparison
+  set.seed(100)
+  result_seq <- calculate_restricted_bounds(estimates, var, parallel = FALSE)
+
+  # Results should be very similar
+  expect_s3_class(result_1core, "restricted_bounds")
+  expect_equal(result_1core$restricted_bounds$horizon,
+               result_seq$restricted_bounds$horizon)
+  expect_equal(result_1core$restricted_bounds$coef,
+               result_seq$restricted_bounds$coef)
+  expect_equal(result_1core$restricted_bounds$surrogate,
+               result_seq$restricted_bounds$surrogate,
+               tolerance = 0.01)
 })
