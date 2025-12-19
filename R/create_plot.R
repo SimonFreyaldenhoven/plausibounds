@@ -44,9 +44,12 @@ create_plot <- function(result,
   )
 
   # Check availability of optional bounds
-  availability <- check_bounds_availability(bounds_data, result, show_supt, show_pointwise)
+  chk <- check_bounds_availability(bounds_data, result, show_supt, show_pointwise)
 
   # Display informative messages about missing optional bounds
+  bounds_data <- chk$bounds_data
+  availability <- chk$availability
+  
   display_availability_messages(availability)
 
   # Extract test statistics for annotations
@@ -70,34 +73,41 @@ create_plot <- function(result,
 
 # Helper function to check what bounds are available and requested
 check_bounds_availability <- function(bounds_data, result, show_supt, show_pointwise) {
-  availability <- list(
-    show_restricted = TRUE,  # Restricted bounds are always shown
-    supt_requested = show_supt,
-    supt_available = !is.null(result$supt_bounds),
-    pointwise_requested = show_pointwise,
-    pointwise_available = !is.null(result$pointwise_bounds)
-  )
-
-  # Add pointwise bounds to restricted data if available
-  if (availability$pointwise_available &&
-      length(result$pointwise_bounds$lower) == nrow(bounds_data$restricted)) {
+  n <- nrow(bounds_data$restricted)
+  
+  pointwise_ok <- !is.null(result$pointwise_bounds) &&
+    all(c("lower", "upper") %in% names(result$pointwise_bounds)) &&
+    length(result$pointwise_bounds$lower) == n &&
+    length(result$pointwise_bounds$upper) == n
+  
+  supt_ok <- !is.null(result$supt_bounds) &&
+    all(c("lower", "upper") %in% names(result$supt_bounds)) &&
+    length(result$supt_bounds$lower) == n &&
+    length(result$supt_bounds$upper) == n
+  
+  if (pointwise_ok) {
     bounds_data$restricted$pointwise_lower <- result$pointwise_bounds$lower
     bounds_data$restricted$pointwise_upper <- result$pointwise_bounds$upper
   }
-
-  # Add sup-t bounds to restricted data if available
-  if (availability$supt_available &&
-      length(result$supt_bounds$lower) == nrow(bounds_data$restricted)) {
+  
+  if (supt_ok) {
     bounds_data$restricted$supt_lower <- result$supt_bounds$lower
     bounds_data$restricted$supt_upper <- result$supt_bounds$upper
   }
-
-  # Determine what will actually be shown
-  availability$show_supt <- availability$supt_requested && availability$supt_available
-  availability$show_pointwise <- availability$pointwise_requested && availability$pointwise_available
-
-  return(availability)
+  
+  availability <- list(
+    show_restricted = TRUE,
+    supt_requested = show_supt,
+    supt_available = supt_ok,
+    pointwise_requested = show_pointwise,
+    pointwise_available = pointwise_ok,
+    show_supt = show_supt && supt_ok,
+    show_pointwise = show_pointwise && pointwise_ok
+  )
+  
+  list(bounds_data = bounds_data, availability = availability)
 }
+
 
 # Helper function to display informative messages about missing optional bounds
 display_availability_messages <- function(availability) {
