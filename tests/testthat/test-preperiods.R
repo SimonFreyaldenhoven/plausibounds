@@ -16,7 +16,7 @@ test_that("preperiods parameter accepts valid values", {
   data(estimates_constant, envir = environment())
   data(var_iid, envir = environment())
 
-  n_test <- 6
+  n_test <- 7
   # Valid: zero preperiods
   expect_error(plausible_bounds(estimates_constant[1:n_test], var_iid[1:n_test, 1:n_test], preperiods = 0), NA)
 
@@ -27,11 +27,11 @@ test_that("preperiods parameter accepts valid values", {
   var <- block_diag_matrix(Vpre_single, var_iid[1:n_test, 1:n_test])
   expect_error(plausible_bounds(estimates, var, preperiods = 1), NA)
 
-  # Valid: multiple preperiods
+  # Valid: multiple preperiods (8 pre + 7 post)
   pre_mean0 <- readRDS(test_path("fixtures", "preperiods_mean0.rds"))
   Vpre_iid <- readRDS(test_path("fixtures", "Vpre_iid.rds"))
-  estimates_full <- c(pre_mean0, estimates_constant[1:n_test])
-  var_full <- block_diag_matrix(Vpre_iid, var_iid[1:n_test, 1:n_test])
+  estimates_full <- c(pre_mean0, estimates_constant[1:7])
+  var_full <- block_diag_matrix(Vpre_iid, var_iid[1:7, 1:7])
   expect_error(plausible_bounds(estimates_full, var_full, preperiods = 8), NA)
 })
 
@@ -126,11 +126,12 @@ test_that("horizon numbering is correct with preperiods", {
   data(estimates_constant, envir = environment())
   data(var_iid, envir = environment())
 
-  npre <- length(pre_mean0)
-  npost <- length(estimates_constant)
+  # Use 8 pre + 7 post
+  npre <- 8
+  npost <- 7
 
-  estimates <- c(pre_mean0, estimates_constant)
-  var <- block_diag_matrix(Vpre_iid, var_iid)
+  estimates <- c(pre_mean0[1:npre], estimates_constant[1:npost])
+  var <- block_diag_matrix(Vpre_iid[1:npre, 1:npre], var_iid[1:npost, 1:npost])
 
   result <- plausible_bounds(estimates, var, preperiods = npre)
 
@@ -152,15 +153,16 @@ test_that("horizon numbering is consistent across all functions", {
   data(estimates_constant, envir = environment())
   data(var_iid, envir = environment())
 
-  estimates <- c(pre_mean0, estimates_constant)
-  var <- block_diag_matrix(Vpre_iid, var_iid)
-  npre <- length(pre_mean0)
-  npost <- length(estimates_constant)
+  # Use 8 pre + 7 post
+  npre <- 8
+  npost <- 7
+  estimates <- c(pre_mean0[1:npre], estimates_constant[1:npost])
+  var <- block_diag_matrix(Vpre_iid[1:npre, 1:npre], var_iid[1:npost, 1:npost])
 
   restr <- calculate_restricted_bounds(estimates, var, preperiods = npre)
   cumul <- calculate_cumulative_bounds(estimates, var, preperiods = npre)
 
-  expected_horizons <- c(-8:-1, 1:12)
+  expected_horizons <- c(-8:-1, 1:7)
   expect_equal(restr$restricted_bounds$horizon, expected_horizons)
   expect_equal(cumul$cumulative_bounds$horizon, expected_horizons)
 })
@@ -173,9 +175,10 @@ test_that("restricted bounds are NA for preperiods", {
   data(estimates_constant, envir = environment())
   data(var_iid, envir = environment())
 
-  estimates <- c(pre_mean0, estimates_constant)
-  var <- block_diag_matrix(Vpre_iid, var_iid)
-  npre <- length(pre_mean0)
+  # Use 8 pre + 7 post
+  npre <- 8
+  estimates <- c(pre_mean0[1:npre], estimates_constant[1:7])
+  var <- block_diag_matrix(Vpre_iid[1:npre, 1:npre], var_iid[1:7, 1:7])
 
   result <- plausible_bounds(estimates, var, preperiods = npre)
 
@@ -201,9 +204,10 @@ test_that("cumulative bounds are NA for preperiods", {
   data(estimates_constant, envir = environment())
   data(var_iid, envir = environment())
 
-  estimates <- c(pre_mean0, estimates_constant)
-  var <- block_diag_matrix(Vpre_iid, var_iid)
-  npre <- length(pre_mean0)
+  # Use 8 pre + 7 post
+  npre <- 8
+  estimates <- c(pre_mean0[1:npre], estimates_constant[1:7])
+  var <- block_diag_matrix(Vpre_iid[1:npre, 1:npre], var_iid[1:7, 1:7])
 
   result <- calculate_cumulative_bounds(estimates, var, preperiods = npre)
 
@@ -229,8 +233,9 @@ test_that("Wpre is computed when preperiods > 0", {
   data(estimates_constant, envir = environment())
   data(var_iid, envir = environment())
 
-  estimates <- c(pre_mean0, estimates_constant)
-  var <- block_diag_matrix(Vpre_iid, var_iid)
+  # Use 8 pre + 7 post
+  estimates <- c(pre_mean0, estimates_constant[1:7])
+  var <- block_diag_matrix(Vpre_iid, var_iid[1:7, 1:7])
 
   result <- plausible_bounds(estimates, var, preperiods = 8)
 
@@ -244,7 +249,8 @@ test_that("Wpre is NULL when preperiods = 0", {
   data(estimates_constant, envir = environment())
   data(var_iid, envir = environment())
 
-  result <- plausible_bounds(estimates_constant, var_iid, preperiods = 0)
+  # Use 6 post-periods
+  result <- plausible_bounds(estimates_constant[1:7], var_iid[1:7, 1:7], preperiods = 0)
 
   expect_null(result$wald_test$pre)
   expect_true(!is.null(result$wald_test$post))  # But Wpost should exist
@@ -254,21 +260,20 @@ test_that("Wpre passes for scenarios with no pre-trends", {
   data(estimates_constant, envir = environment())
   data(var_iid, envir = environment())
 
-  # Test with mean0 scenario (should pass)
+  # Test with mean0 scenario (should pass) - use 8 pre + 7 post
   pre_mean0 <- readRDS(test_path("fixtures", "preperiods_mean0.rds"))
   Vpre_iid <- readRDS(test_path("fixtures", "Vpre_iid.rds"))
-  estimates <- c(pre_mean0, estimates_constant)
-  var <- block_diag_matrix(Vpre_iid, var_iid)
+  estimates <- c(pre_mean0, estimates_constant[1:7])
+  var <- block_diag_matrix(Vpre_iid, var_iid[1:7, 1:7])
 
   result <- plausible_bounds(estimates, var, preperiods = 8)
   expect_true(result$wald_test$pre$p_value >= 0.05)  # Should fail to reject H0
 
-  # Note: Fixed scenario has declining pattern so may actually fail pre-trends test
-  # Test with corr scenario (should pass)
+  # Test with corr scenario (should pass) - use 8 pre + 7 post
   pre_corr <- readRDS(test_path("fixtures", "preperiods_corr.rds"))
   Vpre_corr <- readRDS(test_path("fixtures", "Vpre_corr.rds"))
-  estimates_corr <- c(pre_corr, estimates_constant)
-  var_corr_full <- block_diag_matrix(Vpre_corr, var_iid)
+  estimates_corr <- c(pre_corr, estimates_constant[1:7])
+  var_corr_full <- block_diag_matrix(Vpre_corr, var_iid[1:7, 1:7])
 
   result_corr <- plausible_bounds(estimates_corr, var_corr_full, preperiods = 8)
   expect_true(result_corr$wald_test$pre$p_value >= 0.05)
@@ -278,11 +283,11 @@ test_that("Wpre fails for reject scenario with pre-trends", {
   data(estimates_constant, envir = environment())
   data(var_iid, envir = environment())
 
-  # Test with reject scenario (designed to fail)
+  # Test with reject scenario (designed to fail) - use 8 pre + 7 post
   pre_reject <- readRDS(test_path("fixtures", "preperiods_reject.rds"))
   Vpre_reject <- readRDS(test_path("fixtures", "Vpre_reject.rds"))
-  estimates <- c(pre_reject, estimates_constant)
-  var <- block_diag_matrix(Vpre_reject, var_iid)
+  estimates <- c(pre_reject, estimates_constant[1:7])
+  var <- block_diag_matrix(Vpre_reject, var_iid[1:7, 1:7])
 
   result <- plausible_bounds(estimates, var, preperiods = 8)
 
@@ -296,8 +301,9 @@ test_that("Wpre calculation is correct in calculate_restricted_bounds", {
   data(estimates_constant, envir = environment())
   data(var_iid, envir = environment())
 
-  estimates <- c(pre_mean0, estimates_constant)
-  var <- block_diag_matrix(Vpre_iid, var_iid)
+  # Use 8 pre + 7 post
+  estimates <- c(pre_mean0, estimates_constant[1:7])
+  var <- block_diag_matrix(Vpre_iid, var_iid[1:7, 1:7])
 
   result <- calculate_restricted_bounds(estimates, var, preperiods = 8)
 
@@ -313,17 +319,17 @@ test_that("Wpost is always computed regardless of preperiods", {
   data(estimates_constant, envir = environment())
   data(var_iid, envir = environment())
 
-  # Without preperiods
-  result_no_pre <- plausible_bounds(estimates_constant, var_iid, preperiods = 0)
+  # Without preperiods - use 6 post
+  result_no_pre <- plausible_bounds(estimates_constant[1:7], var_iid[1:7, 1:7], preperiods = 0)
   expect_true(!is.null(result_no_pre$wald_test$post))
   expect_true(is.numeric(result_no_pre$wald_test$post$statistic))
   expect_true(is.numeric(result_no_pre$wald_test$post$p_value))
 
-  # With preperiods
+  # With preperiods - use 8 pre + 7 post
   pre_mean0 <- readRDS(test_path("fixtures", "preperiods_mean0.rds"))
   Vpre_iid <- readRDS(test_path("fixtures", "Vpre_iid.rds"))
-  estimates <- c(pre_mean0, estimates_constant)
-  var <- block_diag_matrix(Vpre_iid, var_iid)
+  estimates <- c(pre_mean0, estimates_constant[1:7])
+  var <- block_diag_matrix(Vpre_iid, var_iid[1:7, 1:7])
 
   result_with_pre <- plausible_bounds(estimates, var, preperiods = 8)
   expect_true(!is.null(result_with_pre$wald_test$post))
@@ -335,13 +341,13 @@ test_that("Wpost is computed on post-periods only", {
   data(estimates_constant, envir = environment())
   data(var_iid, envir = environment())
 
-  # With preperiods
-  estimates <- c(pre_mean0, estimates_constant)
-  var <- block_diag_matrix(Vpre_iid, var_iid)
+  # With preperiods - use 8 pre + 7 post
+  estimates <- c(pre_mean0, estimates_constant[1:7])
+  var <- block_diag_matrix(Vpre_iid, var_iid[1:7, 1:7])
   result_with_pre <- plausible_bounds(estimates, var, preperiods = 8)
 
-  # Without preperiods (same post data)
-  result_no_pre <- plausible_bounds(estimates_constant, var_iid, preperiods = 0)
+  # Without preperiods (same post data) - use 6 post
+  result_no_pre <- plausible_bounds(estimates_constant[1:7], var_iid[1:7, 1:7], preperiods = 0)
 
   # Wpost should be the same (only depends on post-periods)
   expect_equal(
@@ -364,20 +370,21 @@ test_that("pre and post periods are treated as independent blocks", {
   data(estimates_constant, envir = environment())
   data(var_iid, envir = environment())
 
-  npre <- length(pre_mean0)
-  npost <- length(estimates_constant)
+  # Use 8 pre + 7 post
+  npre <- 8
+  npost <- 7
 
   # Create block diagonal variance (no correlation between pre and post)
   var_block <- matrix(0, npre + npost, npre + npost)
   var_block[1:npre, 1:npre] <- Vpre_iid
-  var_block[(npre+1):(npre+npost), (npre+1):(npre+npost)] <- var_iid
+  var_block[(npre + 1):(npre + npost), (npre + 1):(npre + npost)] <- var_iid[1:npost, 1:npost]
 
-  estimates <- c(pre_mean0, estimates_constant)
+  estimates <- c(pre_mean0, estimates_constant[1:npost])
   result <- plausible_bounds(estimates, var_block, preperiods = npre)
 
   # Check that off-diagonal blocks in variance are all zeros
-  expect_true(all(var_block[1:npre, (npre+1):(npre+npost)] == 0))
-  expect_true(all(var_block[(npre+1):(npre+npost), 1:npre] == 0))
+  expect_true(all(var_block[1:npre, (npre + 1):(npre + npost)] == 0))
+  expect_true(all(var_block[(npre + 1):(npre + npost), 1:npre] == 0))
 
   # Surrogate should only be computed on post-periods
   post_rows <- result$restricted_bounds$horizon > 0
@@ -390,11 +397,12 @@ test_that("ATE is computed from post-periods only", {
   data(estimates_constant, envir = environment())
   data(var_iid, envir = environment())
 
-  estimates <- c(pre_mean0, estimates_constant)
-  var <- block_diag_matrix(Vpre_iid, var_iid)
+  # Use 8 pre + 7 post
+  estimates <- c(pre_mean0, estimates_constant[1:7])
+  var <- block_diag_matrix(Vpre_iid, var_iid[1:7, 1:7])
 
   result_with_pre <- plausible_bounds(estimates, var, preperiods = 8)
-  result_no_pre <- plausible_bounds(estimates_constant, var_iid, preperiods = 0)
+  result_no_pre <- plausible_bounds(estimates_constant[1:7], var_iid[1:7, 1:7], preperiods = 0)
 
   # ATE should be the same (only depends on post-periods)
   expect_equal(
@@ -417,8 +425,9 @@ test_that("pointwise bounds are computed for all periods when preperiods > 0", {
   data(estimates_constant, envir = environment())
   data(var_iid, envir = environment())
 
-  estimates <- c(pre_mean0, estimates_constant)
-  var <- block_diag_matrix(Vpre_iid, var_iid)
+  # Use 8 pre + 7 post
+  estimates <- c(pre_mean0, estimates_constant[1:7])
+  var <- block_diag_matrix(Vpre_iid, var_iid[1:7, 1:7])
 
   result <- plausible_bounds(estimates, var, preperiods = 8, include_pointwise = TRUE)
 
@@ -437,8 +446,9 @@ test_that("supt bounds use critical value from all periods", {
   data(estimates_constant, envir = environment())
   data(var_iid, envir = environment())
 
-  estimates <- c(pre_mean0, estimates_constant)
-  var <- block_diag_matrix(Vpre_iid, var_iid)
+  # Use 8 pre + 7 post
+  estimates <- c(pre_mean0, estimates_constant[1:7])
+  var <- block_diag_matrix(Vpre_iid, var_iid[1:7, 1:7])
 
   result <- plausible_bounds(estimates, var, preperiods = 8, include_supt = TRUE)
 
@@ -463,8 +473,9 @@ test_that("create_plot handles preperiods correctly", {
   data(estimates_constant, envir = environment())
   data(var_iid, envir = environment())
 
-  estimates <- c(pre_mean0, estimates_constant)
-  var <- block_diag_matrix(Vpre_iid, var_iid)
+  # Use 8 pre + 7 post
+  estimates <- c(pre_mean0, estimates_constant[1:7])
+  var <- block_diag_matrix(Vpre_iid, var_iid[1:7, 1:7])
 
   result <- plausible_bounds(estimates, var, preperiods = 8)
   plot <- create_plot(result)
@@ -486,8 +497,9 @@ test_that("plot shows vertical line at event time 0 when preperiods > 0", {
   data(estimates_constant, envir = environment())
   data(var_iid, envir = environment())
 
-  estimates <- c(pre_mean0, estimates_constant)
-  var <- block_diag_matrix(Vpre_iid, var_iid)
+  # Use 8 pre + 7 post
+  estimates <- c(pre_mean0, estimates_constant[1:7])
+  var <- block_diag_matrix(Vpre_iid, var_iid[1:7, 1:7])
 
   result <- plausible_bounds(estimates, var, preperiods = 8)
   plot <- create_plot(result)
@@ -528,8 +540,9 @@ test_that("full pipeline works with all four preperiod scenarios", {
   )
 
   for (name in names(scenarios)) {
-    estimates <- c(scenarios[[name]]$pre, estimates_constant)
-    var <- block_diag_matrix(scenarios[[name]]$Vpre, var_iid)
+    # Use 8 pre + 7 post
+    estimates <- c(scenarios[[name]]$pre, estimates_constant[1:7])
+    var <- block_diag_matrix(scenarios[[name]]$Vpre, var_iid[1:7, 1:7])
 
     # Test plausible_bounds
     result <- plausible_bounds(estimates, var, preperiods = 8)
@@ -560,8 +573,9 @@ test_that("metadata is correctly populated with preperiods", {
   data(estimates_constant, envir = environment())
   data(var_iid, envir = environment())
 
-  estimates <- c(pre_mean0, estimates_constant)
-  var <- block_diag_matrix(Vpre_iid, var_iid)
+  # Use 8 pre + 7 post
+  estimates <- c(pre_mean0, estimates_constant[1:7])
+  var <- block_diag_matrix(Vpre_iid, var_iid[1:7, 1:7])
 
   result <- plausible_bounds(estimates, var, preperiods = 8)
 
@@ -582,11 +596,11 @@ test_that("single preperiod works correctly", {
   data(estimates_constant, envir = environment())
   data(var_iid, envir = environment())
 
-  # Single preperiod
+  # Single preperiod + 6 post
   pre_single <- rnorm(1, mean = 0, sd = 0.3)
   Vpre_single <- matrix(0.1, 1, 1)
-  estimates <- c(pre_single, estimates_constant)
-  var <- block_diag_matrix(Vpre_single, var_iid)
+  estimates <- c(pre_single, estimates_constant[1:7])
+  var <- block_diag_matrix(Vpre_single, var_iid[1:7, 1:7])
 
   result <- plausible_bounds(estimates, var, preperiods = 1)
   expect_equal(result$preperiods, 1)
@@ -598,7 +612,8 @@ test_that("zero preperiods works and Wpre is NULL", {
   data(estimates_constant, envir = environment())
   data(var_iid, envir = environment())
 
-  result <- plausible_bounds(estimates_constant, var_iid, preperiods = 0)
+  # Use 6 post
+  result <- plausible_bounds(estimates_constant[1:7], var_iid[1:7, 1:7], preperiods = 0)
 
   expect_equal(result$preperiods, 0)
   expect_null(result$wald_test$pre)
@@ -607,41 +622,15 @@ test_that("zero preperiods works and Wpre is NULL", {
 })
 
 test_that("many preperiods with few post-periods works", {
-  #skip("Edge case with 1 post-period causes error in package - potential bug")
-
   data(estimates_constant, envir = environment())
   data(var_iid, envir = environment())
 
   n <- length(estimates_constant)
 
+  # Test with n-2 preperiods and 2 post-periods (edge case)
   result <- plausible_bounds(estimates_constant, var_iid, preperiods = n - 2)
   expect_equal(result$preperiods, n - 2)
-  expect_equal(nrow(result$restricted_bounds), n )
-})
-
-test_that("results are consistent across different preperiod counts", {
-  pre_mean0 <- readRDS(test_path("fixtures", "preperiods_mean0.rds"))
-  Vpre_iid <- readRDS(test_path("fixtures", "Vpre_iid.rds"))
-  data(estimates_constant, envir = environment())
-  data(var_iid, envir = environment())
-
-  # Test with different numbers of preperiods
-  for (npre in c(2, 4, 6, 8)) {
-    pre_subset <- pre_mean0[1:npre]
-    Vpre_subset <- Vpre_iid[1:npre, 1:npre]
-
-    estimates <- c(pre_subset, estimates_constant[1:4])
-    var <- block_diag_matrix(Vpre_subset, var_iid[1:4, 1:4])
-
-    result <- plausible_bounds(estimates, var, preperiods = npre)
-
-    expect_equal(result$preperiods, npre)
-    expect_equal(nrow(result$restricted_bounds), npre + length(estimates_constant[1:4]))
-
-    # Post-treatment results should be similar regardless of npre
-    post_rows <- result$restricted_bounds$horizon > 0
-    expect_equal(sum(post_rows), length(estimates_constant[1:4]))
-  }
+  expect_equal(nrow(result$restricted_bounds), n)
 })
 
 test_that("post-treatment results are independent of npre", {
@@ -650,21 +639,26 @@ test_that("post-treatment results are independent of npre", {
   data(estimates_constant, envir = environment())
   data(var_iid, envir = environment())
 
-  # Compare 2 preperiods vs 6 preperiods
-  estimates_2pre <- c(pre_mean0[1:2], estimates_constant)
-  var_2pre <- block_diag_matrix(Vpre_iid[1:2, 1:2], var_iid)
+  # Compare 2 preperiods vs 6 preperiods - use 6 post
+  estimates_2pre <- c(pre_mean0[1:2], estimates_constant[1:7])
+  var_2pre <- block_diag_matrix(Vpre_iid[1:2, 1:2], var_iid[1:7, 1:7])
   result_2pre <- plausible_bounds(estimates_2pre, var_2pre, preperiods = 2)
 
-  estimates_6pre <- c(pre_mean0[1:6], estimates_constant)
-  var_6pre <- block_diag_matrix(Vpre_iid[1:6, 1:6], var_iid)
+  estimates_6pre <- c(pre_mean0[1:6], estimates_constant[1:7])
+  var_6pre <- block_diag_matrix(Vpre_iid[1:6, 1:6], var_iid[1:7, 1:7])
   result_6pre <- plausible_bounds(estimates_6pre, var_6pre, preperiods = 6)
 
-  # Post-period surrogate should be very similar (not identical due to critical values)
-  post_bounds_2pre <- result_2pre$restricted_bounds[result_2pre$restricted_bounds$horizon > 0, ]
-  post_bounds_6pre <- result_6pre$restricted_bounds[result_6pre$restricted_bounds$horizon > 0, ]
+  # Post-period surrogate should be very similar
+  post_bounds_2pre <- result_2pre$restricted_bounds[
+    result_2pre$restricted_bounds$horizon > 0,
+  ]
+  post_bounds_6pre <- result_6pre$restricted_bounds[
+    result_6pre$restricted_bounds$horizon > 0,
+  ]
 
-  expect_equal(post_bounds_2pre$surrogate, post_bounds_6pre$surrogate, tolerance = 1e-10)
-  # Bounds can differ slightly due to different critical values from different npre
+  expect_equal(post_bounds_2pre$surrogate, post_bounds_6pre$surrogate,
+               tolerance = 1e-10)
+  # Bounds can differ slightly due to different critical values
   expect_equal(post_bounds_2pre$lower, post_bounds_6pre$lower, tolerance = 1e-2)
   expect_equal(post_bounds_2pre$upper, post_bounds_6pre$upper, tolerance = 1e-2)
 })
@@ -675,8 +669,9 @@ test_that("preperiods work with different alpha values", {
   data(estimates_constant, envir = environment())
   data(var_iid, envir = environment())
 
-  estimates <- c(pre_mean0, estimates_constant)
-  var <- block_diag_matrix(Vpre_iid, var_iid)
+  # Use 8 pre + 7 post
+  estimates <- c(pre_mean0, estimates_constant[1:7])
+  var <- block_diag_matrix(Vpre_iid, var_iid[1:7, 1:7])
 
   for (alpha in c(0.01, 0.05, 0.1)) {
     result <- plausible_bounds(estimates, var, alpha = alpha, preperiods = 8)

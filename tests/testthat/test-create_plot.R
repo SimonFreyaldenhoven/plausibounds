@@ -253,19 +253,21 @@ test_that("check_bounds_availability identifies available optional bounds", {
     has_restricted = TRUE
   )
 
-  availability <- check_bounds_availability(
+  chk <- check_bounds_availability(
     bounds_data,
     pb,
     show_supt = TRUE,
     show_pointwise = TRUE
   )
 
-  # Check structure
-  expect_type(availability, "list")
+  # Check structure - function returns list with bounds_data and availability
+  expect_type(chk, "list")
+  expect_true("bounds_data" %in% names(chk))
+  expect_true("availability" %in% names(chk))
 
-  # Check that requested status is recorded
-  expect_true(availability$supt_requested)
-  expect_true(availability$pointwise_requested)
+  # Check that requested status is recorded in the availability sub-list
+  expect_true(chk$availability$supt_requested)
+  expect_true(chk$availability$pointwise_requested)
 })
 
 test_that("display_availability_messages shows correct messages for optional bounds", {
@@ -302,15 +304,15 @@ test_that("create_bounds_plot generates correct plot structure", {
     has_restricted = TRUE
   )
 
-  availability <- check_bounds_availability(
+  chk <- check_bounds_availability(
     bounds_data,
     pb,
     show_supt = FALSE,
     show_pointwise = FALSE
   )
 
-  # Create plot
-  plot <- create_bounds_plot(bounds_data, availability)
+  # Create plot - use extracted bounds_data and availability from chk
+  plot <- create_bounds_plot(chk$bounds_data, chk$availability)
 
   check_plot_structure(plot)
 
@@ -359,4 +361,24 @@ test_that("legend is properly configured", {
   if (!is.null(color_scale)) {
     expect_true("Point Estimates" %in% color_scale$labels)
   }
+})
+
+# ---- Annotations Tests ----
+
+test_that("show_annotations parameter controls annotation visibility", {
+  # Use pre-computed fixture that has test statistics
+  pb <- readRDS(test_path("fixtures", "complex_plausible.rds"))
+
+  # Plot with annotations (default)
+  plot_with <- create_plot(pb, show_annotations = TRUE)
+  # Plot without annotations
+  plot_without <- create_plot(pb, show_annotations = FALSE)
+
+  # Check that plot with annotations has a caption if test statistics exist
+  if (!is.null(pb$wald_test) || !is.null(pb$avg_treatment_effect)) {
+    expect_false(is.null(plot_with$labels$caption))
+  }
+
+  # Plot without annotations should not have caption
+  expect_true(is.null(plot_without$labels$caption))
 })

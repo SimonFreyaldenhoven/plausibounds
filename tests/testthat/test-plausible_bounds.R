@@ -200,7 +200,7 @@ test_that("plausible_bounds works with specific n_cores values", {
   skip_on_cran()
 
   set.seed(456)
-  p <- 6
+  p <- 8
   estimates <- stats::rnorm(p)
   var <- diag(p) * 0.1
 
