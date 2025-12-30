@@ -15,21 +15,7 @@
 #'   \item{cumulative_bounds}{A data frame with columns for horizon (event time), coefficients, and bounds}
 #'   \item{ate}{Average treatment effect with standard error}
 #'   \item{metadata}{A list with metadata about the calculation}
-#'
-#' @examples
-#' # Example with constant estimates and IID errors
-#' data(estimates_constant)
-#' data(var_iid)
-#' cumul_bounds <- calculate_cumulative_bounds(estimates_constant, var_iid)
-#'
-#' # Example with wiggly estimates and strong correlation
-#' data(estimates_wiggly)
-#' data(var_corr)
-#' cumul_bounds_complex <- calculate_cumulative_bounds(
-#'   estimates_wiggly,
-#'   var_corr
-#' )
-#'
+
 calculate_cumulative_bounds <- function(estimates, var, alpha = 0.05,
                                        preperiods = 0) {
   # Check inputs

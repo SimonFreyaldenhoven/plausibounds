@@ -20,13 +20,6 @@
 #'   \item{Wpre}{Wald test for pre-trends (statistic and p-value), if preperiods > 0}
 #'   \item{Wpost}{Wald test for no treatment effect (statistic and p-value)}
 #'   \item{metadata}{A list with metadata about the calculation}
-#'
-#' @examples
-#' # Example with constant estimates and IID errors
-#' data(estimates_constant)
-#' data(var_iid)
-#' restr_bounds <- calculate_restricted_bounds(estimates_constant[1:5], var_iid[1:5, 1:5])
-#'
 #' @keywords internal
 
 calculate_restricted_bounds <- function(estimates, var, alpha = 0.05,
