@@ -1,0 +1,237 @@
+---
+title: "Introduction to plausibounds: Computing Plausible Bounds for Treatment Path Estimates"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Introduction to plausiblebounds}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.width = 7,
+  fig.height = 5,
+  fig.align = "center"
+)
+```
+
+```{r setup}
+library(plausibounds)
+library(ggplot2)
+```
+
+## Overview
+
+The `plausibounds` package implements methods developed in Freyaldenhoven and Hansen (2025) for visualizing uncertainty in treatment effect paths from event study designs and related settings. The central contribution is to provide **plausible bounds**—confidence regions that often remain informative even when traditional uniform bands are too wide to be useful.
+
+Two innovations distinguish the approach:
+
+1. **Cumulative bounds**, which quantify uncertainty in the *average* treatment effect across horizons.
+2. **Restricted bounds**, which approximate the treatment path with a smooth surrogate chosen from a model universe, and then construct confidence regions that account for model selection.
+
+These tools are designed to complement traditional pointwise and sup-t confidence bands, offering different inferential targets and interpretive advantages.
+
+## Key Concepts
+
+### Treatment Path Estimation
+
+Let $\hat{\beta} = (\hat{\beta}_1, \ldots, \hat{\beta}_H)$ denote estimates of treatment effects at horizons $h=1,\dots,H$, with
+
+$$
+\hat{\beta} \sim N(\beta, V_\beta).
+$$
+
+Here $\beta$ is the true treatment path and $V_\beta$ its covariance matrix. This setup encompasses common estimators such as distributed lag models, local projections, and event studies.
+
+### Types of Bounds
+
+* **Pointwise bounds**: Standard intervals for each horizon separately.
+* **Sup-t bounds**: Uniform bands covering the full path with probability $1-\alpha$.
+* **Cumulative bounds**: Plausible bounds for the average effect across horizons.
+* **Restricted bounds**: Plausible bounds for a data-selected surrogate path that smooths the treatment path.
+
+
+## Theoretical Background
+
+### Cumulative Bounds
+
+Cumulative bounds target the average treatment effect:
+
+$$
+\bar{\beta} = \frac{1}{H} w'\hat{\beta}, \quad w = (1, \dots, 1)' .
+$$
+
+Its variance is
+
+$$
+\text{Var}(\bar{\beta}) = \frac{1}{H^2} w' V_\beta w .
+$$
+
+A $(1-\alpha)$ interval is then
+
+$$
+\bar{\beta} \pm z_{1-\alpha/2}\sqrt{\tfrac{1}{H^2}w'V_\beta w}.
+$$
+
+These bounds are constant across horizons. They guarantee that the true treatment path lies *on average* within the region in $1-\alpha$ of repeated samples:
+
+$$
+\Pr\!\left(\sum_{h=1}^H L_h < \sum_{h=1}^H \beta_h < \sum_{h=1}^H U_h \right) = 1-\alpha .
+$$
+
+### Restricted Bounds
+
+Restricted bounds approximate $\beta$ by a **surrogate path** $\beta_M = P(M)\beta$, where $M$ indexes a model in a pre-specified universe $\mathcal{M}$. Examples include:
+
+* polynomial models (constant, linear, quadratic, cubic)
+* shrinkage of first and third differences to enforce smoothness and eventual decay
+
+Given estimates $\hat{\beta}$, the surrogate is obtained by solving a penalized least squares problem:
+
+$$
+\tilde{\beta}(M) = \arg\min_b \Big[ (\hat{\beta} - b)'V_\beta^{-1}(\hat{\beta} - b)
+  + \lambda_1 b'D_1'W_1(K)D_1 b
+  + \lambda_2 b'D_3'W_3 D_3 b \Big],
+$$
+
+where $D_1$ and $D_3$ are first- and third-difference operators and $\lambda_1,\lambda_2,K$ are tuning parameters. The solution has closed form
+
+$$
+\tilde{\beta}(M) = P(M)\hat{\beta}, \quad P(M) = \Big(V_\beta^{-1} + \lambda_1 D_1'W_1(K)D_1 + \lambda_2 D_3'W_3D_3\Big)^{-1} V_\beta^{-1}.
+$$
+
+The surrogate model $M$ is selected by minimizing a BIC-type criterion:
+
+$$
+\hat{M} = \arg\min_{M \in \mathcal{M}} \; (\hat{\beta}-\tilde{\beta}(M))'V_\beta^{-1}(\hat{\beta}-\tilde{\beta}(M)) + \log(H)\,\text{df}(M),
+$$
+
+with degrees of freedom $\text{df}(M) = \mathrm{trace}(P(M))$.
+
+Once $\hat{M}$ is chosen, post-selection inference (Berk et al. 2013) is used to guarantee coverage for the surrogate path:
+
+$$
+\Pr\!\big(\beta_{\hat{M}} \in \text{CR}_{\text{PoSI}}\big) \ge 1-\alpha.
+$$
+
+The restricted bounds are therefore uniform confidence regions for the *selected surrogate path*, not the true path. This is a feature: the surrogate often captures policy-relevant features of the dynamics more clearly than raw noisy estimates.
+
+
+## Properties and Practical Guidance
+
+* **Cumulative bounds** quantify average effects and remain narrow even when sup-t bands are too wide to interpret.
+* **Restricted bounds** adapt to smoothness and covariance structure, often yielding informative bands that reflect economically meaningful approximations.
+* **Sup-t bands** remain the default for full-path uniform coverage but can be extremely wide, especially when horizons are many or estimates are strongly correlated.
+* In applications, cumulative bounds are useful for assessing overall effect direction and magnitude, while restricted bounds provide a clearer picture of the main shape of the treatment path.
+
+
+## Basic Usage
+
+### Example 1: Simple Case with IID Errors
+
+```{r simple-example}
+# Display the first few estimates of built in dataset `estimates_constant`
+head(estimates_constant)
+
+simple_pb <- plausible_bounds(
+  estimates = estimates_constant,
+  var = var_iid,
+  alpha = 0.05
+)
+
+summary(simple_pb)
+```
+
+### Visualizing the Results
+
+```{r plot-simple, fig.cap="Plausible bounds for constant estimates with IID errors"}
+create_plot(simple_pb)
+```
+
+---
+
+## Example 2: Complex Case with Correlated Errors
+
+```{r complex-example}
+wiggly_pb <- plausible_bounds(
+  estimates = estimates_wiggly,
+  var = var_corr,
+  alpha = 0.05
+)
+
+create_plot(wiggly_pb)
+```
+
+---
+
+## Additional Features
+
+```{r selective-bounds}
+cumul_only <- calculate_cumulative_bounds(
+  estimates = estimates_constant,
+  var = var_iid,
+  alpha = 0.05,
+  include_pointwise = TRUE,
+  include_supt = TRUE
+)
+
+restr_only <- calculate_restricted_bounds(
+  estimates = estimates_constant,
+  var = var_iid,
+  alpha = 0.05
+)
+
+create_plot(cumul_only, restr_only)
+```
+
+Visualization options allow hiding or showing different bounds:
+
+```{r custom-plot}
+create_plot(wiggly_pb, show_cumulative = FALSE)
+create_plot(wiggly_pb, show_supt = FALSE, show_restricted = FALSE)
+```
+
+Parallel processing is supported:
+
+```{r parallel, eval=FALSE}
+parallel_pb <- plausible_bounds(
+  estimates = estimates_wiggly,
+  var = var_corr,
+  alpha = 0.05,
+  parallel = TRUE
+)
+```
+
+---
+
+## Working with Your Own Data
+
+```{r own-data, eval=FALSE}
+my_estimates <- c(0.5, 0.7, 0.9, 1.1, 1.0, 0.8)
+my_var <- diag(c(0.1, 0.12, 0.15, 0.18, 0.20, 0.22))
+
+my_result <- plausible_bounds(
+  estimates = my_estimates,
+  var = my_var,
+  alpha = 0.05
+)
+
+create_plot(my_result)
+```
+
+Data requirements:
+
+1. `estimates`: numeric vector of $\hat{\beta}_h$
+2. `var`: symmetric, positive semi-definite covariance matrix
+3. Dimensions must match
+4. Estimates should be approximately normal: $\hat{\beta} \sim N(\beta, V_\beta)$
+
+
+## References
+
+* Freyaldenhoven, S. and Hansen, C. (2025). "(Visualizing) Plausible Treatment Effect Paths." Federal Reserve Bank of Philadelphia and University of Chicago.
+* Berk, R., Brown, L., Buja, A., Zhang, K., and Zhao, L. (2013). "Valid post-selection inference." *Annals of Statistics*, 41(2):802-837.
+
+```

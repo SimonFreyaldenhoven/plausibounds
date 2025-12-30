@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+
+
+<title>Introduction to plausiblebounds: Computing Plausible Bounds for Treatment Path Estimates</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+<style type="text/css">
+code {
+white-space: pre;
+}
+.sourceCode {
+overflow: visible;
+}
+</style>
+<style type="text/css" data-origin="pandoc">
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Introduction to plausiblebounds: Computing
+Plausible Bounds for Treatment Path Estimates</h1>
+
+
+
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">library</span>(plausibounds)</span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span></code></pre></div>
+<div id="overview" class="section level2">
+<h2>Overview</h2>
+<p>The <code>plausibounds</code> package provides tools for calculating
+and visualizing plausible bounds for treatment path estimates in event
+study designs. This methodology addresses a fundamental challenge in
+empirical research: how to construct confidence bands that properly
+account for the uncertainty in dynamic treatment effects while
+maintaining computational tractability.</p>
+<p>The package implements the methodology described in Freyaldenhoven
+and Hansen (2025), which introduces a novel approach to constructing
+confidence bands that are both theoretically justified and practically
+useful. The key innovation is the use of two types of plausible bounds:
+cumulative bounds that target the average treatment effect, and
+restricted bounds that leverage data-driven smoothness properties of the
+underlying treatment path to provide tighter confidence intervals than
+traditional pointwise or simultaneous confidence bands.</p>
+</div>
+<div id="key-concepts" class="section level2">
+<h2>Key Concepts</h2>
+<div id="treatment-path-estimation" class="section level3">
+<h3>Treatment Path Estimation</h3>
+<p>In event study designs, researchers often estimate the dynamic
+effects of a treatment over multiple time horizons. These estimates form
+a “treatment path” that shows how the effect evolves over time. However,
+these estimates come with uncertainty, and properly quantifying this
+uncertainty is crucial for valid inference.</p>
+<p>The package assumes access to point estimates <span class="math inline">\(\hat{\beta}_h\)</span> for horizons <span class="math inline">\(h = 1, \ldots, H\)</span> that follow <span class="math inline">\(\hat{\beta} \sim N(\beta, V_\beta)\)</span>, where
+<span class="math inline">\(\hat{\beta}\)</span> collects the estimated
+dynamic treatment effect path and <span class="math inline">\(V_\beta\)</span> is the known covariance
+matrix.</p>
+</div>
+<div id="types-of-bounds" class="section level3">
+<h3>Types of Bounds</h3>
+<p>The package implements several types of confidence bounds:</p>
+<ol style="list-style-type: decimal">
+<li><strong>Pointwise bounds</strong>: Traditional confidence intervals
+calculated separately for each horizon</li>
+<li><strong>Simultaneous (sup-t) bounds</strong>: Uniform confidence
+bands that cover the entire path with a specified probability</li>
+<li><strong>Cumulative bounds</strong>: Bounds that target the average
+treatment effect rather than the entire path</li>
+<li><strong>Restricted bounds</strong>: Novel bounds that use
+data-driven model selection with smoothness assumptions, providing
+uniform coverage for a selected surrogate path</li>
+</ol>
+</div>
+</div>
+<div id="basic-usage" class="section level2">
+<h2>Basic Usage</h2>
+<div id="example-1-simple-case-with-iid-errors" class="section level3">
+<h3>Example 1: Simple Case with IID Errors</h3>
+<p>Let’s start with a simple example using constant estimates with
+independent and identically distributed (IID) errors:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="co"># Display the first few estimates of built in dataset `estimates_constant_iid`</span></span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a><span class="fu">head</span>(estimates_constant_iid)</span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a><span class="co">#&gt; [1] -0.5399318 -0.4827816 -0.4466255 -0.5618378 -0.2556507 -0.2608547</span></span>
+<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a></span>
+<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a>simple_pb <span class="ot">&lt;-</span> <span class="fu">plausible_bounds</span>(</span>
+<span id="cb2-6"><a href="#cb2-6" tabindex="-1"></a>  <span class="at">estimates =</span> estimates_constant_iid,</span>
+<span id="cb2-7"><a href="#cb2-7" tabindex="-1"></a>  <span class="at">var =</span> var_constant_iid,</span>
+<span id="cb2-8"><a href="#cb2-8" tabindex="-1"></a>  <span class="at">alpha =</span> <span class="fl">0.05</span></span>
+<span id="cb2-9"><a href="#cb2-9" tabindex="-1"></a>)</span>
+<span id="cb2-10"><a href="#cb2-10" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb2-11"><a href="#cb2-11" tabindex="-1"></a>Calculating restricted bounds<span class="sc">:</span> ■■■■■■                           K <span class="ot">=</span> <span class="dv">2</span><span class="sc">/</span><span class="dv">11</span> [ <span class="dv">18</span>%]</span>
+<span id="cb2-12"><a href="#cb2-12" tabindex="-1"></a></span>
+<span id="cb2-13"><a href="#cb2-13" tabindex="-1"></a>Calculating restricted bounds<span class="sc">:</span> ■■■■■■■■■                        K <span class="ot">=</span> <span class="dv">3</span><span class="sc">/</span><span class="dv">11</span> [ <span class="dv">27</span>%]</span>
+<span id="cb2-14"><a href="#cb2-14" tabindex="-1"></a></span>
+<span id="cb2-15"><a href="#cb2-15" tabindex="-1"></a>Calculating restricted bounds<span class="sc">:</span> ■■■■■■■■■■■■                     K <span class="ot">=</span> <span class="dv">4</span><span class="sc">/</span><span class="dv">11</span> [ <span class="dv">36</span>%]</span>
+<span id="cb2-16"><a href="#cb2-16" tabindex="-1"></a></span>
+<span id="cb2-17"><a href="#cb2-17" tabindex="-1"></a>Calculating restricted bounds<span class="sc">:</span> ■■■■■■■■■■■■■■■                  K <span class="ot">=</span> <span class="dv">5</span><span class="sc">/</span><span class="dv">11</span> [ <span class="dv">45</span>%]</span>
+<span id="cb2-18"><a href="#cb2-18" tabindex="-1"></a></span>
+<span id="cb2-19"><a href="#cb2-19" tabindex="-1"></a>Calculating restricted bounds<span class="sc">:</span> ■■■■■■■■■■■■■■■■■                K <span class="ot">=</span> <span class="dv">6</span><span class="sc">/</span><span class="dv">11</span> [ <span class="dv">55</span>%]</span>
+<span id="cb2-20"><a href="#cb2-20" tabindex="-1"></a></span>
+<span id="cb2-21"><a href="#cb2-21" tabindex="-1"></a>Calculating restricted bounds<span class="sc">:</span> ■■■■■■■■■■■■■■■■■■■■             K <span class="ot">=</span> <span class="dv">7</span><span class="sc">/</span><span class="dv">11</span> [ <span class="dv">64</span>%]</span>
+<span id="cb2-22"><a href="#cb2-22" tabindex="-1"></a></span>
+<span id="cb2-23"><a href="#cb2-23" tabindex="-1"></a>Calculating restricted bounds<span class="sc">:</span> ■■■■■■■■■■■■■■■■■■■■■■■          K <span class="ot">=</span> <span class="dv">8</span><span class="sc">/</span><span class="dv">11</span> [ <span class="dv">73</span>%]</span>
+<span id="cb2-24"><a href="#cb2-24" tabindex="-1"></a></span>
+<span id="cb2-25"><a href="#cb2-25" tabindex="-1"></a>Calculating restricted bounds<span class="sc">:</span> ■■■■■■■■■■■■■■■■■■■■■■■■■■       K <span class="ot">=</span> <span class="dv">9</span><span class="sc">/</span><span class="dv">11</span> [ <span class="dv">82</span>%]</span>
+<span id="cb2-26"><a href="#cb2-26" tabindex="-1"></a></span>
+<span id="cb2-27"><a href="#cb2-27" tabindex="-1"></a>Calculating restricted bounds<span class="sc">:</span> ■■■■■■■■■■■■■■■■■■■■■■■■■■■■     K <span class="ot">=</span> <span class="dv">10</span><span class="sc">/</span><span class="dv">11</span> [ <span class="dv">91</span>%]</span>
+<span id="cb2-28"><a href="#cb2-28" tabindex="-1"></a></span>
+<span id="cb2-29"><a href="#cb2-29" tabindex="-1"></a>Calculating restricted bounds<span class="sc">:</span> ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■  K <span class="ot">=</span> <span class="dv">11</span><span class="sc">/</span><span class="dv">11</span> [<span class="dv">100</span>%]</span>
+<span id="cb2-30"><a href="#cb2-30" tabindex="-1"></a></span>
+<span id="cb2-31"><a href="#cb2-31" tabindex="-1"></a></span>
+<span id="cb2-32"><a href="#cb2-32" tabindex="-1"></a></span>
+<span id="cb2-33"><a href="#cb2-33" tabindex="-1"></a><span class="fu">summary</span>(simple_pb)</span>
+<span id="cb2-34"><a href="#cb2-34" tabindex="-1"></a><span class="co">#&gt; Summary of Plausible Bounds Results</span></span>
+<span id="cb2-35"><a href="#cb2-35" tabindex="-1"></a><span class="co">#&gt; ----------------------------------</span></span>
+<span id="cb2-36"><a href="#cb2-36" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb2-37"><a href="#cb2-37" tabindex="-1"></a><span class="co">#&gt; Bounds data.frame:</span></span>
+<span id="cb2-38"><a href="#cb2-38" tabindex="-1"></a><span class="co">#&gt;    horizon       coef cumul_lower cumul_upper  surrogate restr_lower restr_upper</span></span>
+<span id="cb2-39"><a href="#cb2-39" tabindex="-1"></a><span class="co">#&gt; 1        1 -0.5399318  -0.4787285  -0.3360597 -0.4110322  -0.5258702  -0.2961942</span></span>
+<span id="cb2-40"><a href="#cb2-40" tabindex="-1"></a><span class="co">#&gt; 2        2 -0.4827816  -0.4787285  -0.3360597 -0.4110322  -0.5258702  -0.2961942</span></span>
+<span id="cb2-41"><a href="#cb2-41" tabindex="-1"></a><span class="co">#&gt; 3        3 -0.4466255  -0.4787285  -0.3360597 -0.4110322  -0.5258702  -0.2961942</span></span>
+<span id="cb2-42"><a href="#cb2-42" tabindex="-1"></a><span class="co">#&gt; 4        4 -0.5618378  -0.4787285  -0.3360597 -0.4110322  -0.5258702  -0.2961942</span></span>
+<span id="cb2-43"><a href="#cb2-43" tabindex="-1"></a><span class="co">#&gt; 5        5 -0.2556507  -0.4787285  -0.3360597 -0.4110322  -0.5258702  -0.2961942</span></span>
+<span id="cb2-44"><a href="#cb2-44" tabindex="-1"></a><span class="co">#&gt; 6        6 -0.2608547  -0.4787285  -0.3360597 -0.4110322  -0.5258702  -0.2961942</span></span>
+<span id="cb2-45"><a href="#cb2-45" tabindex="-1"></a><span class="co">#&gt; 7        7 -0.4524304  -0.4787285  -0.3360597 -0.4110322  -0.5258702  -0.2961942</span></span>
+<span id="cb2-46"><a href="#cb2-46" tabindex="-1"></a><span class="co">#&gt; 8        8 -0.6157351  -0.4787285  -0.3360597 -0.4110322  -0.5258702  -0.2961942</span></span>
+<span id="cb2-47"><a href="#cb2-47" tabindex="-1"></a><span class="co">#&gt; 9        9 -0.2923537  -0.4787285  -0.3360597 -0.4110322  -0.5258702  -0.2961942</span></span>
+<span id="cb2-48"><a href="#cb2-48" tabindex="-1"></a><span class="co">#&gt; 10      10 -0.3125616  -0.4787285  -0.3360597 -0.4110322  -0.5258702  -0.2961942</span></span>
+<span id="cb2-49"><a href="#cb2-49" tabindex="-1"></a><span class="co">#&gt; 11      11 -0.3243322  -0.4787285  -0.3360597 -0.4110322  -0.5258702  -0.2961942</span></span>
+<span id="cb2-50"><a href="#cb2-50" tabindex="-1"></a><span class="co">#&gt; 12      12 -0.3436341  -0.4787285  -0.3360597 -0.4110322  -0.5258702  -0.2961942</span></span></code></pre></div>
+<p>The <code>plausible_bounds()</code> function returns both cumulative
+and restricted bounds. The cumulative bounds show the uncertainty in the
+average effect (not the sum), while the restricted bounds use
+data-driven model selection to choose an appropriate surrogate path and
+provide uniform coverage for that surrogate.</p>
+</div>
+<div id="visualizing-the-results" class="section level3">
+<h3>Visualizing the Results</h3>
+<p>The package provides a flexible plotting function to visualize the
+bounds:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="fu">create_plot</span>(simple_pb)</span></code></pre></div>
+<div class="figure" style="text-align: center">
+<img role="img" aria-label="Plausible bounds for constant estimates with IID errors" src="data:image/png;base64,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" alt="Plausible bounds for constant estimates with IID errors" />
+<p class="caption">
+Plausible bounds for constant estimates with IID errors
+</p>
+</div>
+<p>The plot shows:</p>
+<ul>
+<li><p><strong>Black points</strong>: Original point estimates</p></li>
+<li><p><strong>Orange shaded area</strong>: Cumulative bounds (targeting
+average effect)</p></li>
+<li><p><strong>Blue line</strong>: Restricted (data-selected surrogate)
+estimate</p></li>
+<li><p><strong>Blue dashed lines</strong>: Restricted bounds</p></li>
+</ul>
+<p>and the more traditional bounds:</p>
+<ul>
+<li><p><strong>Grey vertical bars</strong>: Sup-t intervals</p></li>
+<li><p><strong>Grey horizontal bars</strong>: Pointwise
+intervals</p></li>
+</ul>
+</div>
+</div>
+<div id="example-2-complex-case-with-correlated-errors" class="section level2">
+<h2>Example 2: Complex Case with Correlated Errors</h2>
+<p>Let’s examine a case with wiggly estimates and strongly correlated
+errors:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a></span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a><span class="co"># Calculate bounds</span></span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a>wiggly_pb <span class="ot">&lt;-</span> <span class="fu">plausible_bounds</span>(</span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a>  <span class="at">estimates =</span> estimates_wiggly_strong_corr,</span>
+<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a>  <span class="at">var =</span> var_wiggly_strong_corr,</span>
+<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a>  <span class="at">alpha =</span> <span class="fl">0.05</span></span>
+<span id="cb4-7"><a href="#cb4-7" tabindex="-1"></a>)</span>
+<span id="cb4-8"><a href="#cb4-8" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb4-9"><a href="#cb4-9" tabindex="-1"></a>Calculating restricted bounds<span class="sc">:</span> ■■■■■■                           K <span class="ot">=</span> <span class="dv">2</span><span class="sc">/</span><span class="dv">11</span> [ <span class="dv">18</span>%]</span>
+<span id="cb4-10"><a href="#cb4-10" tabindex="-1"></a></span>
+<span id="cb4-11"><a href="#cb4-11" tabindex="-1"></a>Calculating restricted bounds<span class="sc">:</span> ■■■■■■■■■                        K <span class="ot">=</span> <span class="dv">3</span><span class="sc">/</span><span class="dv">11</span> [ <span class="dv">27</span>%]</span>
+<span id="cb4-12"><a href="#cb4-12" tabindex="-1"></a></span>
+<span id="cb4-13"><a href="#cb4-13" tabindex="-1"></a>Calculating restricted bounds<span class="sc">:</span> ■■■■■■■■■■■■                     K <span class="ot">=</span> <span class="dv">4</span><span class="sc">/</span><span class="dv">11</span> [ <span class="dv">36</span>%]</span>
+<span id="cb4-14"><a href="#cb4-14" tabindex="-1"></a></span>
+<span id="cb4-15"><a href="#cb4-15" tabindex="-1"></a>Calculating restricted bounds<span class="sc">:</span> ■■■■■■■■■■■■■■■                  K <span class="ot">=</span> <span class="dv">5</span><span class="sc">/</span><span class="dv">11</span> [ <span class="dv">45</span>%]</span>
+<span id="cb4-16"><a href="#cb4-16" tabindex="-1"></a></span>
+<span id="cb4-17"><a href="#cb4-17" tabindex="-1"></a>Calculating restricted bounds<span class="sc">:</span> ■■■■■■■■■■■■■■■■■                K <span class="ot">=</span> <span class="dv">6</span><span class="sc">/</span><span class="dv">11</span> [ <span class="dv">55</span>%]</span>
+<span id="cb4-18"><a href="#cb4-18" tabindex="-1"></a></span>
+<span id="cb4-19"><a href="#cb4-19" tabindex="-1"></a>Calculating restricted bounds<span class="sc">:</span> ■■■■■■■■■■■■■■■■■■■■             K <span class="ot">=</span> <span class="dv">7</span><span class="sc">/</span><span class="dv">11</span> [ <span class="dv">64</span>%]</span>
+<span id="cb4-20"><a href="#cb4-20" tabindex="-1"></a></span>
+<span id="cb4-21"><a href="#cb4-21" tabindex="-1"></a>Calculating restricted bounds<span class="sc">:</span> ■■■■■■■■■■■■■■■■■■■■■■■          K <span class="ot">=</span> <span class="dv">8</span><span class="sc">/</span><span class="dv">11</span> [ <span class="dv">73</span>%]</span>
+<span id="cb4-22"><a href="#cb4-22" tabindex="-1"></a></span>
+<span id="cb4-23"><a href="#cb4-23" tabindex="-1"></a>Calculating restricted bounds<span class="sc">:</span> ■■■■■■■■■■■■■■■■■■■■■■■■■■       K <span class="ot">=</span> <span class="dv">9</span><span class="sc">/</span><span class="dv">11</span> [ <span class="dv">82</span>%]</span>
+<span id="cb4-24"><a href="#cb4-24" tabindex="-1"></a></span>
+<span id="cb4-25"><a href="#cb4-25" tabindex="-1"></a>Calculating restricted bounds<span class="sc">:</span> ■■■■■■■■■■■■■■■■■■■■■■■■■■■■     K <span class="ot">=</span> <span class="dv">10</span><span class="sc">/</span><span class="dv">11</span> [ <span class="dv">91</span>%]</span>
+<span id="cb4-26"><a href="#cb4-26" tabindex="-1"></a></span>
+<span id="cb4-27"><a href="#cb4-27" tabindex="-1"></a>Calculating restricted bounds<span class="sc">:</span> ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■  K <span class="ot">=</span> <span class="dv">11</span><span class="sc">/</span><span class="dv">11</span> [<span class="dv">100</span>%]</span>
+<span id="cb4-28"><a href="#cb4-28" tabindex="-1"></a></span>
+<span id="cb4-29"><a href="#cb4-29" tabindex="-1"></a></span>
+<span id="cb4-30"><a href="#cb4-30" tabindex="-1"></a></span>
+<span id="cb4-31"><a href="#cb4-31" tabindex="-1"></a><span class="co"># Create visualization</span></span>
+<span id="cb4-32"><a href="#cb4-32" tabindex="-1"></a><span class="fu">create_plot</span>(wiggly_pb)</span></code></pre></div>
+<div class="figure" style="text-align: center">
+<img role="img" aria-label="plot of chunk complex-example" src="data:image/png;base64,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" alt="plot of chunk complex-example" />
+<p class="caption">
+plot of chunk complex-example
+</p>
+</div>
+<p>Notice how the restricted bounds (blue dashed lines) adapt to the
+underlying smoothness while still providing meaningful uncertainty
+quantification. The cumulative bounds (orange area) reflect the
+uncertainty in the average treatment effect across all horizons.</p>
+</div>
+<div id="additional-features" class="section level2">
+<h2>Additional Features</h2>
+<p>You can also choose which types of bounds to calculate:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="co"># Calculate only cumulative bounds</span></span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>cumul_only <span class="ot">&lt;-</span> <span class="fu">calculate_cumulative_bounds</span>(</span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a>  <span class="at">estimates =</span> estimates_constant_iid,</span>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a>  <span class="at">var =</span> var_constant_iid,</span>
+<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a>  <span class="at">alpha =</span> <span class="fl">0.05</span>,</span>
+<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a>  <span class="at">include_pointwise =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a>  <span class="at">include_supt =</span> <span class="cn">TRUE</span></span>
+<span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a>)</span>
+<span id="cb5-9"><a href="#cb5-9" tabindex="-1"></a></span>
+<span id="cb5-10"><a href="#cb5-10" tabindex="-1"></a><span class="co"># Calculate only restricted bounds</span></span>
+<span id="cb5-11"><a href="#cb5-11" tabindex="-1"></a>restr_only <span class="ot">&lt;-</span> <span class="fu">calculate_restricted_bounds</span>(</span>
+<span id="cb5-12"><a href="#cb5-12" tabindex="-1"></a>  <span class="at">estimates =</span> estimates_constant_iid,</span>
+<span id="cb5-13"><a href="#cb5-13" tabindex="-1"></a>  <span class="at">var =</span> var_constant_iid,</span>
+<span id="cb5-14"><a href="#cb5-14" tabindex="-1"></a>  <span class="at">alpha =</span> <span class="fl">0.05</span></span>
+<span id="cb5-15"><a href="#cb5-15" tabindex="-1"></a>)</span>
+<span id="cb5-16"><a href="#cb5-16" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb5-17"><a href="#cb5-17" tabindex="-1"></a>Calculating restricted bounds<span class="sc">:</span> ■■■■■■                           K <span class="ot">=</span> <span class="dv">2</span><span class="sc">/</span><span class="dv">11</span> [ <span class="dv">18</span>%]</span>
+<span id="cb5-18"><a href="#cb5-18" tabindex="-1"></a></span>
+<span id="cb5-19"><a href="#cb5-19" tabindex="-1"></a>Calculating restricted bounds<span class="sc">:</span> ■■■■■■■■■                        K <span class="ot">=</span> <span class="dv">3</span><span class="sc">/</span><span class="dv">11</span> [ <span class="dv">27</span>%]</span>
+<span id="cb5-20"><a href="#cb5-20" tabindex="-1"></a></span>
+<span id="cb5-21"><a href="#cb5-21" tabindex="-1"></a>Calculating restricted bounds<span class="sc">:</span> ■■■■■■■■■■■■                     K <span class="ot">=</span> <span class="dv">4</span><span class="sc">/</span><span class="dv">11</span> [ <span class="dv">36</span>%]</span>
+<span id="cb5-22"><a href="#cb5-22" tabindex="-1"></a></span>
+<span id="cb5-23"><a href="#cb5-23" tabindex="-1"></a>Calculating restricted bounds<span class="sc">:</span> ■■■■■■■■■■■■■■■                  K <span class="ot">=</span> <span class="dv">5</span><span class="sc">/</span><span class="dv">11</span> [ <span class="dv">45</span>%]</span>
+<span id="cb5-24"><a href="#cb5-24" tabindex="-1"></a></span>
+<span id="cb5-25"><a href="#cb5-25" tabindex="-1"></a>Calculating restricted bounds<span class="sc">:</span> ■■■■■■■■■■■■■■■■■                K <span class="ot">=</span> <span class="dv">6</span><span class="sc">/</span><span class="dv">11</span> [ <span class="dv">55</span>%]</span>
+<span id="cb5-26"><a href="#cb5-26" tabindex="-1"></a></span>
+<span id="cb5-27"><a href="#cb5-27" tabindex="-1"></a>Calculating restricted bounds<span class="sc">:</span> ■■■■■■■■■■■■■■■■■■■■             K <span class="ot">=</span> <span class="dv">7</span><span class="sc">/</span><span class="dv">11</span> [ <span class="dv">64</span>%]</span>
+<span id="cb5-28"><a href="#cb5-28" tabindex="-1"></a></span>
+<span id="cb5-29"><a href="#cb5-29" tabindex="-1"></a>Calculating restricted bounds<span class="sc">:</span> ■■■■■■■■■■■■■■■■■■■■■■■          K <span class="ot">=</span> <span class="dv">8</span><span class="sc">/</span><span class="dv">11</span> [ <span class="dv">73</span>%]</span>
+<span id="cb5-30"><a href="#cb5-30" tabindex="-1"></a></span>
+<span id="cb5-31"><a href="#cb5-31" tabindex="-1"></a>Calculating restricted bounds<span class="sc">:</span> ■■■■■■■■■■■■■■■■■■■■■■■■■■       K <span class="ot">=</span> <span class="dv">9</span><span class="sc">/</span><span class="dv">11</span> [ <span class="dv">82</span>%]</span>
+<span id="cb5-32"><a href="#cb5-32" tabindex="-1"></a></span>
+<span id="cb5-33"><a href="#cb5-33" tabindex="-1"></a>Calculating restricted bounds<span class="sc">:</span> ■■■■■■■■■■■■■■■■■■■■■■■■■■■■     K <span class="ot">=</span> <span class="dv">10</span><span class="sc">/</span><span class="dv">11</span> [ <span class="dv">91</span>%]</span>
+<span id="cb5-34"><a href="#cb5-34" tabindex="-1"></a></span>
+<span id="cb5-35"><a href="#cb5-35" tabindex="-1"></a>Calculating restricted bounds<span class="sc">:</span> ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■  K <span class="ot">=</span> <span class="dv">11</span><span class="sc">/</span><span class="dv">11</span> [<span class="dv">100</span>%]</span>
+<span id="cb5-36"><a href="#cb5-36" tabindex="-1"></a></span>
+<span id="cb5-37"><a href="#cb5-37" tabindex="-1"></a></span>
+<span id="cb5-38"><a href="#cb5-38" tabindex="-1"></a></span>
+<span id="cb5-39"><a href="#cb5-39" tabindex="-1"></a><span class="co"># Plot them together</span></span>
+<span id="cb5-40"><a href="#cb5-40" tabindex="-1"></a><span class="fu">create_plot</span>(cumul_only, restr_only)</span></code></pre></div>
+<div class="figure" style="text-align: center">
+<img role="img" aria-label="plot of chunk selective-bounds" src="data:image/png;base64,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" alt="plot of chunk selective-bounds" />
+<p class="caption">
+plot of chunk selective-bounds
+</p>
+</div>
+<p>By default, <code>plausible_bounds()</code> computes the pointwise
+and sup-t bounds for comparison. However, you can choose not to
+calculate or display them by setting <code>include_pointwise</code> to
+<code>FALSE</code>. This option is available across all functions.</p>
+<div id="adjusting-visualizations" class="section level3">
+<h3>Adjusting Visualizations</h3>
+<p>The plotting function offers control over which bounds to
+display:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a><span class="co"># Hide cumulative bounds</span></span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a><span class="fu">create_plot</span>(wiggly_pb, <span class="at">show_cumulative =</span> <span class="cn">FALSE</span>)</span></code></pre></div>
+<div class="figure" style="text-align: center">
+<img role="img" aria-label="plot of chunk custom-plot" src="data:image/png;base64,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" alt="plot of chunk custom-plot" />
+<p class="caption">
+plot of chunk custom-plot
+</p>
+</div>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a></span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a><span class="co"># Hide sup-t and restricted bounds</span></span>
+<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a><span class="fu">create_plot</span>(wiggly_pb, <span class="at">show_supt =</span> <span class="cn">FALSE</span>, <span class="at">show_restricted =</span> <span class="cn">FALSE</span>)</span></code></pre></div>
+<div class="figure" style="text-align: center">
+<img role="img" aria-label="plot of chunk custom-plot" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAfgAAAFoCAMAAACMkBkOAAAA8FBMVEUAAAAAADoAAGYAOpAAZrY6AAA6ADo6AGY6Ojo6OmY6OpA6ZmY6ZrY6kNtNTU1NTY5NbqtNjshmAABmADpmAGZmOgBmOmZmOpBmZmZmtttmtv9uTY5ubqtuq6tuq+SAUwCOTU2OTY6ObquOjk2OyP+QOgCQOjqQOmaQ2/+pqamrbk2r5P+2ZgC2Zjq2tma225C2/7a2///Ijk3Ijm7Ijo7Iq47IyP/I///bkDrbtmbb2//b/7bb/9vb///kq27kq47k/8jk///r6+v1yHX/tmb/trb/yI7/0n//25D/29v/5Kv//7b//8j//9v//+T///8lWBGfAAAACXBIWXMAAAsSAAALEgHS3X78AAAKK0lEQVR4nO2cCVsTVxhGR4ld1KQIVtsUsaWgEWMrYGu6EEVTRALk//+bzoqsyUy428x73ueRLBzujffku3NnMploQiQT+X4BxE8QLxrEiwbxormR+A9Q5ilHHSI+NArxohTiRSnEi1KIF6UQL0ohXpRCvCiFeFEK8aIU4kUpxItSiBelEC9KIV6UQrwohXhRCvGiFOJFKcSLUogXpRAvSiFelApN/AfSkFQUX/ENBTUvFVrFW+kdyluHiA+NQrwohXhRCvGiFOJFKcSLUogXpRAvSiFelApa/Ivzmbt3KG8dUvGhUYgXpRAvSiFelEK8KIV4UQrxohTiRSnEi1KIF6UQL0ohXpRCvCiFeFEK8aIU4s9F5wwAxItSiBelEC9KIV6UaoB4nQUZ4qFuTCFelPIr/mSz8yC7d7iyZ693KG8dXiN+f3WyvZ7cOdlcRLxTyq/4dy8T93GGT9Yy8b6v1URMZar4nVz84cr7NSreKRVGxQ87nc6qvd6hvHU4axs/OaLi3VIBrOpT59bFc5jHS4fsx4dGIV6UQrwohXhRCvGiFOJFKcSLUogXpRAvSiFelEK8KIV4UaoG4qNyfxzoAIdKhS8+isqZD3SAQ6UQL0qFL56p3gpVA/GhDl29KcSLUogXpRAvSiFelEK8KIV4UQrxohTiRSnEi1KIF6UQL0ohXpRC/BVR+DwQ8ZcjcQYA4i8H8eaoWok3M9VXuhID4q30DuWtw9Li5766VhQZvFQXuXkqiq/4hjqNxHa5yRU/b++Ir0jVQfzHTyXy9GkZ6lOpthQokx16FR/qAIdKIV6NurCbaaJDxNeIouJFKcSLUmLiWfvb6DB88U+fljMfqCyH4istARFfI0qr4pnqrXRYA/FQNjpEfI0oxItSiBelEC9KIV6UQrwo5Vz8eCn68VkP8RYoCx+4mhN/vNHtdw/u7iLeM+Va/PjhVr8b/0C8Z8pLxY8WqHjflI9tfHS7UsEj3gYV9Kre22ql0iIqmNdVifKwjc9/lE+gQ1dvyq34440oDdt475SXiq+YQIcu1D30MMVPBknFV1vdhaahEZTzil/uxbtzrSreEW+D8jDVD9os7vxTzg/gPOuNWoj3Tznfxo8W/t2I2lW8I94GFfQBHMTboxAvSjkX3z+7O3ey2Xlw9hbxzii/B3D2Vyfb62duEe+Mcl7xr86effPuZeL8y+3VV736SMJOqatenTtyt5ML3zkVT8U7ovxO9ZcrHvGOKL9TPdt4b5Tzil+6tKo/WttjVd948fMk0KErR834YraFD1wdip99oeZc/Pjh66WgP5Y1flJVsJdioOLtUojPI3fOXajX4HAr3so5d00457Xp4jnnLhjK+TZ+1Ir36LqI9025Fn/8rDdo8aVJ/5SHqb7POXcBUM4r/vnr5R4V750yurNRbhsfLfyzzIURPFNmDy9wAKc2FOJVKcdTfbKq63eljtyFSrld3HkUz/G9OaCS80LQ4qGqQ2VXAoivEeVY/FL2IU2wn8frUG6n+vkS6NDVm3J95A7xgVCIF6UQL0ohXpRCfOMo92d3Ij4EquTON+KbRiFelWKqt0yFesY8izu7VLDfkUG8XQrxp9ESz1R/GjHx9X6rIb4+lNGNS2jiuerV9UnE+34NV6bUVa+o+Pkppnrb/xMBCvGiFOJFKcSLUogXpRAvSiFelEK8KIV4UQrxohTiRak6iJ/SblOoqNwAGezR0X8R8VOTfIPYbY+ID4Kqt/hpr11Q/OyL+J9Jnaf6qe9aQfGBU4gXpZjqRSkWd6IU4kUpxItSiBelEC9KIV6UQrwohXg1qtKhZMQ3jqLiRSnEi1KIF6UQL0ohXpSaAZla+yM+NIqKF6UQL0r5FX+y2XmQ3Ttc2bPXO5S3Dq8Rv7862V5P7pxsLiLeKeVX/LuXifs4wydrmfgrr5xFapip4ndy8Ycr79eoeKeUx4rf7iz+kYsfdjqdVXu9i1BuP3crR83axk+OalTxL0Ic4apUAKv61HmdxDeCYj9elEK8KIV4UQrxohTi60BV2o1APJT/DhEfGoV4UQrxohTiRSnEi1KIF6UQL0ohXpRCvCiFeFEK8aIU4kUpxItSiPdLWfjAFfFQ/jtEfGgU4kUpxItSRpqavUJBfGgUFS9KIV6UQrwohXhRCvGiFOJFKcSLUogXpUIT7/taTcRUKoqv+IaCmpcKreKt9A7lrUPEh0YhXpRCvCiFeFEK8aIU4kUpxItSiBelEC9KIV6UQrwohXhRCvGiFOJFKcSLUogXpRAvSiFelEK8KIV4UQrxohTiRSnEi1KIF6XqIJ7UN4gXDeJFg3jRIF40iBcN4kVjW/zRz53v3hpr7XBlz1BLJ5udxQDbGq4nrT0w1daU0bctPu59uGqqsZNNY7KS17VuqK39VVNtbXfWk9a2TbSWtDVl9B1M9fumBngyfLJmSvybX81VvDHxR3/G7bx7mTRopq3J9aNvX/yRMVmHK++NtbW9bmR4sww7ppqKZe2YET/J3ozXjr518Ue/GNvEDzsdYyP85q058fFsampzZq7iM/HXj75t8Yc/mVvamZw94lExtglK2jKzHkubMrSNT9qaMvq2xW8brFKT4k2u6g3uuRhe1U8ZffbjRYN40SBeNIgXDeJFg3jRCIs/uLub/jv3hEwQ7/tleAriJ4Moak8Ovv3+9u93/1mKkgfZM/eWopbv12gvyuLvxJYXdg++3hov9w6+6mXlP35cPBP/fLjl+0Vai7L4rOJHcVn3u0X5J65Pnzl+1vP9Iq0F8efEp6oR3+zkrvOJPXvQ7ya/KJ5BfCNzZnHXzR/8FRWLu+4E8aSJQbxoEC8axIsG8aJBvGgQLxrEiwbxokG8aBAvGsSLBvGiQbxoEC8axIsG8aJBvGjqKP7Thfh+PbUM4kWDeNEgXjSIFw3iRdMg8cmXILtX4KN2dvt5t7g3O9GFcRlFUXR760Jz+fNFp5fb/xzwd7CbIz75uuN4+YqvvuQ6xo/La0h0XmrjvNasuTPPXW6/So/O0xzxuYP4ZtAd3btz+7e4RLMH7XguuNUbRK1RO3Zx/HxrvBQtTHVyjfjjjfjvRu1RUv2D9MvzWadxe+kT8a/yjose057SX1sYhxulOeIH2YybuV7YHbRS5+mPeModdGPn8cNXvYP7CTpj1r96qh/EzbVju62suS/PdyfHf6ftFx0XPaY9pb+2MA43SnPEpyr/K4p8UtwmP+JKjXLxqYZ+rKvaxS6y98mr3uTgfmy3/UV8UfG3epn4vOOix7Sn9NdGR8BAmiM+2b4fbySu+2fFJw9iYf1c/PjRo61icqiQTHBR8RfFp3fOiS96LHoqv6x0leaIz1f1cXl9cyo+fxBPyD/EZd9Khr/fSis0qmYiE1ds47OaTrfx6feqB8l8n7Z/+o7Le0x7GkRs442E/XgDQbxoEC+aOoonBoJ40SBeNIgXDeJFg3jRIF40iBcN4kWDeNEgXjSIF83/2r4w3P//Eg4AAAAASUVORK5CYII=" alt="plot of chunk custom-plot" />
+<p class="caption">
+plot of chunk custom-plot
+</p>
+</div>
+</div>
+<div id="parallel-processing" class="section level3">
+<h3>Parallel Processing</h3>
+<p>The restricted bounds calculation can be computationally intensive so
+the package supports parallel processing via the <code>parallel</code>
+and <code>n_cores</code> arguments in <code>plausible_bounds()</code>
+and <code>calculate_restricted_bounds()</code>:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a><span class="co"># Enable parallel processing for restricted bounds</span></span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a>parallel_pb <span class="ot">&lt;-</span> <span class="fu">plausible_bounds</span>(</span>
+<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a>  <span class="at">estimates =</span> estimates_wiggly_strong_corr,</span>
+<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a>  <span class="at">var =</span> var_wiggly_strong_corr,</span>
+<span id="cb8-5"><a href="#cb8-5" tabindex="-1"></a>  <span class="at">alpha =</span> <span class="fl">0.05</span>,</span>
+<span id="cb8-6"><a href="#cb8-6" tabindex="-1"></a>  <span class="at">parallel =</span> <span class="cn">TRUE</span></span>
+<span id="cb8-7"><a href="#cb8-7" tabindex="-1"></a>)</span></code></pre></div>
+</div>
+</div>
+<div id="theoretical-background" class="section level2">
+<h2>Theoretical Background</h2>
+<div id="cumulative-bounds" class="section level3">
+<h3>Cumulative Bounds</h3>
+<p>The cumulative bounds target the average treatment effect rather than
+uniform coverage of the entire path. They are constructed as:</p>
+<p><span class="math display">\[(U, L)_{1-\alpha} =
+\{w&#39;\hat{\beta}/H \pm z_{1-\alpha/2}(w&#39;V_\beta
+w)^{1/2}/H\}_{h=1}^H\]</span></p>
+<p>where <span class="math inline">\(w\)</span> is a vector of ones and
+the bounds are constant across all horizons <span class="math inline">\(h\)</span>. These bounds satisfy:</p>
+<p><span class="math display">\[P\left(\sum_{h=1}^H L_{h}^{1-\alpha}
+&lt; \sum_{h=1}^H \beta_h &lt; \sum_{h=1}^H U_{h}^{1-\alpha}\right) =
+(1-\alpha)\]</span></p>
+<p>This means the true treatment path will <strong>on average</strong>
+be within these bounds for <span class="math inline">\((1-\alpha)\)</span> of all realizations.</p>
+</div>
+<div id="restricted-bounds-and-model-selection" class="section level3">
+<h3>Restricted Bounds and Model Selection</h3>
+<p>The restricted bounds use data-driven model selection from a
+pre-specified universe of candidate models. The procedure:</p>
+<ol style="list-style-type: decimal">
+<li><p><strong>Model Universe</strong>: Includes constant, linear,
+quadratic, and cubic models, plus models based on shrinkage of first and
+third differences motivated by smoothness and eventual decay</p></li>
+<li><p><strong>Selection Criterion</strong>: Uses a BIC-type criterion
+to select model <span class="math inline">\(\hat{M}\)</span></p></li>
+<li><p><strong>Post-Selection Inference</strong>: Applies Berk et
+al. (2013) to provide uniform coverage for the selected surrogate <span class="math inline">\(\beta_{\hat{M}} =
+P(\hat{M})\beta\)</span></p></li>
+</ol>
+<p>The key innovation is that the restricted bounds provide uniform
+coverage for the <strong>selected surrogate path</strong>, not the true
+path. This surrogate represents a data-driven approximation that
+captures key features while being potentially simpler than the true
+path.</p>
+</div>
+<div id="coverage-properties" class="section level3">
+<h3>Coverage Properties</h3>
+<ul>
+<li><strong>Cumulative bounds</strong>: Cover the sum/average of the
+true treatment effects with probability <span class="math inline">\((1-\alpha)\)</span></li>
+<li><strong>Restricted bounds</strong>: Cover the selected surrogate
+path with probability <span class="math inline">\(\geq
+(1-\alpha)\)</span> via post-selection inference</li>
+<li><strong>Traditional bounds</strong>: Pointwise bounds lack joint
+coverage; sup-t bounds provide uniform coverage but can be very
+wide</li>
+</ul>
+</div>
+</div>
+<div id="practical-recommendations" class="section level2">
+<h2>Practical Recommendations</h2>
+<div id="interpreting-the-results" class="section level3">
+<h3>Interpreting the Results</h3>
+<ol style="list-style-type: decimal">
+<li><strong>Cumulative bounds</strong>: Show plausible range for the
+average treatment effect</li>
+<li><strong>Restricted bounds</strong>: Show uncertainty around a
+data-selected smooth approximation</li>
+<li><strong>Width comparisons</strong>: Restricted bounds are often much
+narrower than sup-t bounds</li>
+<li><strong>Different inferential targets</strong>: Remember that
+cumulative and restricted bounds target different objects than the true
+path</li>
+</ol>
+</div>
+<div id="key-insights-from-the-methodology" class="section level3">
+<h3>Key Insights from the Methodology</h3>
+<p>The paper demonstrates several important points:</p>
+<ol style="list-style-type: decimal">
+<li><strong>Volume differences</strong>: Sup-t regions can have volumes
+orders of magnitude larger than Wald regions, meaning most paths within
+sup-t bands would be rejected by joint tests</li>
+<li><strong>Correlation matters</strong>: Strong correlation in
+estimates can lead to counterintuitive results where joint tests and
+visual inspection disagree</li>
+<li><strong>Surrogate interpretation</strong>: Restricted bounds cover
+approximations that may be more policy-relevant than the exact true
+path</li>
+<li><strong>Efficiency gains</strong>: Both cumulative and restricted
+bounds can be much more informative than traditional approaches</li>
+</ol>
+</div>
+</div>
+<div id="working-with-your-own-data" class="section level2">
+<h2>Working with Your Own Data</h2>
+<p>To use the package with your own estimates:</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a><span class="co"># Prepare your data</span></span>
+<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a>my_estimates <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="fl">0.5</span>, <span class="fl">0.7</span>, <span class="fl">0.9</span>, <span class="fl">1.1</span>, <span class="fl">1.0</span>, <span class="fl">0.8</span>)  <span class="co"># Your point estimates</span></span>
+<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a>my_var <span class="ot">&lt;-</span> <span class="fu">diag</span>(<span class="fu">c</span>(<span class="fl">0.1</span>, <span class="fl">0.12</span>, <span class="fl">0.15</span>, <span class="fl">0.18</span>, <span class="fl">0.20</span>, <span class="fl">0.22</span>))  <span class="co"># Your variance-covariance matrix</span></span>
+<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a></span>
+<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a><span class="co"># Calculate bounds</span></span>
+<span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a>my_result <span class="ot">&lt;-</span> <span class="fu">plausible_bounds</span>(</span>
+<span id="cb9-7"><a href="#cb9-7" tabindex="-1"></a>  <span class="at">estimates =</span> my_estimates,</span>
+<span id="cb9-8"><a href="#cb9-8" tabindex="-1"></a>  <span class="at">var =</span> my_var,</span>
+<span id="cb9-9"><a href="#cb9-9" tabindex="-1"></a>  <span class="at">alpha =</span> <span class="fl">0.05</span></span>
+<span id="cb9-10"><a href="#cb9-10" tabindex="-1"></a>)</span>
+<span id="cb9-11"><a href="#cb9-11" tabindex="-1"></a></span>
+<span id="cb9-12"><a href="#cb9-12" tabindex="-1"></a><span class="co"># Visualize</span></span>
+<span id="cb9-13"><a href="#cb9-13" tabindex="-1"></a><span class="fu">create_plot</span>(my_result)</span></code></pre></div>
+<div id="data-requirements" class="section level3">
+<h3>Data Requirements</h3>
+<p>Your data must satisfy: 1. <code>estimates</code>: A numeric vector
+of point estimates <span class="math inline">\(\hat{\beta}_h\)</span></p>
+<ol start="2" style="list-style-type: decimal">
+<li><p><code>var</code>: A symmetric, positive semi-definite
+variance-covariance matrix <span class="math inline">\(V_\beta\)</span></p></li>
+<li><p>The dimension of <code>var</code> must match the length of
+<code>estimates</code></p></li>
+<li><p>The estimates should be approximately jointly normal: <span class="math inline">\(\hat{\beta} \sim N(\beta,
+V_\beta)\)</span></p></li>
+</ol>
+</div>
+</div>
+<div id="references" class="section level2">
+<h2>References</h2>
+<p>Freyaldenhoven, S. and Hansen, C. (2025). “(Visualizing) Plausible
+Treatment Effect Paths.” Federal Reserve Bank of Philadelphia and
+University of Chicago.</p>
+<p>Berk, R., Brown, L., Buja, A., Zhang, K., and Zhao, L. (2013). “Valid
+post-selection inference.” The Annals of Statistics, 41(2):802-837.</p>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

@@ -45,7 +45,7 @@ precompile_vignette <- function(input_file, output_file = NULL) {
 
 # List of vignettes to precompile
 vignettes_to_precompile <- list(
-  list(input = "intro.rmd.orig", output = "intro.rmd")
+  list(input = "documentation.Rmd.orig", output = "documentation.Rmd")
   # Add more vignettes here as needed:
   # list(input = "another_vignette.Rmd.orig", output = "another_vignette.Rmd")
 )
