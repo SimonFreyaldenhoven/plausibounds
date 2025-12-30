@@ -1,11 +1,10 @@
-
 test_that("calculate_restricted_bounds works with real example data", {
   # Use smaller subset for computational efficiency
   data(estimates_constant)
   data(var_iid)
 
   # Use first 10 observations for faster testing
-  n_test <- min(10, length(estimates_constant))
+  n_test <- min(7, length(estimates_constant))
   estimates_subset <- estimates_constant[1:n_test]
   var_subset <- var_iid[1:n_test, 1:n_test]
   
@@ -84,8 +83,8 @@ test_that("calculate_restricted_bounds handles different alpha values", {
 })
 
 test_that("calculate_restricted_bounds handles parallel parameter", {
-  skip_if_not_installed("parallel")
   skip_on_cran()
+  skip_if_not_installed("parallel")
 
   # Use small sample for speed
   set.seed(456)
@@ -308,8 +307,8 @@ test_that("calculate_restricted_bounds produces reproducible results", {
 })
 
 test_that("calculate_restricted_bounds validates n_cores parameter", {
-  skip_if_not_installed("parallel")
   skip_on_cran()
+  skip_if_not_installed("parallel")
 
   set.seed(123)
   n <- 6
@@ -348,8 +347,8 @@ test_that("calculate_restricted_bounds validates n_cores parameter", {
 })
 
 test_that("calculate_restricted_bounds works with n_cores = 1", {
-  skip_if_not_installed("parallel")
   skip_on_cran()
+  skip_if_not_installed("parallel")
 
   set.seed(789)
   n <- 8

@@ -1,9 +1,8 @@
-
 # Test basic functionality
 test_that("plausible_bounds functions work with simple test data", {
   # Create test data
   set.seed(123)
-  p <- 4
+  p <- 7
   estimates <- stats::rnorm(p)
   var <- diag(p) * 0.1
 
@@ -71,7 +70,7 @@ test_that("new functions match original full_eventplot_l2tf results", {
 # Test parallel vs non-parallel results
 test_that("parallel and non-parallel results are identical", {
   skip_on_cran()
-  l <- 6
+  l <- 7
 
   # Test with wiggly estimates and strong correlation
   data(estimates_wiggly)
@@ -157,7 +156,6 @@ test_that("parallel and non-parallel results are identical", {
 # Test n_cores parameter validation and edge cases
 test_that("plausible_bounds validates n_cores parameter", {
   skip_if_not_installed("parallel")
-  skip_on_cran()
 
   set.seed(123)
   p <- 6
@@ -196,8 +194,8 @@ test_that("plausible_bounds validates n_cores parameter", {
 })
 
 test_that("plausible_bounds works with specific n_cores values", {
-  skip_if_not_installed("parallel")
   skip_on_cran()
+  skip_if_not_installed("parallel")
 
   set.seed(456)
   p <- 8
@@ -212,9 +210,6 @@ test_that("plausible_bounds works with specific n_cores values", {
   set.seed(42)
   result_2cores <- plausible_bounds(estimates, var, parallel = TRUE, n_cores = 2)
 
-  # Test with parallel = FALSE for comparison
-  set.seed(42)
-  result_seq <- plausible_bounds(estimates, var, parallel = FALSE)
 
   # All should produce valid results
   expect_s3_class(result_1core, "plausible_bounds")

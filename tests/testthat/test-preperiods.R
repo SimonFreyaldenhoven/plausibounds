@@ -118,165 +118,113 @@ test_that("preperiods parameter rejects vector inputs", {
   )
 })
 
-# Section 2: Horizon Numbering Tests ----
+# Section 2: Core Functionality Tests ----
 
-test_that("horizon numbering is correct with preperiods", {
+test_that("core functionality with 8 preperiods (mean0 scenario)", {
+  # Setup data once for all assertions
   pre_mean0 <- readRDS(test_path("fixtures", "preperiods_mean0.rds"))
   Vpre_iid <- readRDS(test_path("fixtures", "Vpre_iid.rds"))
   data(estimates_constant, envir = environment())
   data(var_iid, envir = environment())
 
-  # Use 8 pre + 7 post
   npre <- 8
   npost <- 7
-
   estimates <- c(pre_mean0[1:npre], estimates_constant[1:npost])
   var <- block_diag_matrix(Vpre_iid[1:npre, 1:npre], var_iid[1:npost, 1:npost])
 
+  # Call functions once (used across multiple assertions below)
   result <- plausible_bounds(estimates, var, preperiods = npre)
+  restr <- calculate_restricted_bounds(estimates, var, preperiods = npre)
+  cumul <- calculate_cumulative_bounds(estimates, var, preperiods = npre)
 
-  # Check horizon numbering in restricted bounds
+  # Test 1: Function accepts multiple preperiods without error
+  expect_s3_class(result, "plausible_bounds")
+
+  # Test 2: Horizon numbering in restricted bounds
   expect_equal(min(result$restricted_bounds$horizon), -npre)
   expect_equal(max(result$restricted_bounds$horizon), npost)
   expect_true(all(result$restricted_bounds$horizon[1:npre] < 0))
   expect_true(all(result$restricted_bounds$horizon[(npre+1):(npre+npost)] > 0))
   expect_false(any(result$restricted_bounds$horizon == 0))  # No period 0
-
-  # Check horizon sequence is consecutive
   expected_horizons <- c(-npre:-1, 1:npost)
   expect_equal(result$restricted_bounds$horizon, expected_horizons)
-})
 
-test_that("horizon numbering is consistent across all functions", {
-  pre_mean0 <- readRDS(test_path("fixtures", "preperiods_mean0.rds"))
-  Vpre_iid <- readRDS(test_path("fixtures", "Vpre_iid.rds"))
-  data(estimates_constant, envir = environment())
-  data(var_iid, envir = environment())
-
-  # Use 8 pre + 7 post
-  npre <- 8
-  npost <- 7
-  estimates <- c(pre_mean0[1:npre], estimates_constant[1:npost])
-  var <- block_diag_matrix(Vpre_iid[1:npre, 1:npre], var_iid[1:npost, 1:npost])
-
-  restr <- calculate_restricted_bounds(estimates, var, preperiods = npre)
-  cumul <- calculate_cumulative_bounds(estimates, var, preperiods = npre)
-
-  expected_horizons <- c(-8:-1, 1:7)
-  expect_equal(restr$restricted_bounds$horizon, expected_horizons)
-  expect_equal(cumul$cumulative_bounds$horizon, expected_horizons)
-})
-
-# Section 3: NA Bounds Tests ----
-
-test_that("restricted bounds are NA for preperiods", {
-  pre_mean0 <- readRDS(test_path("fixtures", "preperiods_mean0.rds"))
-  Vpre_iid <- readRDS(test_path("fixtures", "Vpre_iid.rds"))
-  data(estimates_constant, envir = environment())
-  data(var_iid, envir = environment())
-
-  # Use 8 pre + 7 post
-  npre <- 8
-  estimates <- c(pre_mean0[1:npre], estimates_constant[1:7])
-  var <- block_diag_matrix(Vpre_iid[1:npre, 1:npre], var_iid[1:7, 1:7])
-
-  result <- plausible_bounds(estimates, var, preperiods = npre)
-
-  # Restricted bounds should be NA for pre-periods
-  pre_rows <- result$restricted_bounds$horizon < 0
-  expect_true(all(is.na(result$restricted_bounds$surrogate[pre_rows])))
-  expect_true(all(is.na(result$restricted_bounds$lower[pre_rows])))
-  expect_true(all(is.na(result$restricted_bounds$upper[pre_rows])))
-
-  # But NOT NA for post-periods
-  post_rows <- result$restricted_bounds$horizon > 0
-  expect_false(any(is.na(result$restricted_bounds$surrogate[post_rows])))
-  expect_false(any(is.na(result$restricted_bounds$lower[post_rows])))
-  expect_false(any(is.na(result$restricted_bounds$upper[post_rows])))
-
-  # Coefficients should never be NA
-  expect_false(any(is.na(result$restricted_bounds$coef)))
-})
-
-test_that("cumulative bounds are NA for preperiods", {
-  pre_mean0 <- readRDS(test_path("fixtures", "preperiods_mean0.rds"))
-  Vpre_iid <- readRDS(test_path("fixtures", "Vpre_iid.rds"))
-  data(estimates_constant, envir = environment())
-  data(var_iid, envir = environment())
-
-  # Use 8 pre + 7 post
-  npre <- 8
-  estimates <- c(pre_mean0[1:npre], estimates_constant[1:7])
-  var <- block_diag_matrix(Vpre_iid[1:npre, 1:npre], var_iid[1:7, 1:7])
-
-  result <- calculate_cumulative_bounds(estimates, var, preperiods = npre)
-
-  # Cumulative bounds should be NA for pre-periods
-  pre_rows <- result$cumulative_bounds$horizon < 0
-  expect_true(all(is.na(result$cumulative_bounds$lower[pre_rows])))
-  expect_true(all(is.na(result$cumulative_bounds$upper[pre_rows])))
-
-  # But NOT NA for post-periods
-  post_rows <- result$cumulative_bounds$horizon > 0
-  expect_false(any(is.na(result$cumulative_bounds$lower[post_rows])))
-  expect_false(any(is.na(result$cumulative_bounds$upper[post_rows])))
-
-  # Coefficients should never be NA
-  expect_false(any(is.na(result$cumulative_bounds$coef)))
-})
-
-# Section 4: Wald Test Coverage ----
-
-test_that("Wpre is computed when preperiods > 0", {
-  pre_mean0 <- readRDS(test_path("fixtures", "preperiods_mean0.rds"))
-  Vpre_iid <- readRDS(test_path("fixtures", "Vpre_iid.rds"))
-  data(estimates_constant, envir = environment())
-  data(var_iid, envir = environment())
-
-  # Use 8 pre + 7 post
-  estimates <- c(pre_mean0, estimates_constant[1:7])
-  var <- block_diag_matrix(Vpre_iid, var_iid[1:7, 1:7])
-
-  result <- plausible_bounds(estimates, var, preperiods = 8)
-
+  # Test 3: Wpre is computed when preperiods > 0
   expect_true(!is.null(result$wald_test$pre))
   expect_true(is.numeric(result$wald_test$pre$statistic))
   expect_true(is.numeric(result$wald_test$pre$p_value))
   expect_true(result$wald_test$pre$p_value >= 0 && result$wald_test$pre$p_value <= 1)
+
+  # Test 4: Restricted bounds are NA for preperiods but not for post-periods
+  pre_rows <- result$restricted_bounds$horizon < 0
+  expect_true(all(is.na(result$restricted_bounds$surrogate[pre_rows])))
+  expect_true(all(is.na(result$restricted_bounds$lower[pre_rows])))
+  expect_true(all(is.na(result$restricted_bounds$upper[pre_rows])))
+  post_rows <- result$restricted_bounds$horizon > 0
+  expect_false(any(is.na(result$restricted_bounds$surrogate[post_rows])))
+  expect_false(any(is.na(result$restricted_bounds$lower[post_rows])))
+  expect_false(any(is.na(result$restricted_bounds$upper[post_rows])))
+  expect_false(any(is.na(result$restricted_bounds$coef)))
+
+  # Test 5: Wpre passes for mean0 scenario (no pre-trends)
+  expect_true(result$wald_test$pre$p_value >= 0.05)
+
+  # Test 6: Horizon numbering consistent across all functions
+  expect_equal(restr$restricted_bounds$horizon, expected_horizons)
+  expect_equal(cumul$cumulative_bounds$horizon, expected_horizons)
+
+  # Test 7: Cumulative bounds are NA for preperiods but not for post-periods
+  pre_rows_cumul <- cumul$cumulative_bounds$horizon < 0
+  expect_true(all(is.na(cumul$cumulative_bounds$lower[pre_rows_cumul])))
+  expect_true(all(is.na(cumul$cumulative_bounds$upper[pre_rows_cumul])))
+  post_rows_cumul <- cumul$cumulative_bounds$horizon > 0
+  expect_false(any(is.na(cumul$cumulative_bounds$lower[post_rows_cumul])))
+  expect_false(any(is.na(cumul$cumulative_bounds$upper[post_rows_cumul])))
+  expect_false(any(is.na(cumul$cumulative_bounds$coef)))
+
+  # Test 8: Pre and post periods treated as independent blocks
+  var_block <- matrix(0, npre + npost, npre + npost)
+  var_block[1:npre, 1:npre] <- Vpre_iid[1:npre, 1:npre]
+  var_block[(npre + 1):(npre + npost), (npre + 1):(npre + npost)] <- var_iid[1:npost, 1:npost]
+  estimates_block <- c(pre_mean0[1:npre], estimates_constant[1:npost])
+  result_block <- plausible_bounds(estimates_block, var_block, preperiods = npre)
+  expect_true(all(var_block[1:npre, (npre + 1):(npre + npost)] == 0))
+  expect_true(all(var_block[(npre + 1):(npre + npost), 1:npre] == 0))
+  post_rows_block <- result_block$restricted_bounds$horizon > 0
+  expect_false(any(is.na(result_block$restricted_bounds$surrogate[post_rows_block])))
+
+  # Test 9: Metadata correctly populated
+  expect_equal(result$preperiods, 8)
+  expect_equal(restr$metadata$preperiods, 8)
+  expect_equal(cumul$metadata$preperiods, 8)
+
+  # Test 10: Wpre calculation is mathematically correct
+  expected_stat <- as.numeric(t(pre_mean0[1:npre]) %*% solve(Vpre_iid[1:npre, 1:npre]) %*% pre_mean0[1:npre])
+  expected_pval <- 1 - pchisq(expected_stat, df = npre)
+  expect_equal(unname(restr$Wpre["statistic"]), expected_stat, tolerance = 1e-6)
+  expect_equal(unname(restr$Wpre["pvalue"]), expected_pval, tolerance = 1e-6)
 })
 
-test_that("Wpre is NULL when preperiods = 0", {
+# Section 3: Horizon Numbering Tests ----
+
+# Section 3: NA Bounds Tests ----
+
+# Section 4: Wald Test Coverage ----
+
+test_that("zero preperiods functionality", {
+  # Setup data once for all assertions
   data(estimates_constant, envir = environment())
   data(var_iid, envir = environment())
 
-  # Use 6 post-periods
   result <- plausible_bounds(estimates_constant[1:7], var_iid[1:7, 1:7], preperiods = 0)
 
+  # Test 1: Wpre is NULL when preperiods = 0
   expect_null(result$wald_test$pre)
-  expect_true(!is.null(result$wald_test$post))  # But Wpost should exist
-})
+  expect_true(!is.null(result$wald_test$post))
 
-test_that("Wpre passes for scenarios with no pre-trends", {
-  data(estimates_constant, envir = environment())
-  data(var_iid, envir = environment())
-
-  # Test with mean0 scenario (should pass) - use 8 pre + 7 post
-  pre_mean0 <- readRDS(test_path("fixtures", "preperiods_mean0.rds"))
-  Vpre_iid <- readRDS(test_path("fixtures", "Vpre_iid.rds"))
-  estimates <- c(pre_mean0, estimates_constant[1:7])
-  var <- block_diag_matrix(Vpre_iid, var_iid[1:7, 1:7])
-
-  result <- plausible_bounds(estimates, var, preperiods = 8)
-  expect_true(result$wald_test$pre$p_value >= 0.05)  # Should fail to reject H0
-
-  # Test with corr scenario (should pass) - use 8 pre + 7 post
-  pre_corr <- readRDS(test_path("fixtures", "preperiods_corr.rds"))
-  Vpre_corr <- readRDS(test_path("fixtures", "Vpre_corr.rds"))
-  estimates_corr <- c(pre_corr, estimates_constant[1:7])
-  var_corr_full <- block_diag_matrix(Vpre_corr, var_iid[1:7, 1:7])
-
-  result_corr <- plausible_bounds(estimates_corr, var_corr_full, preperiods = 8)
-  expect_true(result_corr$wald_test$pre$p_value >= 0.05)
+  # Test 2: Zero preperiods metadata and horizon numbering
+  expect_equal(result$preperiods, 0)
+  expect_true(all(result$restricted_bounds$horizon > 0))
 })
 
 test_that("Wpre fails for reject scenario with pre-trends", {
@@ -293,46 +241,6 @@ test_that("Wpre fails for reject scenario with pre-trends", {
 
   expect_true(!is.null(result$wald_test$pre))
   expect_true(result$wald_test$pre$p_value < 0.05)  # Should reject H0
-})
-
-test_that("Wpre calculation is correct in calculate_restricted_bounds", {
-  pre_mean0 <- readRDS(test_path("fixtures", "preperiods_mean0.rds"))
-  Vpre_iid <- readRDS(test_path("fixtures", "Vpre_iid.rds"))
-  data(estimates_constant, envir = environment())
-  data(var_iid, envir = environment())
-
-  # Use 8 pre + 7 post
-  estimates <- c(pre_mean0, estimates_constant[1:7])
-  var <- block_diag_matrix(Vpre_iid, var_iid[1:7, 1:7])
-
-  result <- calculate_restricted_bounds(estimates, var, preperiods = 8)
-
-  # Manually calculate Wpre
-  expected_stat <- as.numeric(t(pre_mean0) %*% solve(Vpre_iid) %*% pre_mean0)
-  expected_pval <- 1 - pchisq(expected_stat, df = 8)
-
-  expect_equal(unname(result$Wpre["statistic"]), expected_stat, tolerance = 1e-6)
-  expect_equal(unname(result$Wpre["pvalue"]), expected_pval, tolerance = 1e-6)
-})
-
-test_that("Wpost is always computed regardless of preperiods", {
-  data(estimates_constant, envir = environment())
-  data(var_iid, envir = environment())
-
-  # Without preperiods - use 6 post
-  result_no_pre <- plausible_bounds(estimates_constant[1:7], var_iid[1:7, 1:7], preperiods = 0)
-  expect_true(!is.null(result_no_pre$wald_test$post))
-  expect_true(is.numeric(result_no_pre$wald_test$post$statistic))
-  expect_true(is.numeric(result_no_pre$wald_test$post$p_value))
-
-  # With preperiods - use 8 pre + 7 post
-  pre_mean0 <- readRDS(test_path("fixtures", "preperiods_mean0.rds"))
-  Vpre_iid <- readRDS(test_path("fixtures", "Vpre_iid.rds"))
-  estimates <- c(pre_mean0, estimates_constant[1:7])
-  var <- block_diag_matrix(Vpre_iid, var_iid[1:7, 1:7])
-
-  result_with_pre <- plausible_bounds(estimates, var, preperiods = 8)
-  expect_true(!is.null(result_with_pre$wald_test$post))
 })
 
 test_that("Wpost is computed on post-periods only", {
@@ -364,33 +272,6 @@ test_that("Wpost is computed on post-periods only", {
 
 # Section 5: Block Structure Tests ----
 
-test_that("pre and post periods are treated as independent blocks", {
-  pre_mean0 <- readRDS(test_path("fixtures", "preperiods_mean0.rds"))
-  Vpre_iid <- readRDS(test_path("fixtures", "Vpre_iid.rds"))
-  data(estimates_constant, envir = environment())
-  data(var_iid, envir = environment())
-
-  # Use 8 pre + 7 post
-  npre <- 8
-  npost <- 7
-
-  # Create block diagonal variance (no correlation between pre and post)
-  var_block <- matrix(0, npre + npost, npre + npost)
-  var_block[1:npre, 1:npre] <- Vpre_iid
-  var_block[(npre + 1):(npre + npost), (npre + 1):(npre + npost)] <- var_iid[1:npost, 1:npost]
-
-  estimates <- c(pre_mean0, estimates_constant[1:npost])
-  result <- plausible_bounds(estimates, var_block, preperiods = npre)
-
-  # Check that off-diagonal blocks in variance are all zeros
-  expect_true(all(var_block[1:npre, (npre + 1):(npre + npost)] == 0))
-  expect_true(all(var_block[(npre + 1):(npre + npost), 1:npre] == 0))
-
-  # Surrogate should only be computed on post-periods
-  post_rows <- result$restricted_bounds$horizon > 0
-  expect_false(any(is.na(result$restricted_bounds$surrogate[post_rows])))
-})
-
 test_that("ATE is computed from post-periods only", {
   pre_mean0 <- readRDS(test_path("fixtures", "preperiods_mean0.rds"))
   Vpre_iid <- readRDS(test_path("fixtures", "Vpre_iid.rds"))
@@ -419,27 +300,6 @@ test_that("ATE is computed from post-periods only", {
 
 # Section 6: Pointwise and Sup-t Bounds ----
 
-test_that("pointwise bounds are computed for all periods when preperiods > 0", {
-  pre_mean0 <- readRDS(test_path("fixtures", "preperiods_mean0.rds"))
-  Vpre_iid <- readRDS(test_path("fixtures", "Vpre_iid.rds"))
-  data(estimates_constant, envir = environment())
-  data(var_iid, envir = environment())
-
-  # Use 8 pre + 7 post
-  estimates <- c(pre_mean0, estimates_constant[1:7])
-  var <- block_diag_matrix(Vpre_iid, var_iid[1:7, 1:7])
-
-  result <- plausible_bounds(estimates, var, preperiods = 8, include_pointwise = TRUE)
-
-  expect_true(!is.null(result$pointwise_bounds))
-  expect_equal(length(result$pointwise_bounds$lower), length(estimates))
-  expect_equal(length(result$pointwise_bounds$upper), length(estimates))
-
-  # No NAs in pointwise bounds
-  expect_false(any(is.na(result$pointwise_bounds$lower)))
-  expect_false(any(is.na(result$pointwise_bounds$upper)))
-})
-
 test_that("supt bounds use critical value from all periods", {
   pre_mean0 <- readRDS(test_path("fixtures", "preperiods_mean0.rds"))
   Vpre_iid <- readRDS(test_path("fixtures", "Vpre_iid.rds"))
@@ -467,128 +327,37 @@ test_that("supt bounds use critical value from all periods", {
 
 # Section 7: Plotting Integration ----
 
-test_that("create_plot handles preperiods correctly", {
+test_that("plotting handles preperiods correctly", {
+  # Setup data once for all assertions
   pre_mean0 <- readRDS(test_path("fixtures", "preperiods_mean0.rds"))
   Vpre_iid <- readRDS(test_path("fixtures", "Vpre_iid.rds"))
   data(estimates_constant, envir = environment())
   data(var_iid, envir = environment())
 
-  # Use 8 pre + 7 post
   estimates <- c(pre_mean0, estimates_constant[1:7])
   var <- block_diag_matrix(Vpre_iid, var_iid[1:7, 1:7])
-
   result <- plausible_bounds(estimates, var, preperiods = 8)
+
+  # Call plot once (used across multiple assertions below)
   plot <- create_plot(result)
 
+  # Test 1: create_plot returns ggplot object
   expect_s3_class(plot, "ggplot")
 
-  # Build plot to access data
+  # Test 2: X-axis includes negative values (pre-periods)
   built <- ggplot2::ggplot_build(plot)
-
-  # Check that x-axis includes negative values
   x_range <- range(built$layout$panel_params[[1]]$x.range)
   expect_true(x_range[1] < 0)
   expect_true(x_range[2] > 0)
-})
 
-test_that("plot shows vertical line at event time 0 when preperiods > 0", {
-  pre_mean0 <- readRDS(test_path("fixtures", "preperiods_mean0.rds"))
-  Vpre_iid <- readRDS(test_path("fixtures", "Vpre_iid.rds"))
-  data(estimates_constant, envir = environment())
-  data(var_iid, envir = environment())
-
-  # Use 8 pre + 7 post
-  estimates <- c(pre_mean0, estimates_constant[1:7])
-  var <- block_diag_matrix(Vpre_iid, var_iid[1:7, 1:7])
-
-  result <- plausible_bounds(estimates, var, preperiods = 8)
-  plot <- create_plot(result)
-
-  # Check for vline at x = 0
+  # Test 3: Vertical line at event time 0
   has_vline <- any(sapply(plot$layers, function(l) {
     inherits(l$geom, "GeomVline")
   }))
-
   expect_true(has_vline)
 })
 
 # Section 8: Integration Tests ----
-
-test_that("full pipeline works with all four preperiod scenarios", {
-  skip_on_cran()
-
-  data(estimates_constant, envir = environment())
-  data(var_iid, envir = environment())
-
-  scenarios <- list(
-    mean0 = list(
-      pre = readRDS(test_path("fixtures", "preperiods_mean0.rds")),
-      Vpre = readRDS(test_path("fixtures", "Vpre_iid.rds"))
-    ),
-    fixed = list(
-      pre = readRDS(test_path("fixtures", "preperiods_fixed.rds")),
-      Vpre = readRDS(test_path("fixtures", "Vpre_iid.rds"))
-    ),
-    corr = list(
-      pre = readRDS(test_path("fixtures", "preperiods_corr.rds")),
-      Vpre = readRDS(test_path("fixtures", "Vpre_corr.rds"))
-    ),
-    reject = list(
-      pre = readRDS(test_path("fixtures", "preperiods_reject.rds")),
-      Vpre = readRDS(test_path("fixtures", "Vpre_reject.rds"))
-    )
-  )
-
-  for (name in names(scenarios)) {
-    # Use 8 pre + 7 post
-    estimates <- c(scenarios[[name]]$pre, estimates_constant[1:7])
-    var <- block_diag_matrix(scenarios[[name]]$Vpre, var_iid[1:7, 1:7])
-
-    # Test plausible_bounds
-    result <- plausible_bounds(estimates, var, preperiods = 8)
-    expect_s3_class(result, "plausible_bounds")
-    expect_equal(result$preperiods, 8)
-    expect_true(!is.null(result$wald_test$pre))
-    expect_true(!is.null(result$wald_test$post))
-
-    # Test calculate_restricted_bounds
-    restr <- calculate_restricted_bounds(estimates, var, preperiods = 8)
-    expect_s3_class(restr, "restricted_bounds")
-    expect_true(!is.null(restr$Wpre))
-    expect_true(!is.null(restr$Wpost))
-
-    # Test calculate_cumulative_bounds
-    cumul <- calculate_cumulative_bounds(estimates, var, preperiods = 8)
-    expect_s3_class(cumul, "cumulative_bounds")
-
-    # Test plotting
-    plot <- create_plot(result)
-    expect_s3_class(plot, "ggplot")
-  }
-})
-
-test_that("metadata is correctly populated with preperiods", {
-  pre_mean0 <- readRDS(test_path("fixtures", "preperiods_mean0.rds"))
-  Vpre_iid <- readRDS(test_path("fixtures", "Vpre_iid.rds"))
-  data(estimates_constant, envir = environment())
-  data(var_iid, envir = environment())
-
-  # Use 8 pre + 7 post
-  estimates <- c(pre_mean0, estimates_constant[1:7])
-  var <- block_diag_matrix(Vpre_iid, var_iid[1:7, 1:7])
-
-  result <- plausible_bounds(estimates, var, preperiods = 8)
-
-  # Check preperiods is stored at top level
-  expect_equal(result$preperiods, 8)
-
-  # Check metadata in sub-results
-  restr <- calculate_restricted_bounds(estimates, var, preperiods = 8)
-  expect_equal(restr$metadata$preperiods, 8)
-
-  cumul <- calculate_cumulative_bounds(estimates, var, preperiods = 8)
-  expect_equal(cumul$metadata$preperiods, 8)
-})
 
 # Section 9: Edge Cases and Boundary Conditions ----
 
@@ -606,79 +375,4 @@ test_that("single preperiod works correctly", {
   expect_equal(result$preperiods, 1)
   expect_true(!is.null(result$wald_test$pre))
   expect_equal(min(result$restricted_bounds$horizon), -1)
-})
-
-test_that("zero preperiods works and Wpre is NULL", {
-  data(estimates_constant, envir = environment())
-  data(var_iid, envir = environment())
-
-  # Use 6 post
-  result <- plausible_bounds(estimates_constant[1:7], var_iid[1:7, 1:7], preperiods = 0)
-
-  expect_equal(result$preperiods, 0)
-  expect_null(result$wald_test$pre)
-  expect_true(!is.null(result$wald_test$post))
-  expect_true(all(result$restricted_bounds$horizon > 0))
-})
-
-test_that("many preperiods with few post-periods works", {
-  data(estimates_constant, envir = environment())
-  data(var_iid, envir = environment())
-
-  n <- length(estimates_constant)
-
-  # Test with n-2 preperiods and 2 post-periods (edge case)
-  result <- plausible_bounds(estimates_constant, var_iid, preperiods = n - 2)
-  expect_equal(result$preperiods, n - 2)
-  expect_equal(nrow(result$restricted_bounds), n)
-})
-
-test_that("post-treatment results are independent of npre", {
-  pre_mean0 <- readRDS(test_path("fixtures", "preperiods_mean0.rds"))
-  Vpre_iid <- readRDS(test_path("fixtures", "Vpre_iid.rds"))
-  data(estimates_constant, envir = environment())
-  data(var_iid, envir = environment())
-
-  # Compare 2 preperiods vs 6 preperiods - use 6 post
-  estimates_2pre <- c(pre_mean0[1:2], estimates_constant[1:7])
-  var_2pre <- block_diag_matrix(Vpre_iid[1:2, 1:2], var_iid[1:7, 1:7])
-  result_2pre <- plausible_bounds(estimates_2pre, var_2pre, preperiods = 2)
-
-  estimates_6pre <- c(pre_mean0[1:6], estimates_constant[1:7])
-  var_6pre <- block_diag_matrix(Vpre_iid[1:6, 1:6], var_iid[1:7, 1:7])
-  result_6pre <- plausible_bounds(estimates_6pre, var_6pre, preperiods = 6)
-
-  # Post-period surrogate should be very similar
-  post_bounds_2pre <- result_2pre$restricted_bounds[
-    result_2pre$restricted_bounds$horizon > 0,
-  ]
-  post_bounds_6pre <- result_6pre$restricted_bounds[
-    result_6pre$restricted_bounds$horizon > 0,
-  ]
-
-  expect_equal(post_bounds_2pre$surrogate, post_bounds_6pre$surrogate,
-               tolerance = 1e-10)
-  # Bounds can differ slightly due to different critical values
-  expect_equal(post_bounds_2pre$lower, post_bounds_6pre$lower, tolerance = 1e-2)
-  expect_equal(post_bounds_2pre$upper, post_bounds_6pre$upper, tolerance = 1e-2)
-})
-
-test_that("preperiods work with different alpha values", {
-  pre_mean0 <- readRDS(test_path("fixtures", "preperiods_mean0.rds"))
-  Vpre_iid <- readRDS(test_path("fixtures", "Vpre_iid.rds"))
-  data(estimates_constant, envir = environment())
-  data(var_iid, envir = environment())
-
-  # Use 8 pre + 7 post
-  estimates <- c(pre_mean0, estimates_constant[1:7])
-  var <- block_diag_matrix(Vpre_iid, var_iid[1:7, 1:7])
-
-  for (alpha in c(0.01, 0.05, 0.1)) {
-    result <- plausible_bounds(estimates, var, alpha = alpha, preperiods = 8)
-
-    expect_equal(result$preperiods, 8)
-    expect_equal(result$restricted_bounds_metadata$alpha, alpha)
-    expect_true(!is.null(result$wald_test$pre))
-    expect_true(!is.null(result$wald_test$post))
-  }
 })

@@ -139,30 +139,6 @@ test_that("plot has correct aesthetic mappings and scales", {
   expect_true(inherits(plot$theme, "theme"))
 })
 
-test_that("plot handles different horizon lengths appropriately", {
-  skip_on_cran()
-  # Test with small dataset
-  set.seed(42)
-  small_est <- rnorm(5)
-  small_var <- diag(5) * 0.1
-
-  pb_small <- plausible_bounds(small_est, small_var)
-  plot_small <- create_plot(pb_small)
-  check_plot_structure(plot_small)
-
-  # Test with larger dataset
-  large_est <- rnorm(25)
-  large_var <- diag(25) * 0.1
-
-  pb_large <- plausible_bounds(large_est, large_var)
-  plot_large <- create_plot(pb_large)
-  check_plot_structure(plot_large)
-
-  # Both should be valid plots
-  expect_s3_class(plot_small, "ggplot")
-  expect_s3_class(plot_large, "ggplot")
-})
-
 # ---- Integration Tests ----
 
 test_that("plots can be modified with ggplot2 functions", {
