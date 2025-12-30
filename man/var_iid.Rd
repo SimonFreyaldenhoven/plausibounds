@@ -21,7 +21,7 @@ no correlation across time periods.
 \examples{
 data(estimates_constant)
 data(var_iid)
-result <- calculate_cumulative_bounds(estimates_constant, var_iid)
+result <- plausible_bounds(estimates_constant[1:7], var_iid[1:7, 1:7])
 create_plot(result)
 }
 \keyword{datasets}

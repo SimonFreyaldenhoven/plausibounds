@@ -28,18 +28,3 @@ This function calculates bounds for the average treatment effect (ATE) from
 a vector of estimates.
 Supports pre-treatment periods for event study designs.
 }
-\examples{
-# Example with constant estimates and IID errors
-data(estimates_constant)
-data(var_iid)
-cumul_bounds <- calculate_cumulative_bounds(estimates_constant, var_iid)
-
-# Example with wiggly estimates and strong correlation
-data(estimates_wiggly)
-data(var_corr)
-cumul_bounds_complex <- calculate_cumulative_bounds(
-  estimates_wiggly,
-  var_corr
-)
-
-}

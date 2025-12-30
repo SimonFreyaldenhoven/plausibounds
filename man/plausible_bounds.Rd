@@ -11,7 +11,8 @@ plausible_bounds(
   preperiods = 0,
   include_pointwise = TRUE,
   include_supt = TRUE,
-  parallel = FALSE
+  parallel = FALSE,
+  n_cores = NULL
 )
 }
 \arguments{
@@ -30,6 +31,9 @@ to be normalized and not included in estimates.}
 \item{include_supt}{Whether to include sup-t bounds (default: TRUE)}
 
 \item{parallel}{Whether to use parallel processing for restricted bounds calculation (default: FALSE)}
+
+\item{n_cores}{Number of cores to use for parallel processing (default: NULL, which uses
+detectCores() - 1). Only used when parallel = TRUE.}
 }
 \value{
 A list containing:

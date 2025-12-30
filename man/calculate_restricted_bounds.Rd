@@ -9,7 +9,8 @@ calculate_restricted_bounds(
   var,
   alpha = 0.05,
   preperiods = 0,
-  parallel = FALSE
+  parallel = FALSE,
+  n_cores = NULL
 )
 }
 \arguments{
@@ -24,6 +25,9 @@ elements are pre-treatment estimates, followed by post-treatment estimates.}
 to be normalized and not included in estimates.}
 
 \item{parallel}{Whether to use parallel processing (default: FALSE)}
+
+\item{n_cores}{Number of cores to use for parallel processing (default: NULL, which uses
+detectCores() - 1). Only used when parallel = TRUE.}
 }
 \value{
 A list containing:
@@ -36,12 +40,5 @@ coefficients, surrogate values, and bounds}
 \description{
 This function calculates restricted bounds for a vector of estimates using model selection.
 Supports pre-treatment periods for event study designs.
-}
-\examples{
-# Example with constant estimates and IID errors
-data(estimates_constant)
-data(var_iid)
-restr_bounds <- calculate_restricted_bounds(estimates_constant[1:5], var_iid[1:5, 1:5])
-
 }
 \keyword{internal}

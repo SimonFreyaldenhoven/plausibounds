@@ -9,7 +9,7 @@
 #' @examples
 #' data(estimates_constant)
 #' data(var_iid)
-#' result <- calculate_cumulative_bounds(estimates_constant, var_iid)
+#' result <- plausible_bounds(estimates_constant[1:7], var_iid[1:7, 1:7])
 #' create_plot(result)
 "estimates_constant"
 
@@ -24,7 +24,7 @@
 #' @examples
 #' data(estimates_constant)
 #' data(var_iid)
-#' result <- calculate_cumulative_bounds(estimates_constant, var_iid)
+#' result <- plausible_bounds(estimates_constant[1:7], var_iid[1:7, 1:7])
 #' create_plot(result)
 "var_iid"
 
@@ -40,7 +40,7 @@
 #' @examples
 #' data(estimates_wiggly)
 #' data(var_corr)
-#' result <- calculate_cumulative_bounds(estimates_wiggly, var_corr)
+#' result <- plausible_bounds(estimates_wiggly[1:7], var_corr[1:7, 1:7])
 #' create_plot(result)
 "estimates_wiggly"
 
@@ -55,6 +55,6 @@
 #' @examples
 #' data(estimates_wiggly)
 #' data(var_corr)
-#' result <- calculate_cumulative_bounds(estimates_wiggly, var_corr)
+#' result <- plausible_bounds(estimates_wiggly[1:7], var_corr[1:7, 1:7])
 #' create_plot(result)
 "var_corr"

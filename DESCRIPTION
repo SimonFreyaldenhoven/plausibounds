@@ -5,10 +5,9 @@ Authors@R:
     person(given = "Ryan",
            family = "Kobler",
            role = c("aut", "cre"),
-           email = "ryan.kobler@phil.frb.org")
+           email = "kobleary@gmail.com")
 Description: Provides tools for calculating and visualizing plausible bounds
-    for treatment path estimates. Includes functions for calculating cumulative
-    bounds, restricted bounds, and visualizing the results.
+    for treatment path estimates as in Freyaldenhoven (2025). Includes functions for calculating bounds and visualizing the results.
 License: MIT + file LICENSE
 Depends: 
     R (>= 3.5)

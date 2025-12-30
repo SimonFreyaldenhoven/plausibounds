@@ -22,7 +22,7 @@ strong correlation structure.
 \examples{
 data(estimates_wiggly)
 data(var_corr)
-result <- calculate_cumulative_bounds(estimates_wiggly, var_corr)
+result <- plausible_bounds(estimates_wiggly[1:7], var_corr[1:7, 1:7])
 create_plot(result)
 }
 \keyword{datasets}
