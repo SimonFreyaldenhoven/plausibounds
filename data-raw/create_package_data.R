@@ -29,8 +29,20 @@ create_dynamic_path <- function(design_name, p = 12) {
     # Smooth, flat (constant effect)
     delta <- rep(-0.4, p)
 
+  } else if (design_name == "pretrends") {
+    # Design with significant pretrends in first 6 periods
+    # Linear pretrend that violates parallel trends assumption
+    pretrend_periods <- 6
+    # Strong linear trend in pre-treatment periods
+    delta <- numeric(p)
+    delta[1:pretrend_periods] <- seq(-0.5, -0.8, length.out = pretrend_periods)
+    # Post-treatment periods show treatment effect
+    if (p > pretrend_periods) {
+      delta[(pretrend_periods+1):p] <- seq(-0.8, -1.2, length.out = p - pretrend_periods)
+    }
+
   } else {
-    stop("Invalid design name. Choose from: 'quadratic', 'wiggly', 'constant'")
+    stop("Invalid design name. Choose from: 'quadratic', 'wiggly', 'constant', 'pretrends'")
   }
 
   return(delta)
@@ -89,10 +101,18 @@ sim_wiggly <- simulate_dgp("wiggly", rho = 0.8, se = 0.014, p = 12)
 estimates_wiggly <- sim_wiggly$dhat
 var_corr <- sim_wiggly$Vhat
 
+# Generate pretrends estimates with moderate correlation (rho = 0.4)
+# These have 6 periods of pretrends that reject the null of no pretrends
+sim_pretrends <- simulate_dgp("pretrends", rho = 0.4, se = 0.014, p = 12)
+estimates_pretrends <- sim_pretrends$dhat
+var_pretrends <- sim_pretrends$Vhat
+
 # Save datasets to data/ directory -----------------------------------------
 
 usethis::use_data(estimates_constant, overwrite = TRUE)
 usethis::use_data(var_iid, overwrite = TRUE)
 usethis::use_data(estimates_wiggly, overwrite = TRUE)
 usethis::use_data(var_corr, overwrite = TRUE)
+usethis::use_data(estimates_pretrends, overwrite = TRUE)
+usethis::use_data(var_pretrends, overwrite = TRUE)
 
