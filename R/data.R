@@ -62,17 +62,18 @@
 #' Pretrends Estimates with Significant Pre-Treatment Trends
 #'
 #' A dataset containing estimates with significant pretrends in the first 6
-#' pre-treatment periods. This dataset exhibits a linear trend before treatment
-#' that violates the parallel trends assumption, making it useful for testing
-#' pretrend detection methods. Statistical tests would reject the null hypothesis
-#' of no pretrends.
+#' pre-treatment periods followed by 12 post-treatment periods. This dataset
+#' exhibits a linear trend before treatment that violates the parallel trends
+#' assumption, making it useful for testing pretrend detection methods.
+#' Statistical tests would reject the null hypothesis of no pretrends.
 #'
-#' @format A numeric vector with 12 elements (6 pre-treatment, 6 post-treatment)
+#' @format A numeric vector with 18 elements (6 pre-treatment, 12 post-treatment)
 #' @source Generated from simulation with linear pretrend design and moderate correlation (rho = 0.4)
 #' @examples
 #' data(estimates_pretrends)
 #' data(var_pretrends)
-#' result <- plausible_bounds(estimates_pretrends[1:7], var_pretrends[1:7, 1:7])
+#' # Use first 7 post-treatment estimates (indices 1:13 = 6 pre + 7 post)
+#' result <- plausible_bounds(estimates_pretrends[1:13], var_pretrends[1:13, 1:13], preperiods = 6)
 #' create_plot(result)
 "estimates_pretrends"
 
@@ -82,11 +83,12 @@
 #' correlation structure (rho = 0.4). This matrix has non-zero off-diagonal
 #' elements representing moderate correlation across time periods.
 #'
-#' @format A 12 x 12 matrix
+#' @format A 18 x 18 matrix
 #' @source Generated from simulation with linear pretrend design and moderate correlation (rho = 0.4)
 #' @examples
 #' data(estimates_pretrends)
 #' data(var_pretrends)
-#' result <- plausible_bounds(estimates_pretrends[1:7], var_pretrends[1:7, 1:7])
+#' # Use first 7 post-treatment estimates (indices 1:13 = 6 pre + 7 post)
+#' result <- plausible_bounds(estimates_pretrends[1:13], var_pretrends[1:13, 1:13], preperiods = 6)
 #' create_plot(result)
 "var_pretrends"

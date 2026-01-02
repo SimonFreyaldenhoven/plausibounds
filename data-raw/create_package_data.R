@@ -102,8 +102,8 @@ estimates_wiggly <- sim_wiggly$dhat
 var_corr <- sim_wiggly$Vhat
 
 # Generate pretrends estimates with moderate correlation (rho = 0.4)
-# These have 6 periods of pretrends that reject the null of no pretrends
-sim_pretrends <- simulate_dgp("pretrends", rho = 0.4, se = 0.014, p = 12)
+# These have 6 periods of pretrends + 12 post periods = 18 total
+sim_pretrends <- simulate_dgp("pretrends", rho = 0.4, se = 0.014, p = 18)
 estimates_pretrends <- sim_pretrends$dhat
 var_pretrends <- sim_pretrends$Vhat
 
