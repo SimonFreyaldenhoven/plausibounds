@@ -17,7 +17,7 @@
 #' @return A list containing:
 #'   \item{restricted_bounds}{A data frame with columns for horizon (event time),
 #'     coefficients, surrogate values, and bounds}
-#'   \item{Wpre}{Wald test for pre-trends (statistic and p-value), if preperiods > 0}
+#'   \item{Wpre}{Wald test for no pre-trends (statistic and p-value), if preperiods > 0}
 #'   \item{Wpost}{Wald test for no treatment effect (statistic and p-value)}
 #'   \item{metadata}{A list with metadata about the calculation}
 #' @keywords internal
@@ -113,16 +113,16 @@ calculate_restricted_bounds <- function(estimates, var, alpha = 0.05,
   surrogate_class <- "polynomial"
   
   Xtmp <- matrix(1, nrow = p, ncol = 1)
-  res <- MDproj2(estimates, var, Xtmp) 
-  bic <- res$MD + log(p) 
+  res <- MDproj2(estimates, var, Xtmp)
+  bic <- res$bic + log(p)
   best_fit <- res
   best_df <- ncol(Xtmp)
-  best_obj <- res$MD
+  best_obj <- res$bic
   best_J <- res$J
-  best_pval <- res$pval
+  best_pval <- res$model_fit_pval
   best_bic <- bic
   mbhsf <- apply(abs(rd %*% best_J), 1, max)
-  
+
   # Limit polynomial degree based on number of observations
   max_degree <- min(3, p - 1)
   for (degree in 1:max_degree) {
@@ -132,29 +132,29 @@ calculate_restricted_bounds <- function(estimates, var, alpha = 0.05,
       break
     }
     res <- MDproj2(estimates, var, Xtmp)
-    bic <- res$MD + log(p) * ncol(Xtmp)
+    bic <- res$bic + log(p) * ncol(Xtmp)
     if (bic < best_bic) {
       best_fit <- res
       best_df <- ncol(Xtmp)
-      best_obj <- res$MD
+      best_obj <- res$bic
       best_J <- res$J
-      best_pval <- res$pval
+      best_pval <- res$model_fit_pval
       surrogate_class <- "polynomial"
       best_bic <- bic
     }
     mbhsf <- pmax(mbhsf, apply(abs(rd %*% res$J), 1, max))
   }
-  
+
   bic_unrestricted <- log(p) * p
   if (bic_unrestricted < best_bic) {
-    d <- estimates
-    Vd <- var
+    estimates_proj <- estimates
+    var_proj <- var
     obj <- 0
-    pval <- 1
+    model_fit_pval <- 1
     stdVd <- sqrt(diag(var))
     cVdb <- diag(1 / stdVd) %*% var %*% diag(1 / stdVd)
     J <- tryCatch(chol(cVdb), error = function(e) diag(p))
-    best_fit <- list(d = d, Vd = Vd, obj = obj, J = J, pval = pval)
+    best_fit <- list(estimates_proj = estimates_proj, var_proj = var_proj, obj = obj, J = J, model_fit_pval = model_fit_pval)
     best_df <- p
     surrogate_class <- "unrestricted"
     best_bic <- bic_unrestricted
@@ -285,8 +285,8 @@ calculate_restricted_bounds <- function(estimates, var, alpha = 0.05,
   suptb <- as.numeric(stats::quantile(mbhsf, 1 - alpha))
 
   # Restricted bounds (post-periods only)
-  restricted_LB <- best_fit$d - suptb * sqrt(diag(best_fit$Vd))
-  restricted_UB <- best_fit$d + suptb * sqrt(diag(best_fit$Vd))
+  restricted_LB <- best_fit$estimates_proj - suptb * sqrt(diag(best_fit$var_proj))
+  restricted_UB <- best_fit$estimates_proj + suptb * sqrt(diag(best_fit$var_proj))
 
   # Wald test for pre-trends (H0: no pre-treatment effects)
   Wpre <- NULL
@@ -308,7 +308,7 @@ calculate_restricted_bounds <- function(estimates, var, alpha = 0.05,
     bounds_df_post <- data.frame(
       horizon = 1:p,
       coef = estimates,
-      surrogate = best_fit$d,
+      surrogate = best_fit$estimates_proj,
       lower = restricted_LB,
       upper = restricted_UB
     )
@@ -325,14 +325,11 @@ calculate_restricted_bounds <- function(estimates, var, alpha = 0.05,
     bounds_df <- data.frame(
       horizon = 1:p,
       coef = estimates,
-      surrogate = best_fit$d,
+      surrogate = best_fit$estimates_proj,
       lower = restricted_LB,
       upper = restricted_UB
     )
   }
-
-  # Calculate width (post-periods only)
-  restricted_width <- mean(restricted_UB - restricted_LB)
 
   # Create result list with restricted bounds
   result <- list(
@@ -346,6 +343,10 @@ calculate_restricted_bounds <- function(estimates, var, alpha = 0.05,
 
   result$Wpost <- Wpost
 
+  # Remove J from best_fit before storing in metadata
+  best_fit_clean <- best_fit
+  best_fit_clean$J <- NULL
+
   # Add metadata
   result$metadata <- list(
     alpha = alpha,
@@ -357,10 +358,9 @@ calculate_restricted_bounds <- function(estimates, var, alpha = 0.05,
     lambda1 = bestlam1,
     lambda2 = bestlam2,
     surrogate_class = surrogate_class,
-    width = restricted_width,
     individual_upper = restricted_UB,
     individual_lower = restricted_LB,
-    best_fit_model = best_fit
+    best_fit_model = best_fit_clean
   )
 
   class(result) <- c("restricted_bounds", "plausible_bounds_result")
@@ -384,20 +384,20 @@ process_K <- function(K, estimates, var, loglam1_range, loglam2_range, target_df
   
   for (jj in 1:nrow(loglambda_grid)) {
     res <- MDprojl2tf(estimates, var, exp(loglambda_grid[jj, 1]), exp(loglambda_grid[jj, 2]), K)
-    bic <- res$MD + log(p) * res$df
-    
+    bic <- res$bic + log(p) * res$df
+
     # Update best results for this K
     if (bic < K_best_bic) {
       K_bestlam1 <- exp(loglambda_grid[jj, 1])
       K_bestlam2 <- exp(loglambda_grid[jj, 2])
       K_best_fit <- res
       K_best_df <- res$df
-      K_best_obj <- res$MD
+      K_best_obj <- res$bic
       K_best_J <- res$J
-      K_best_pval <- res$pval
+      K_best_pval <- res$model_fit_pval
       K_best_bic <- bic
     }
-    
+
     # Update mbhsf for this K
     K_mbhsf <- pmax(K_mbhsf, apply(abs(rd %*% res$J), 1, max))
   }
@@ -419,23 +419,23 @@ process_K <- function(K, estimates, var, loglam1_range, loglam2_range, target_df
 
 
 MDproj2 <- function(delta, V, X) {
-  p <- length(delta)                       
-  Vb <- solve(t(X) %*% solve(V) %*% X)      
-  beta <- Vb %*% (t(X) %*% solve(V, delta)) 
-  d <- X %*% beta                           
-  Vd <- X %*% Vb %*% t(X)                   
-  stdVd <- sqrt(diag(Vd))
-  cVdb <- diag(1 / stdVd) %*% Vd %*% diag(1 / stdVd)
-  
+  p <- length(delta)
+  Vb <- solve(t(X) %*% solve(V) %*% X)
+  beta <- Vb %*% (t(X) %*% solve(V, delta))
+  estimates_proj <- X %*% beta
+  var_proj <- X %*% Vb %*% t(X)
+  stdVd <- sqrt(diag(var_proj))
+  cVdb <- diag(1 / stdVd) %*% var_proj %*% diag(1 / stdVd)
+
   eig <- eigen(cVdb)
   eigVec <- eig$vectors
   D <- eig$values
   J <- eigVec %*% diag(sqrt(D * (Re(D) > 1e-12))) %*% t(eigVec)
-  
-  MD <- t(delta - d) %*% solve(V, delta - d)
-  pv <- 1 - stats::pchisq(MD, p - length(beta))
-  
-  return(list(d = d, Vd = Vd, MD = MD, J = J, pval = pv))
+
+  bic <- t(delta - estimates_proj) %*% solve(V, delta - estimates_proj)
+  model_fit_pval <- 1 - stats::pchisq(bic, p - length(beta))
+
+  return(list(estimates_proj = estimates_proj, var_proj = var_proj, bic = bic, J = J, model_fit_pval = model_fit_pval))
 }
 
 find_lam_bounds <- function(p, V, target_df) {
@@ -486,72 +486,72 @@ setup_grid <- function(n_grid, loglam1_range, loglam2_range, K, V, lb, ub) {
 }
 
 MDprojl2tf <- function(delta, V, lambda1, lambda2, K) {
-  
+
   p <- length(delta)
-  
+
   D1 <- matrix(0, nrow = p, ncol = p)
   D1[cbind(2:p, 1:(p-1))] <- 1
   D1 <- D1 - diag(p)
   D1 <- D1[-1, ]
-  
+
   D2 <- D1[-1, -1]
   D3 <- D2[-1, -1] %*% D2 %*% D1
-  
+
   diag_mean <- mean(diag(V))
   scaledV <- V / diag_mean
   iV <- solve(V)
   scalediV <- solve(scaledV)
-  
+
   # Calculate vD1 and related matrices
   vD1 <- D1 %*% scaledV %*% t(D1)
   zeros_block <- matrix(0, nrow = K-1, ncol = K-1)
   partial_vD1 <- vD1[K:nrow(vD1), K:ncol(vD1)] %>% as.matrix()
   vD1_block <- partial_vD1 / mean(diag(partial_vD1))
   W1 <- as.matrix(Matrix::bdiag(zeros_block, vD1_block))
-  
+
   # Calculate vD3 and W3
   vD3 <- D3 %*% scaledV %*% t(D3)
   W3 <- vD3 / mean(diag(vD3))
-  
+
   # Solve system and calculate results
   den <- solve(scalediV + lambda1 * t(D1) %*% diag(diag(W1)) %*% D1 +
                  lambda2 * t(D3) %*% diag(diag(W3)) %*% D3)
-  
+
   df <- sum(diag(den %*% scalediV))
-  
-  d <- den %*% (scalediV %*% delta)
-  
-  Vd <- den %*% scalediV %*% t(den)
-  Vd <- Vd * diag_mean
-  
-  stdVd <- sqrt(diag(Vd))
-  cVdb <- diag(1/stdVd) %*% Vd %*% diag(1/stdVd)
-  
+
+  estimates_proj <- den %*% (scalediV %*% delta)
+
+  var_proj <- den %*% scalediV %*% t(den)
+  var_proj <- var_proj * diag_mean
+
+  stdVd <- sqrt(diag(var_proj))
+  cVdb <- diag(1/stdVd) %*% var_proj %*% diag(1/stdVd)
+
   eigen_result <- eigen(cVdb)
   eigVec <- eigen_result$vectors
   eigen_values <- eigen_result$values
   D_eigen <- diag(eigen_values)
-  
+
   if (any(Im(eigen_values) > 0)) {
     warning("Complex eigenvalues detected in covariance matrix, results may be unreliable")
   }
-  
+
   # Create J matrix more efficiently
   sqrt_D <- sqrt(pmax(D_eigen, 1e-12))
   sqrt_D[D_eigen <= 1e-12] <- 0
   J <- eigVec %*% sqrt_D %*% t(eigVec)
-  
-  residual <- delta - d
-  MD <- as.numeric(t(residual) %*% iV %*% residual)
-  
-  pv <- 1 - stats::pchisq(MD, df = p - df)
-  
+
+  residual <- delta - estimates_proj
+  bic <- as.numeric(t(residual) %*% iV %*% residual)
+
+  model_fit_pval <- 1 - stats::pchisq(bic, df = p - df)
+
   return(list(
-    d = as.vector(d),
-    Vd = Vd,
-    MD = MD,
+    estimates_proj = as.vector(estimates_proj),
+    var_proj = var_proj,
+    bic = bic,
     J = J,
-    pval = pv,
+    model_fit_pval = model_fit_pval,
     df = df
   ))
 }

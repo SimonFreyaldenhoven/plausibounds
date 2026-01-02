@@ -17,12 +17,13 @@
 #'   detectCores() - 1). Only used when parallel = TRUE.
 #'
 #' @return A list containing:
+#'   \item{alpha}{Significance level}
 #'   \item{preperiods}{Number of pre-treatment periods}
 #'   \item{wald_test}{List with post (and pre if preperiods > 0) Wald test results}
 #'   \item{restricted_bounds}{Data frame with horizon, coef, surrogate, lower, upper}
-#'   \item{restricted_bounds_metadata}{List with alpha, width, supt_critval, supt_b,
+#'   \item{restricted_bounds_metadata}{List with supt_critval, supt_b,
 #'     degrees_of_freedom, K, lambda1, lambda2, surrogate_class, best_fit_model}
-#'   \item{avg_treatment_effect}{List with estimate, se, bounds, alpha, width}
+#'   \item{avg_treatment_effect}{List with estimate, se, lower, upper}
 #'   \item{pointwise_bounds}{List with lower and upper vectors (if include_pointwise = TRUE)}
 #'   \item{supt_bounds}{List with lower and upper vectors (if include_supt = TRUE)}
 #'
@@ -82,8 +83,6 @@ plausible_bounds <- function(estimates, var, alpha = 0.05,
 
   # Build restricted_bounds_metadata
   restricted_bounds_metadata <- list(
-    alpha = restr_bd$metadata$alpha,
-    width = restr_bd$metadata$width,
     supt_critval = restr_bd$metadata$supt_critval,
     supt_b = restr_bd$metadata$suptb,
     degrees_of_freedom = restr_bd$metadata$df,
@@ -98,17 +97,14 @@ plausible_bounds <- function(estimates, var, alpha = 0.05,
   avg_treatment_effect <- list(
     estimate = unname(cumul_bd$ate["estimate"]),
     se = unname(cumul_bd$ate["se"]),
-    bounds = list(
-      lb = cumul_bd$metadata$lb,
-      ub = cumul_bd$metadata$ub
-    ),
-    alpha = cumul_bd$metadata$alpha,
-    width = cumul_bd$metadata$width
+    lower = cumul_bd$metadata$lb,
+    upper = cumul_bd$metadata$ub
   )
 
   # Build result list
 
   result <- list(
+    alpha = alpha,
     preperiods = preperiods,
     wald_test = wald_test,
     restricted_bounds = restr_bd$restricted_bounds,
@@ -195,14 +191,13 @@ print.plausible_bounds <- function(x, ...) {
   cat(sprintf("  Estimate: %.4f (SE: %.4f)\n",
               x$avg_treatment_effect$estimate, x$avg_treatment_effect$se))
   cat(sprintf("  %.0f%% CI: [%.4f, %.4f]\n",
-              (1 - x$avg_treatment_effect$alpha) * 100,
-              x$avg_treatment_effect$bounds$lb, x$avg_treatment_effect$bounds$ub))
+              (1 - x$alpha) * 100,
+              x$avg_treatment_effect$lower, x$avg_treatment_effect$upper))
 
   # Restricted bounds info
   cat("\nRestricted Bounds:\n")
   cat(sprintf("  Surrogate class: %s\n", x$restricted_bounds_metadata$surrogate_class))
   cat(sprintf("  Degrees of freedom: %.2f\n", x$restricted_bounds_metadata$degrees_of_freedom))
-  cat(sprintf("  Average width: %.4f\n", x$restricted_bounds_metadata$width))
 
   cat("\nBounds by horizon:\n")
   print(x$restricted_bounds, row.names = FALSE)

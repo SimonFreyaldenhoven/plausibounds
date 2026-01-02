@@ -21,12 +21,15 @@ test_that("calculate_cumulative_bounds works with real example data", {
   
   # Check that bounds contain the estimates (for constant case)
   expect_true(all(result$cumulative_bounds$lower <= result$cumulative_bounds$upper))
-  
+
   # Check metadata
   expect_type(result$metadata, "list")
   expect_equal(result$metadata$alpha, 0.05)
-  expect_true(is.numeric(result$metadata$width))
-  expect_true(result$metadata$width > 0)
+
+  # Compute width from bounds
+  width <- mean(result$cumulative_bounds$upper - result$cumulative_bounds$lower)
+  expect_true(is.numeric(width))
+  expect_true(width > 0)
 })
 
 test_that("calculate_cumulative_bounds works with wiggly correlated data", {
@@ -230,21 +233,20 @@ test_that("calculate_cumulative_bounds metadata is correct", {
   # Check metadata structure
   expect_type(result$metadata, "list")
   expect_true("alpha" %in% names(result$metadata))
-  expect_true("width" %in% names(result$metadata))
   expect_true("lb" %in% names(result$metadata))
   expect_true("ub" %in% names(result$metadata))
   expect_true("preperiods" %in% names(result$metadata))
 
   # Check metadata values
   expect_equal(result$metadata$alpha, 0.10)
-  expect_true(is.numeric(result$metadata$width))
-  expect_true(result$metadata$width > 0)
   expect_true(is.numeric(result$metadata$lb))
   expect_true(is.numeric(result$metadata$ub))
   expect_equal(result$metadata$preperiods, 0)
 
-  # Width should match ub - lb
-  expect_equal(result$metadata$width, result$metadata$ub - result$metadata$lb)
+  # Compute width from ub - lb
+  width <- result$metadata$ub - result$metadata$lb
+  expect_true(is.numeric(width))
+  expect_true(width > 0)
 })
 
 test_that("calculate_cumulative_bounds handles NA and infinite values appropriately", {

@@ -33,7 +33,7 @@ detectCores() - 1). Only used when parallel = TRUE.}
 A list containing:
 \item{restricted_bounds}{A data frame with columns for horizon (event time),
 coefficients, surrogate values, and bounds}
-\item{Wpre}{Wald test for pre-trends (statistic and p-value), if preperiods > 0}
+\item{Wpre}{Wald test for no pre-trends (statistic and p-value), if preperiods > 0}
 \item{Wpost}{Wald test for no treatment effect (statistic and p-value)}
 \item{metadata}{A list with metadata about the calculation}
 }

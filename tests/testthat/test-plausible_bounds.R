@@ -39,12 +39,12 @@ test_that("new functions match original full_eventplot_l2tf results", {
   # Compare results
   # Average treatment effect bounds
   expect_equal(
-    pb$avg_treatment_effect$bounds$lb,
+    pb$avg_treatment_effect$lower,
     original_results$lb/length(delta),
     tolerance = 1e-2
   )
   expect_equal(
-    pb$avg_treatment_effect$bounds$ub,
+    pb$avg_treatment_effect$upper,
     original_results$ub/length(delta),
     tolerance = 1e-2
   )
@@ -106,11 +106,10 @@ test_that("parallel and non-parallel results are identical", {
     tolerance = 1e-10
   )
 
-  expect_equal(
-    result_parallel$restricted_bounds_metadata$width,
-    result_sequential$restricted_bounds_metadata$width,
-    tolerance = 1e-10
-  )
+  # Compute widths and compare
+  width_parallel <- mean(result_parallel$restricted_bounds$upper - result_parallel$restricted_bounds$lower)
+  width_sequential <- mean(result_sequential$restricted_bounds$upper - result_sequential$restricted_bounds$lower)
+  expect_equal(width_parallel, width_sequential, tolerance = 1e-10)
   
   # Test with constant estimates and IID errors
   data(estimates_constant)
@@ -146,11 +145,10 @@ test_that("parallel and non-parallel results are identical", {
     tolerance = 1e-10
   )
 
-  expect_equal(
-    result_parallel_const$restricted_bounds_metadata$width,
-    result_sequential_const$restricted_bounds_metadata$width,
-    tolerance = 1e-10
-  )
+  # Compute widths and compare
+  width_parallel_const <- mean(result_parallel_const$restricted_bounds$upper - result_parallel_const$restricted_bounds$lower)
+  width_sequential_const <- mean(result_sequential_const$restricted_bounds$upper - result_sequential_const$restricted_bounds$lower)
+  expect_equal(width_parallel_const, width_sequential_const, tolerance = 1e-10)
 })
 
 # Test n_cores parameter validation and edge cases

@@ -101,9 +101,6 @@ calculate_cumulative_bounds <- function(estimates, var, alpha = 0.05,
     )
   }
 
-  # Calculate width
-  width <- ub - lb
-
   # Return list with bounds data frame and metadata
   result <- list(
     cumulative_bounds = bounds_df,
@@ -113,7 +110,6 @@ calculate_cumulative_bounds <- function(estimates, var, alpha = 0.05,
   result$metadata <- list(
     alpha = alpha,
     preperiods = preperiods,
-    width = width,
     lb = lb,
     ub = ub
   )

@@ -26,8 +26,11 @@ test_that("calculate_restricted_bounds works with real example data", {
   # Check metadata
   expect_type(result$metadata, "list")
   expect_equal(result$metadata$alpha, 0.05)
-  expect_true(is.numeric(result$metadata$width))
-  expect_true(result$metadata$width > 0)
+
+  # Compute width from bounds
+  width <- mean(result$restricted_bounds$upper - result$restricted_bounds$lower)
+  expect_true(is.numeric(width))
+  expect_true(width > 0)
 })
 
 test_that("calculate_restricted_bounds works with wiggly correlated data", {
@@ -218,27 +221,25 @@ test_that("calculate_restricted_bounds metadata is correct", {
   n <- 5
   estimates <- rnorm(n)
   var <- diag(n) * 0.15
-  
+
   result <- calculate_restricted_bounds(estimates, var, alpha = 0.10)
-  
+
   # Check metadata structure
   expect_type(result$metadata, "list")
   expect_true("alpha" %in% names(result$metadata))
-  expect_true("width" %in% names(result$metadata))
   expect_true("suptb" %in% names(result$metadata))
   expect_true("df" %in% names(result$metadata))
-  
+
   # Check metadata values
   expect_equal(result$metadata$alpha, 0.10)
-  expect_true(is.numeric(result$metadata$width))
-  expect_true(result$metadata$width > 0)
   expect_true(is.numeric(result$metadata$suptb))
   expect_true(result$metadata$suptb > 0)
   expect_true(is.numeric(result$metadata$df))
-  
-  # Width should match the actual bounds
+
+  # Compute width from actual bounds
   actual_width <- mean(result$restricted_bounds$upper - result$restricted_bounds$lower)
-  expect_equal(result$metadata$width, actual_width, tolerance = 1e-10)
+  expect_true(is.numeric(actual_width))
+  expect_true(actual_width > 0)
 })
 
 
