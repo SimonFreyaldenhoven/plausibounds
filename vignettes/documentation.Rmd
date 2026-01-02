@@ -34,9 +34,10 @@ where $\beta$ is the true treatment path vector and $V_{\beta}$ is the variance 
 The key contribution of this research is the construction of restricted bounds via a data-driven "surrogate path." Rather than attempting uniform coverage of the raw estimates, restricted bounds provide valid inference for a smoothed approximation of the true treatment path and thus may better capture policy-relevant features.
 The approximation is restricted to a set of reasonable path shapes, and specifically, the dynamic effect is assumed to be (1) smooth and (2) to die off eventually. 
 
-The approach approximates $\beta$ by a *surrogate path* $\beta_M = P(M)\beta$, where $M$ indexes a model in a pre-specified universe $\mathcal{M}$, alluded to above. The model universe is specified a priori and includes polynomial specifications (up to cubic) and penalized smoothing that shrinks first (effect is "smooth") and third (effects "die off") differences. 
+The approach approximates $\beta$ by a *surrogate path* $\beta_M = P(M)\beta$, where $M$ indexes a model in a pre-specified universe $\mathcal{M}$. 
+The model universe is specified as follows: it includes polynomial specifications (up to cubic) and penalized smoothing that shrinks first (effect is "smooth") and third (effects "die off") differences. 
 
-Given estimates $\hat{\beta}$, the surrogate for a given model $M$ is obtained by solving a penalized least squares problem:
+Given estimates $\hat{\beta}$, the (non-polynomial) surrogate for a given model $M$ is obtained by solving a penalized least squares problem:
 
 $$
 \begin{align}
@@ -56,13 +57,14 @@ $$
 \tilde{\beta}(M) = P(M)\hat{\beta}, \quad P(M) = \Big(V_\beta^{-1} + \lambda_1 D_1'W_1(K)D_1 + \lambda_2 D_3'W_3D_3\Big)^{-1} V_\beta^{-1}.
 $$
 
-The best-fitting surrogate model $\hat{M}$ is selected by minimizing a BIC-type criterion:
+Then, the best-fitting surrogate model $\hat{M}$ is selected by minimizing a BIC-type criterion:
 
 $$
 \hat{M} = \arg\min_{M \in \mathcal{M}} \; (\hat{\beta}-\tilde{\beta}(M))'V_\beta^{-1}(\hat{\beta}-\tilde{\beta}(M)) + \log(H)\,\text{df}(M),
 $$
 
-where the degrees of freedom is $\text{df}(M) = \mathrm{trace}(P(M))$. Therefore, the main algorithm of the package simply iterates over all models in the pre-specified universe to find $$\hat{M}$$. 
+where the degrees of freedom is $\text{df}(M) = \mathrm{trace}(P(M))$. 
+Therefore, the main algorithm of the package simply iterates over all models in the pre-specified universe to find $\hat{M}$. 
 
 ### Post-Selection Inference
 
@@ -109,7 +111,7 @@ pb_iid <- plausible_bounds(
   var = var_iid,
   alpha = 0.05
 )
-#> Calculating restricted bounds: ■■■■■■                           K = 2/11 [ 18%]Calculating restricted bounds: ■■■■■■■■■                        K = 3/11 [ 27%]Calculating restricted bounds: ■■■■■■■■■■■■                     K = 4/11 [ 36%]Calculating restricted bounds: ■■■■■■■■■■■■■■■                  K = 5/11 [ 45%]Calculating restricted bounds: ■■■■■■■■■■■■■■■■■                K = 6/11 [ 55%]Calculating restricted bounds: ■■■■■■■■■■■■■■■■■■■■             K = 7/11 [ 64%]Calculating restricted bounds: ■■■■■■■■■■■■■■■■■■■■■■■          K = 8/11 [ 73%]Calculating restricted bounds: ■■■■■■■■■■■■■■■■■■■■■■■■■■       K = 9/11 [ 82%]Calculating restricted bounds: ■■■■■■■■■■■■■■■■■■■■■■■■■■■■     K = 10/11 [ 91%]Calculating restricted bounds: ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■  K = 11/11 [100%]
+#> Calculating restricted bounds: ■■■■■■                           K = 2/11 [ 1…Calculating restricted bounds: ■■■■■■■■■                        K = 3/11 [ 2…Calculating restricted bounds: ■■■■■■■■■■■■                     K = 4/11 [ 3…Calculating restricted bounds: ■■■■■■■■■■■■■■■                  K = 5/11 [ 4…Calculating restricted bounds: ■■■■■■■■■■■■■■■■■                K = 6/11 [ 5…Calculating restricted bounds: ■■■■■■■■■■■■■■■■■■■■             K = 7/11 [ 6…Calculating restricted bounds: ■■■■■■■■■■■■■■■■■■■■■■■          K = 8/11 [ 7…Calculating restricted bounds: ■■■■■■■■■■■■■■■■■■■■■■■■■■       K = 9/11 [ 8…Calculating restricted bounds: ■■■■■■■■■■■■■■■■■■■■■■■■■■■■     K = 10/11 [ …Calculating restricted bounds: ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■  K = 11/11 [1…
 ```
 
 The returned object is a list containing the bounds, test statistics, and metadata. The `summary()` method extracts the key results in a tabular format, showing the horizon, original coefficient estimates, surrogate path, and restricted bounds for that path:
@@ -140,7 +142,8 @@ For a more detailed view of the object structure:
 
 ``` r
 str(pb_iid)
-#> List of 7
+#> List of 8
+#>  $ alpha                     : num 0.05
 #>  $ preperiods                : num 0
 #>  $ wald_test                 :List of 1
 #>   ..$ post:List of 2
@@ -152,9 +155,7 @@ str(pb_iid)
 #>   ..$ surrogate: num [1:12] 0.08 -0.125 -0.257 -0.329 -0.354 ...
 #>   ..$ lower    : num [1:12] -0.253 -0.328 -0.455 -0.534 -0.546 ...
 #>   ..$ upper    : num [1:12] 0.4128 0.078 -0.0592 -0.124 -0.1616 ...
-#>  $ restricted_bounds_metadata:List of 10
-#>   ..$ alpha             : num 0.05
-#>   ..$ width             : num 0.448
+#>  $ restricted_bounds_metadata:List of 8
 #>   ..$ supt_critval      : num 2.85
 #>   ..$ supt_b            : num 3.18
 #>   ..$ degrees_of_freedom: int 4
@@ -162,20 +163,16 @@ str(pb_iid)
 #>   ..$ lambda1           : logi NA
 #>   ..$ lambda2           : logi NA
 #>   ..$ surrogate_class   : chr "polynomial"
-#>   ..$ best_fit_model    :List of 5
-#>   .. ..$ d   : num [1:12, 1] 0.08 -0.125 -0.257 -0.329 -0.354 ...
-#>   .. ..$ Vd  : num [1:12, 1:12] 0.01096 0.005009 0.001171 -0.000937 -0.001697 ...
-#>   .. ..$ MD  : num [1, 1] 4.05
-#>   .. ..$ J   : cplx [1:12, 1:12] 0.739+0i 0.552+0i 0.133+0i ...
-#>   .. ..$ pval: num [1, 1] 0.853
-#>  $ avg_treatment_effect      :List of 5
+#>   ..$ best_fit_model    :List of 4
+#>   .. ..$ estimates_proj: num [1:12, 1] 0.08 -0.125 -0.257 -0.329 -0.354 ...
+#>   .. ..$ var_proj      : num [1:12, 1:12] 0.01096 0.005009 0.001171 -0.000937 -0.001697 ...
+#>   .. ..$ bic           : num [1, 1] 4.05
+#>   .. ..$ model_fit_pval: num [1, 1] 0.853
+#>  $ avg_treatment_effect      :List of 4
 #>   ..$ estimate: num -0.236
 #>   ..$ se      : num 0.0364
-#>   ..$ bounds  :List of 2
-#>   .. ..$ lb: num -0.307
-#>   .. ..$ ub: num -0.165
-#>   ..$ alpha   : num 0.05
-#>   ..$ width   : num 0.143
+#>   ..$ lower   : num -0.307
+#>   ..$ upper   : num -0.165
 #>  $ pointwise_bounds          :List of 3
 #>   ..$ lower  : num [1:12] -0.139 -0.345 -0.536 -0.568 -0.692 ...
 #>   ..$ upper  : num [1:12] 0.3298 0.1279 -0.0579 -0.0852 -0.2048 ...
@@ -190,6 +187,7 @@ str(pb_iid)
 The object contains several components. The `restricted_bounds` data frame is identical to that produced with the `summary()` method. 
 The `restricted_bounds_metadata` list stores important information about the model selection process, including the surrogate class selected (e.g., polynomial degree or penalized smoothing parameters), the degrees of freedom, and the sup-t critical value used in constructing the bounds. 
 The `avg_treatment_effect` component provides the average treatment effect estimate, its standard error, and confidence interval. 
+
 When arguments `include_pointwise` and `include_supt` of `plausible_bounds()` are `TRUE` (the default), the object also contains `pointwise_bounds` and `supt_bounds` lists with the corresponding confidence bounds. 
 Finally, `wald_test` contains test statistics and p-values for testing the joint null hypothesis of no treatment effect.
 
@@ -230,7 +228,7 @@ pb_corr <- plausible_bounds(
   var = var_corr,
   alpha = 0.05
 )
-#> Calculating restricted bounds: ■■■■■■                           K = 2/11 [ 18%]Calculating restricted bounds: ■■■■■■■■■                        K = 3/11 [ 27%]Calculating restricted bounds: ■■■■■■■■■■■■                     K = 4/11 [ 36%]Calculating restricted bounds: ■■■■■■■■■■■■■■■                  K = 5/11 [ 45%]Calculating restricted bounds: ■■■■■■■■■■■■■■■■■                K = 6/11 [ 55%]Calculating restricted bounds: ■■■■■■■■■■■■■■■■■■■■             K = 7/11 [ 64%]Calculating restricted bounds: ■■■■■■■■■■■■■■■■■■■■■■■          K = 8/11 [ 73%]Calculating restricted bounds: ■■■■■■■■■■■■■■■■■■■■■■■■■■       K = 9/11 [ 82%]Calculating restricted bounds: ■■■■■■■■■■■■■■■■■■■■■■■■■■■■     K = 10/11 [ 91%]Calculating restricted bounds: ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■  K = 11/11 [100%]
+#> Calculating restricted bounds: ■■■■■■                           K = 2/11 [ 1…Calculating restricted bounds: ■■■■■■■■■                        K = 3/11 [ 2…Calculating restricted bounds: ■■■■■■■■■■■■                     K = 4/11 [ 3…Calculating restricted bounds: ■■■■■■■■■■■■■■■                  K = 5/11 [ 4…Calculating restricted bounds: ■■■■■■■■■■■■■■■■■                K = 6/11 [ 5…Calculating restricted bounds: ■■■■■■■■■■■■■■■■■■■■             K = 7/11 [ 6…Calculating restricted bounds: ■■■■■■■■■■■■■■■■■■■■■■■          K = 8/11 [ 7…Calculating restricted bounds: ■■■■■■■■■■■■■■■■■■■■■■■■■■       K = 9/11 [ 8…Calculating restricted bounds: ■■■■■■■■■■■■■■■■■■■■■■■■■■■■     K = 10/11 [ …Calculating restricted bounds: ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■  K = 11/11 [1…
 
 create_plot(pb_corr)
 ```
@@ -254,9 +252,7 @@ Use the `preperiods` argument to indicate how many of the initial estimates corr
 
 ``` r
 data(estimates_pretrends)
-#> Warning in data(estimates_pretrends): data set 'estimates_pretrends' not found
 data(var_pretrends)
-#> Warning in data(var_pretrends): data set 'var_pretrends' not found
 
 pb_event <- plausible_bounds(
   estimates = estimates_pretrends,
@@ -264,17 +260,55 @@ pb_event <- plausible_bounds(
   alpha = 0.05,
   preperiods = 6  # First 6 elements are pre-treatment periods
 )
-#> Error: object 'estimates_pretrends' not found
+#> Calculating restricted bounds: ■■■■■■                           K = 2/11 [ 1…Calculating restricted bounds: ■■■■■■■■■                        K = 3/11 [ 2…Calculating restricted bounds: ■■■■■■■■■■■■                     K = 4/11 [ 3…Calculating restricted bounds: ■■■■■■■■■■■■■■■                  K = 5/11 [ 4…Calculating restricted bounds: ■■■■■■■■■■■■■■■■■                K = 6/11 [ 5…Calculating restricted bounds: ■■■■■■■■■■■■■■■■■■■■             K = 7/11 [ 6…Calculating restricted bounds: ■■■■■■■■■■■■■■■■■■■■■■■          K = 8/11 [ 7…Calculating restricted bounds: ■■■■■■■■■■■■■■■■■■■■■■■■■■       K = 9/11 [ 8…Calculating restricted bounds: ■■■■■■■■■■■■■■■■■■■■■■■■■■■■     K = 10/11 [ …Calculating restricted bounds: ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■  K = 11/11 [1…
 
 print(pb_event)
-#> Error: object 'pb_event' not found
+#> Plausible Bounds Results
+#> ========================
+#> 
+#> Wald Tests:
+#>   Post-treatment (H0: no effect): stat = 429.481, p = 0.0000
+#>   Pre-treatment (H0: no pre-trends): stat = 114.910, p = 0.0000
+#> 
+#> Average Treatment Effect:
+#>   Estimate: -1.1354 (SE: 0.0563)
+#>   95% CI: [-1.2458, -1.0250]
+#> 
+#> Restricted Bounds:
+#>   Surrogate class: polynomial
+#>   Degrees of freedom: 2.00
+#> 
+#> Bounds by horizon:
+#>  horizon       coef surrogate     lower      upper
+#>       -6 -0.5300870        NA        NA         NA
+#>       -5 -0.5726965        NA        NA         NA
+#>       -4 -0.6890785        NA        NA         NA
+#>       -3 -0.8093474        NA        NA         NA
+#>       -2 -0.8938708        NA        NA         NA
+#>       -1 -0.8872600        NA        NA         NA
+#>        1 -0.9084403 -0.977038 -1.270034 -0.6840424
+#>        2 -1.0492537 -1.006074 -1.263986 -0.7481625
+#>        3 -1.1577356 -1.035111 -1.261522 -0.8086996
+#>        4 -1.0755315 -1.064147 -1.264339 -0.8639552
+#>        5 -1.1728620 -1.093184 -1.274741 -0.9116264
+#>        6 -1.0360738 -1.122220 -1.295196 -0.9492445
+#>        7 -1.0177519 -1.151257 -1.327181 -0.9753320
+#>        8 -1.4030715 -1.180293 -1.370161 -0.9904254
+#>        9 -1.2286457 -1.209329 -1.421983 -0.9966764
+#>       10 -1.0445562 -1.238366 -1.480160 -0.9965721
+#>       11 -1.1446137 -1.267402 -1.542681 -0.9921233
+#>       12 -1.3864318 -1.296439 -1.608150 -0.9847270
 ```
 
 
 ``` r
 create_plot(pb_event)
-#> Error: object 'pb_event' not found
 ```
+
+<div class="figure" style="text-align: center">
+<img src="figs/plot-pretrends-1.png" alt="Event study with pre-treatment periods showing pre-trends"  />
+<p class="caption">Event study with pre-treatment periods showing pre-trends</p>
+</div>
 
 The vertical dashed line at event time 0 separates pre- and post-treatment periods. Pre-treatment estimates appear at negative horizons, revealing any pre-existing trends. The restricted bounds and surrogate path are only computed for the post-treatment periods, since the goal is inference on the treatment effect path.
 
