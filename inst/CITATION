@@ -1,0 +1,9 @@
+citHeader("To cite l1rotation in publications use:")
+
+bibentry(
+  bibtype  = "Misc",
+  title    = "plausibounds package",
+  author   = "Simon Freyaldenhoven, Ryan Kobler",
+  url      = "https://github.com/SimonFreyaldenhoven/plausibounds",
+  year     = 2026
+)
