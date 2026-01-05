@@ -285,8 +285,8 @@ create_bounds_plot <- function(bounds_data, availability, annotations = NULL) {
       annotation_parts <- c(annotation_parts,
         sprintf("Average effect [CI]: %.3g [%.3g, %.3g]",
                 annotations$ate$estimate,
-                annotations$ate$bounds$lb,
-                annotations$ate$bounds$ub))
+                annotations$ate$lower,
+                annotations$ate$upper))
     }
 
     if (length(annotation_parts) > 0) {
