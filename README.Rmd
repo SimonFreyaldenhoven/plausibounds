@@ -1,0 +1,75 @@
+---
+output: github_document
+---
+
+# plausibounds
+
+<!-- badges: start -->
+[![CRAN status](https://www.r-pkg.org/badges/version/plausibounds)](https://CRAN.R-project.org/package=plausibounds)
+[![CRAN RStudio mirror downloads](https://cranlogs.r-pkg.org/badges/grand-total/plausibounds)](https://r-pkg.org/pkg/plausibounds)
+<!-- badges: end -->
+
+```{r, echo = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.path = "man/figures/README-"
+)
+```
+
+## Overview
+
+The `plausibounds` package implements methods from [Freyaldenhoven and Hansen (2025)](https://simonfreyaldenhoven.github.io/papers/Plausible_bounds.pdf) to compute restricted bounds for treatment path estimates from event studies and dynamic panel data models. The package provides an alternative solution between pointwise confidence intervals and uniform confidence bands through data-driven surrogate paths that adapt to smoothness and correlation structure.
+
+## Installation
+
+```{r, eval = FALSE}
+# Install from CRAN
+install.packages("plausibounds")
+
+# Install latest version from GitHub
+install.packages("devtools")
+devtools::install_github("SimonFreyaldenhoven/plausibounds")
+```
+
+## Usage
+
+Find a minimal example below. For more information see the package [documentation](https://cran.r-project.org/package=plausibounds/plausibounds.pdf) and [vignette](https://cran.r-project.org/package=plausibounds/vignettes/documentation.html).
+
+```{r example}
+library(plausibounds)
+library(ggplot2)
+
+# Load example data
+data(estimates_wiggly)
+data(var_iid)
+
+# Compute restricted bounds
+pb <- plausible_bounds(
+  estimates = estimates_wiggly,
+  var = var_iid
+)
+
+# View results
+summary(pb)
+
+# Visualize bounds
+create_plot(pb)
+```
+
+```{r, eval = FALSE}
+# Example with parallel processing
+pb_parallel <- plausible_bounds(
+  estimates = estimates_wiggly,
+  var = var_iid,
+  alpha = 0.05,
+  parallel = TRUE,
+  n_cores = 4
+)
+```
+
+## Citation
+
+Simon Freyaldenhoven, Christian Hansen. "(Visualizing) Plausible Treatment Effect Paths." Federal Reserve Bank of Philadelphia and University of Chicago, 2025.
+
+Ryan Kobler. "`plausibounds` package." Code and data repository at <https://github.com/SimonFreyaldenhoven/plausibounds>, 2025.
