@@ -21,7 +21,7 @@ correlation across time periods.
 \examples{
 data(estimates_wiggly)
 data(var_corr)
-result <- plausible_bounds(estimates_wiggly[1:7], var_corr[1:7, 1:7])
+result <- plausible_bounds(estimates_wiggly[1:4], var_corr[1:4, 1:4])
 create_plot(result)
 }
 \keyword{datasets}

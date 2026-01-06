@@ -1,0 +1,17 @@
+^\.Rproj\.user$
+^README\.Rmd$
+^LICENSE\.md$
+^cran-comments\.md$
+^data-raw$
+^pkgdown$
+^_pkgdown\.yml$
+^\.github$
+^issues
+^analysis
+^docs$
+^vignettes/archive$
+^vignettes/articles/\.quarto$
+^vignettes/articles/*_files$
+^vignettes/articles$
+^vignettes/\.quarto$
+^vignettes/*.qmd

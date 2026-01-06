@@ -23,8 +23,8 @@ Statistical tests would reject the null hypothesis of no pretrends.
 \examples{
 data(estimates_pretrends)
 data(var_pretrends)
-# Use first 7 post-treatment estimates (indices 1:13 = 6 pre + 7 post)
-result <- plausible_bounds(estimates_pretrends[1:13], var_pretrends[1:13, 1:13], preperiods = 6)
+# Use first 4 post-treatment estimates (indices 1:10 = 6 pre + 4 post)
+result <- plausible_bounds(estimates_pretrends[1:10], var_pretrends[1:10, 1:10], preperiods = 6)
 create_plot(result)
 }
 \keyword{datasets}
