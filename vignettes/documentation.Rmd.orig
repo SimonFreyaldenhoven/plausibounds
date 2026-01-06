@@ -17,7 +17,6 @@ knitr::opts_chunk$set(
 )
 ```
 
-```{r setup}
 library(plausibounds)
 library(ggplot2)
 ```
@@ -104,13 +103,12 @@ The `estimates_wiggly` vector contains 12 treatment effect estimates at differen
 
 ### Example 1: Independent Errors
 
-The simplest case uses the `plausible_bounds()` function with just the estimates and variance-covariance matrix. The `alpha` parameter controls the confidence level (default is 0.05 for 95% confidence):
+A simple example uses the `plausible_bounds()` function with just the estimates and variance-covariance matrix. The `alpha` argument (omitted here) controls the confidence level (default is 0.05 for 95% confidence):
 
 ```{r iid-example}
 pb_iid <- plausible_bounds(
   estimates = estimates_wiggly,
-  var = var_iid,
-  alpha = 0.05
+  var = var_iid
 )
 ```
 

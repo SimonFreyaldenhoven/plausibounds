@@ -90,8 +90,9 @@ data(var_corr)
 
 # Examine the data structures
 print(estimates_wiggly)
-#>  [1]  0.09554212 -0.10861223 -0.29680478 -0.32634657 -0.44833415 -0.33276043
-#>  [7] -0.15294343 -0.27116602 -0.18957586 -0.33455712 -0.28824851 -0.17782216
+#>  [1]  0.09554212 -0.10861223 -0.29680478 -0.32634657 -0.44833415
+#>  [6] -0.33276043 -0.15294343 -0.27116602 -0.18957586 -0.33455712
+#> [11] -0.28824851 -0.17782216
 dim(var_iid)
 #> [1] 12 12
 dim(var_corr)
@@ -111,7 +112,7 @@ pb_iid <- plausible_bounds(
   var = var_iid,
   alpha = 0.05
 )
-#> Calculating restricted bounds: ■■■■■■                           K = 2/11 [ 1…Calculating restricted bounds: ■■■■■■■■■                        K = 3/11 [ 2…Calculating restricted bounds: ■■■■■■■■■■■■                     K = 4/11 [ 3…Calculating restricted bounds: ■■■■■■■■■■■■■■■                  K = 5/11 [ 4…Calculating restricted bounds: ■■■■■■■■■■■■■■■■■                K = 6/11 [ 5…Calculating restricted bounds: ■■■■■■■■■■■■■■■■■■■■             K = 7/11 [ 6…Calculating restricted bounds: ■■■■■■■■■■■■■■■■■■■■■■■          K = 8/11 [ 7…Calculating restricted bounds: ■■■■■■■■■■■■■■■■■■■■■■■■■■       K = 9/11 [ 8…Calculating restricted bounds: ■■■■■■■■■■■■■■■■■■■■■■■■■■■■     K = 10/11 [ …Calculating restricted bounds: ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■  K = 11/11 [1…
+#> Calculating restricted bounds: ■■■■■■                           K = 2/…Calculating restricted bounds: ■■■■■■■■■                        K = 3/…Calculating restricted bounds: ■■■■■■■■■■■■                     K = 4/…Calculating restricted bounds: ■■■■■■■■■■■■■■■                  K = 5/…Calculating restricted bounds: ■■■■■■■■■■■■■■■■■                K = 6/…Calculating restricted bounds: ■■■■■■■■■■■■■■■■■■■■             K = 7/…Calculating restricted bounds: ■■■■■■■■■■■■■■■■■■■■■■■          K = 8/…Calculating restricted bounds: ■■■■■■■■■■■■■■■■■■■■■■■■■■       K = 9/…Calculating restricted bounds: ■■■■■■■■■■■■■■■■■■■■■■■■■■■■     K = 10…Calculating restricted bounds: ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■  K = 11…
 ```
 
 The returned object is a list containing the bounds, test statistics, and metadata. The `summary()` method extracts the key results in a tabular format, showing the horizon, original coefficient estimates, surrogate path, and restricted bounds for that path:
@@ -228,7 +229,7 @@ pb_corr <- plausible_bounds(
   var = var_corr,
   alpha = 0.05
 )
-#> Calculating restricted bounds: ■■■■■■                           K = 2/11 [ 1…Calculating restricted bounds: ■■■■■■■■■                        K = 3/11 [ 2…Calculating restricted bounds: ■■■■■■■■■■■■                     K = 4/11 [ 3…Calculating restricted bounds: ■■■■■■■■■■■■■■■                  K = 5/11 [ 4…Calculating restricted bounds: ■■■■■■■■■■■■■■■■■                K = 6/11 [ 5…Calculating restricted bounds: ■■■■■■■■■■■■■■■■■■■■             K = 7/11 [ 6…Calculating restricted bounds: ■■■■■■■■■■■■■■■■■■■■■■■          K = 8/11 [ 7…Calculating restricted bounds: ■■■■■■■■■■■■■■■■■■■■■■■■■■       K = 9/11 [ 8…Calculating restricted bounds: ■■■■■■■■■■■■■■■■■■■■■■■■■■■■     K = 10/11 [ …Calculating restricted bounds: ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■  K = 11/11 [1…
+#> Calculating restricted bounds: ■■■■■■                           K = 2/…Calculating restricted bounds: ■■■■■■■■■                        K = 3/…Calculating restricted bounds: ■■■■■■■■■■■■                     K = 4/…Calculating restricted bounds: ■■■■■■■■■■■■■■■                  K = 5/…Calculating restricted bounds: ■■■■■■■■■■■■■■■■■                K = 6/…Calculating restricted bounds: ■■■■■■■■■■■■■■■■■■■■             K = 7/…Calculating restricted bounds: ■■■■■■■■■■■■■■■■■■■■■■■          K = 8/…Calculating restricted bounds: ■■■■■■■■■■■■■■■■■■■■■■■■■■       K = 9/…Calculating restricted bounds: ■■■■■■■■■■■■■■■■■■■■■■■■■■■■     K = 10…Calculating restricted bounds: ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■  K = 11…
 
 create_plot(pb_corr)
 ```
@@ -260,44 +261,44 @@ pb_event <- plausible_bounds(
   alpha = 0.05,
   preperiods = 6  # First 6 elements are pre-treatment periods
 )
-#> Calculating restricted bounds: ■■■■■■                           K = 2/11 [ 1…Calculating restricted bounds: ■■■■■■■■■                        K = 3/11 [ 2…Calculating restricted bounds: ■■■■■■■■■■■■                     K = 4/11 [ 3…Calculating restricted bounds: ■■■■■■■■■■■■■■■                  K = 5/11 [ 4…Calculating restricted bounds: ■■■■■■■■■■■■■■■■■                K = 6/11 [ 5…Calculating restricted bounds: ■■■■■■■■■■■■■■■■■■■■             K = 7/11 [ 6…Calculating restricted bounds: ■■■■■■■■■■■■■■■■■■■■■■■          K = 8/11 [ 7…Calculating restricted bounds: ■■■■■■■■■■■■■■■■■■■■■■■■■■       K = 9/11 [ 8…Calculating restricted bounds: ■■■■■■■■■■■■■■■■■■■■■■■■■■■■     K = 10/11 [ …Calculating restricted bounds: ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■  K = 11/11 [1…
+#> Calculating restricted bounds: ■■■■■■                           K = 2/…Calculating restricted bounds: ■■■■■■■■■                        K = 3/…Calculating restricted bounds: ■■■■■■■■■■■■                     K = 4/…Calculating restricted bounds: ■■■■■■■■■■■■■■■                  K = 5/…Calculating restricted bounds: ■■■■■■■■■■■■■■■■■                K = 6/…Calculating restricted bounds: ■■■■■■■■■■■■■■■■■■■■             K = 7/…Calculating restricted bounds: ■■■■■■■■■■■■■■■■■■■■■■■          K = 8/…Calculating restricted bounds: ■■■■■■■■■■■■■■■■■■■■■■■■■■       K = 9/…Calculating restricted bounds: ■■■■■■■■■■■■■■■■■■■■■■■■■■■■     K = 10…Calculating restricted bounds: ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■  K = 11…
 
 print(pb_event)
 #> Plausible Bounds Results
 #> ========================
 #> 
 #> Wald Tests:
-#>   Post-treatment (H0: no effect): stat = 429.481, p = 0.0000
-#>   Pre-treatment (H0: no pre-trends): stat = 114.910, p = 0.0000
+#>   Post-treatment (H0: no effect): stat = 274.594, p = 0.0000
+#>   Pre-treatment (H0: no pre-trends): stat = 120.157, p = 0.0000
 #> 
 #> Average Treatment Effect:
-#>   Estimate: -1.1354 (SE: 0.0563)
-#>   95% CI: [-1.2458, -1.0250]
+#>   Estimate: -0.2558 (SE: 0.0178)
+#>   95% CI: [-0.2907, -0.2209]
 #> 
 #> Restricted Bounds:
-#>   Surrogate class: polynomial
-#>   Degrees of freedom: 2.00
+#>   Surrogate class: M
+#>   Degrees of freedom: 8.74
 #> 
 #> Bounds by horizon:
-#>  horizon       coef surrogate     lower      upper
-#>       -6 -0.5300870        NA        NA         NA
-#>       -5 -0.5726965        NA        NA         NA
-#>       -4 -0.6890785        NA        NA         NA
-#>       -3 -0.8093474        NA        NA         NA
-#>       -2 -0.8938708        NA        NA         NA
-#>       -1 -0.8872600        NA        NA         NA
-#>        1 -0.9084403 -0.977038 -1.270034 -0.6840424
-#>        2 -1.0492537 -1.006074 -1.263986 -0.7481625
-#>        3 -1.1577356 -1.035111 -1.261522 -0.8086996
-#>        4 -1.0755315 -1.064147 -1.264339 -0.8639552
-#>        5 -1.1728620 -1.093184 -1.274741 -0.9116264
-#>        6 -1.0360738 -1.122220 -1.295196 -0.9492445
-#>        7 -1.0177519 -1.151257 -1.327181 -0.9753320
-#>        8 -1.4030715 -1.180293 -1.370161 -0.9904254
-#>        9 -1.2286457 -1.209329 -1.421983 -0.9966764
-#>       10 -1.0445562 -1.238366 -1.480160 -0.9965721
-#>       11 -1.1446137 -1.267402 -1.542681 -0.9921233
-#>       12 -1.3864318 -1.296439 -1.608150 -0.9847270
+#>  horizon        coef  surrogate      lower       upper
+#>       -6  0.33364690         NA         NA          NA
+#>       -5  0.30169214         NA         NA          NA
+#>       -4  0.21240381         NA         NA          NA
+#>       -3  0.14240603         NA         NA          NA
+#>       -2  0.17324430         NA         NA          NA
+#>       -1  0.06520045         NA         NA          NA
+#>        1 -0.05268953 -0.0529454 -0.1777636  0.07187278
+#>        2 -0.14839197 -0.1459116 -0.2687530 -0.02307024
+#>        3 -0.15822442 -0.1645885 -0.2857590 -0.04341790
+#>        4 -0.23873936 -0.2318391 -0.3539368 -0.10974127
+#>        5 -0.17385437 -0.1835984 -0.3065016 -0.06069529
+#>        6 -0.21249874 -0.2056813 -0.3286999 -0.08266262
+#>        7 -0.12378336 -0.1538464 -0.2708490 -0.03684388
+#>        8 -0.33345619 -0.3491464 -0.4444958 -0.25379702
+#>        9 -0.34319526 -0.3661420 -0.4562150 -0.27606895
+#>       10 -0.40464036 -0.3916900 -0.4796216 -0.30375831
+#>       11 -0.48159116 -0.4180416 -0.5088658 -0.32721736
+#>       12 -0.39875157 -0.4010240 -0.4990513 -0.30299657
 ```
 
 
