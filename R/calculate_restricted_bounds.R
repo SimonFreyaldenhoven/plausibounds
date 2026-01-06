@@ -173,6 +173,7 @@ calculate_restricted_bounds <- function(estimates, var, alpha = 0.05,
     
     # Set up parallel processing
     use_parallel <- FALSE
+    pb_cluster <- NULL  # Initialize cluster variable
     if (parallel) {
       if (!requireNamespace("foreach", quietly = TRUE)) {
         warning("Package 'foreach' is required for parallel processing but not installed. Falling back to sequential processing.")
@@ -192,16 +193,34 @@ calculate_restricted_bounds <- function(estimates, var, alpha = 0.05,
           num_cores <- n_cores
         }
 
-        `%dopar%` <- foreach::`%dopar%`     
-        
+        `%dopar%` <- foreach::`%dopar%`
+
         tryCatch({
-          cl <- parallel::makeCluster(num_cores)
-          doParallel::registerDoParallel(cl)
-          on.exit(parallel::stopCluster(cl), add = TRUE)
+          # Clean up any existing parallel backends first
+          if (foreach::getDoParRegistered()) {
+            foreach::registerDoSEQ()  # Reset to sequential backend
+          }
+
+          pb_cluster <- parallel::makeCluster(num_cores)
+          doParallel::registerDoParallel(pb_cluster)
+
+          # Verify that the backend is registered
+          if (!foreach::getDoParRegistered()) {
+            stop("Failed to register parallel backend")
+          }
+
+          on.exit({
+            if (!is.null(pb_cluster)) {
+              tryCatch({
+                parallel::stopCluster(pb_cluster)
+                foreach::registerDoSEQ()  # Reset to sequential after cleanup
+              }, error = function(e) NULL)
+            }
+          }, add = TRUE)
           message(paste("Parallelizing over", num_cores, "cores"))
         }, error = function(e) {
           warning(paste("Failed to set up parallel cluster:", e$message, "\nFalling back to sequential processing."))
-          use_parallel <- FALSE
+          use_parallel <<- FALSE
         })
       }
     }
@@ -218,6 +237,9 @@ calculate_restricted_bounds <- function(estimates, var, alpha = 0.05,
       message("Processing in parallel...")
     }
     
+    # Initialize results variable
+    results <- NULL
+
     # Process all K values (either in parallel or sequentially)
     if (use_parallel) {
       # Parallel processing using foreach
@@ -234,7 +256,7 @@ calculate_restricted_bounds <- function(estimates, var, alpha = 0.05,
           }
           process_K(K, estimates, var, loglam1_range, loglam2_range, target_df, p, rd)
         }
-        
+
         # Check for errors in parallel execution
         error_indices <- which(sapply(results, inherits, "error"))
         if (length(error_indices) > 0) {
@@ -248,12 +270,26 @@ calculate_restricted_bounds <- function(estimates, var, alpha = 0.05,
         }
       }, error = function(e) {
         warning(paste("Error in parallel execution:", e$message, "\nFalling back to sequential processing."))
-        use_parallel <- FALSE
+        # Clean up cluster if it exists
+        if (exists("pb_cluster") && !is.null(pb_cluster)) {
+          tryCatch(parallel::stopCluster(pb_cluster), error = function(e) NULL)
+        }
+        use_parallel <<- FALSE
+        results <<- NULL
       })
     }
     
     # Process sequentially if parallel is not available or failed
-    if (!use_parallel) {
+    if (!use_parallel || is.null(results)) {
+      # Initialize progress bar if not already initialized (e.g., after fallback from parallel)
+      # Check if we need to initialize by seeing if we're falling back from parallel
+      if (is.null(results)) {
+        cli::cli_progress_bar(
+          format = "Calculating restricted bounds: {cli::pb_bar} K = {K}/{p-1} [{cli::pb_percent}]",
+          total = p-1,
+          clear = FALSE
+        )
+      }
       # Sequential processing with progress updates
       results <- list()
       for (K in 1:(p-1)) {
@@ -263,7 +299,7 @@ calculate_restricted_bounds <- function(estimates, var, alpha = 0.05,
       # Complete the progress bar
       cli::cli_progress_done()
     }
-    
+
     # Combine results from all K values
     for (result in results) {
       if (result$best_bic < best_bic) {

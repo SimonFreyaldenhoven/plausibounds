@@ -270,9 +270,6 @@ test_that("calculate_cumulative_bounds handles NA and infinite values appropriat
   # but negative variances would be caught if they occur
   var_not_pd <- matrix(c(1, 2, 2, 1), 2, 2)  # Not positive definite
   # This may or may not error depending on whether sqrt of negative variance occurs
-  # For now, just verify it runs without crashing (may get warnings)
-  suppressWarnings({
-    result <- calculate_cumulative_bounds(c(1, 2), var_not_pd)
-    expect_s3_class(result, "cumulative_bounds")
-  })
+  result <- calculate_cumulative_bounds(c(1, 2), var_not_pd)
+  expect_s3_class(result, "cumulative_bounds")
 })

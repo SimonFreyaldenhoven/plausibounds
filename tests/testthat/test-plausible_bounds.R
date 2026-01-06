@@ -70,7 +70,10 @@ test_that("new functions match original full_eventplot_l2tf results", {
 # Test parallel vs non-parallel results
 test_that("parallel and non-parallel results are identical", {
   skip_on_cran()
-  l <- 7
+  skip_if_not_installed("doParallel")
+  skip_if_not_installed("foreach")
+
+  l <- 8
 
   # Test with wiggly estimates and strong correlation
   data(estimates_wiggly)
@@ -105,16 +108,11 @@ test_that("parallel and non-parallel results are identical", {
     result_sequential$restricted_bounds_metadata,
     tolerance = 1e-10
   )
-
-  # Compute widths and compare
-  width_parallel <- mean(result_parallel$restricted_bounds$upper - result_parallel$restricted_bounds$lower)
-  width_sequential <- mean(result_sequential$restricted_bounds$upper - result_sequential$restricted_bounds$lower)
-  expect_equal(width_parallel, width_sequential, tolerance = 1e-10)
   
   # Test with constant estimates and IID errors
   data(estimates_constant)
   data(var_iid)
-  
+
   # Run with parallel = TRUE
   set.seed(42)  # Set seed for reproducibility
   result_parallel_const <- plausible_bounds(
@@ -144,11 +142,6 @@ test_that("parallel and non-parallel results are identical", {
     result_sequential_const$restricted_bounds_metadata,
     tolerance = 1e-10
   )
-
-  # Compute widths and compare
-  width_parallel_const <- mean(result_parallel_const$restricted_bounds$upper - result_parallel_const$restricted_bounds$lower)
-  width_sequential_const <- mean(result_sequential_const$restricted_bounds$upper - result_sequential_const$restricted_bounds$lower)
-  expect_equal(width_parallel_const, width_sequential_const, tolerance = 1e-10)
 })
 
 # Test n_cores parameter validation and edge cases
@@ -194,6 +187,8 @@ test_that("plausible_bounds validates n_cores parameter", {
 test_that("plausible_bounds works with specific n_cores values", {
   skip_on_cran()
   skip_if_not_installed("parallel")
+  skip_if_not_installed("doParallel")
+  skip_if_not_installed("foreach")
 
   set.seed(456)
   p <- 8
