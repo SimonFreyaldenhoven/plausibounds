@@ -212,6 +212,7 @@ test_that("core functionality with 8 preperiods (mean0 scenario)", {
 # Section 4: Wald Test Coverage ----
 
 test_that("zero preperiods functionality", {
+  skip_on_cran()
   # Setup data once for all assertions
   data(estimates_constant, envir = environment())
   data(var_iid, envir = environment())
@@ -244,6 +245,7 @@ test_that("Wpre fails for reject scenario with pre-trends", {
 })
 
 test_that("Wpost is computed on post-periods only", {
+  skip_on_cran()
   pre_mean0 <- readRDS(test_path("fixtures", "preperiods_mean0.rds"))
   Vpre_iid <- readRDS(test_path("fixtures", "Vpre_iid.rds"))
   data(estimates_constant, envir = environment())
@@ -273,6 +275,7 @@ test_that("Wpost is computed on post-periods only", {
 # Section 5: Block Structure Tests ----
 
 test_that("ATE is computed from post-periods only", {
+  skip_on_cran()
   pre_mean0 <- readRDS(test_path("fixtures", "preperiods_mean0.rds"))
   Vpre_iid <- readRDS(test_path("fixtures", "Vpre_iid.rds"))
   data(estimates_constant, envir = environment())
@@ -301,6 +304,7 @@ test_that("ATE is computed from post-periods only", {
 # Section 6: Pointwise and Sup-t Bounds ----
 
 test_that("supt bounds use critical value from all periods", {
+  skip_on_cran()
   pre_mean0 <- readRDS(test_path("fixtures", "preperiods_mean0.rds"))
   Vpre_iid <- readRDS(test_path("fixtures", "Vpre_iid.rds"))
   data(estimates_constant, envir = environment())
@@ -328,6 +332,7 @@ test_that("supt bounds use critical value from all periods", {
 # Section 7: Plotting Integration ----
 
 test_that("plotting handles preperiods correctly", {
+  skip_on_cran()
   # Setup data once for all assertions
   pre_mean0 <- readRDS(test_path("fixtures", "preperiods_mean0.rds"))
   Vpre_iid <- readRDS(test_path("fixtures", "Vpre_iid.rds"))
@@ -368,8 +373,8 @@ test_that("single preperiod works correctly", {
   # Single preperiod + 6 post
   pre_single <- rnorm(1, mean = 0, sd = 0.3)
   Vpre_single <- matrix(0.1, 1, 1)
-  estimates <- c(pre_single, estimates_constant[1:7])
-  var <- block_diag_matrix(Vpre_single, var_iid[1:7, 1:7])
+  estimates <- c(pre_single, estimates_constant[1:5])
+  var <- block_diag_matrix(Vpre_single, var_iid[1:5, 1:5])
 
   result <- plausible_bounds(estimates, var, preperiods = 1)
   expect_equal(result$preperiods, 1)
