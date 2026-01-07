@@ -3,18 +3,15 @@
 \name{plausibounds-package}
 \alias{plausibounds-package}
 \alias{plausibounds}
-\title{plausibounds: Plausible Bounds for Impulse Response Functions}
+\title{plausibounds: Plausible Bounds for Treatment Path Estimates}
 \description{
-The plausibounds package provides methods for calculating plausible bounds
-for impulse response functions. It implements both cumulative and restricted
-bounds calculations, as well as visualization tools.
+Calculate and visualize plausible bounds as proposed in Freyaldenhoven (2025)
+for dynamic treatment path estimates. Given a treatment path, variance matrix, and significance level, plot various uncertainty measures.
 }
 \section{Main Functions}{
 
 \itemize{
-\item \code{\link{plausible_bounds}}: Calculate both cumulative and restricted bounds
-\item \code{\link{calculate_cumulative_bounds}}: Calculate cumulative bounds
-\item \code{\link{calculate_restricted_bounds}}: Calculate restricted bounds
+\item \code{\link{plausible_bounds}}: Calculate restricted bounds
 \item \code{\link{create_plot}}: Create plots of the bounds
 }
 }
@@ -26,7 +23,9 @@ The package includes example datasets to demonstrate the functionality:
 \item \code{\link{estimates_constant}} and \code{\link{var_iid}}:
 A simple case with constant estimates and independent errors
 \item \code{\link{estimates_wiggly}} and \code{\link{var_corr}}:
-A complex case with wiggly estimates and strongly correlated errors
+A case with wiggly estimates and strongly correlated errors
+\item \code{\link{estimates_pretrends}} and \code{\link{var_pretrends}}:
+A case with 6 preperiods, 12 post
 }
 }
 
