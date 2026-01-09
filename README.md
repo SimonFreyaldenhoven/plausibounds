@@ -13,7 +13,7 @@ downloads](https://cranlogs.r-pkg.org/badges/grand-total/plausibounds)](https://
 
 The `plausibounds` package implements methods from [Freyaldenhoven and
 Hansen
-(2025)](https://simonfreyaldenhoven.github.io/papers/Plausible_bounds.pdf)
+(2026)](https://simonfreyaldenhoven.github.io/papers/Plausible_bounds.pdf)
 to compute restricted bounds for treatment path estimates from event
 studies and dynamic panel data models. The package provides an
 alternative solution between pointwise confidence intervals and uniform

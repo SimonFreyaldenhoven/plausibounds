@@ -6,7 +6,7 @@ Authors@R:
            family = "Kobler",
            role = c("aut", "cre"),
            email = "kobleary@gmail.com")
-Description: Calculate and visualize plausible bounds as proposed in Freyaldenhoven (2025)
+Description: Calculate and visualize plausible bounds as proposed in Freyaldenhoven and Hansen (2026)
     for dynamic treatment path estimates. Given a treatment path, variance matrix, and significance level, plot various uncertainty measures cleanly with `plausible_bounds()` and `create_plot()`.
 License: MIT + file LICENSE
 Depends: 
