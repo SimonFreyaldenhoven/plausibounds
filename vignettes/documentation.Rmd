@@ -14,15 +14,15 @@ vignette: >
 library(plausibounds)
 library(ggplot2)
 ```
-##Dynamic Effect Plots
+## Dynamic Effect Plots
 
-To understand the dynamic effects of a policy, it is common to summarize estimated effects over time in a dynamic effect (or event-study) plot. For example, a macroeconomist may estimate the response of the Consumer Price Index to a monetary shock via local projections, or a microeconomist may estimate the response of labor market outcomes to a change in welfare policies via distributed lag models. 
+To understand the dynamic effects of a policy, it is common to summarize estimated effects over time in a dynamic effect (or event-study) plot. For example, a macroeconomist may estimate the response of the Consumer Price Index to a monetary shock via local projections, or a microeconomist may estimate the response of labor market outcomes to a change in welfare policies via distributed lag models.
 
 ## Overview
 
-The plausibounds package provides simple additions to standard visualizations of dynamic treatment effects aimed at enhancing their informativeness. In particular, it provides functionality to:
+The `plausibounds` package provides simple additions to standard visualizations of dynamic treatment effects aimed at enhancing their informativeness. In particular, it provides functionality to:
 
-* include joint hypothesis tests and summary measures that are often of direct interest alongside the standard event-study plot. 
+* include joint hypothesis tests and summary measures that are often of direct interest alongside the standard event-study plot.
 
 * compute a smooth approximation to the treatment-effect path from a prespecified, economically motivated class and produces corresponding confidence regions. The resulting intervals can be substantially tighter than conventional uniform bands while maintaining formal coverage guarantees through post-selection inference (Berk et al. [2013]).
 
@@ -34,11 +34,12 @@ The package takes $\theta$ and $V_{\theta}$ as input.
 
 ### Finding the surrogate path
 
-The main contribution is to include new visual elements meant to depict approximations to the underlying effect path constrained to exhibit economically and statistically plausible shapes. Intuitively, these elements formalize ``visual data snooping'': Our proposal approximates looking at a dynamic effect plot and then choosing a specification that ``captures the main dynamics'' while a) providing a notion of valid inference that explicitly accounts for the data-dependent choice of specification and b) using the full covariance structure of the estimates when choosing the specification.
+The main contribution is to include new visual elements meant to depict approximations to the underlying effect path constrained to exhibit economically and statistically plausible shapes. Intuitively, these elements formalize "visual data snooping": Our proposal approximates looking at a dynamic effect plot and then choosing a specification that "captures the main dynamics" while a) providing a notion of valid inference that explicitly accounts for the data-dependent choice of specification and b) using the full covariance structure of the estimates when choosing the specification.
 
-Specifically, we construct \emph{restricted estimates} and \emph{plausible bounds} by using data-driven regularization to select an approximation to the treatment path from a pre-specified class. We consider a default universe motivated by a preference for smooth dynamics that eventually die out. The restricted estimates are the resulting regularized point estimates of the treatment path. Our plausible bounds are sup-t bands under the selected approximation, adjusted to account for data-dependent selection using Berk et al.'s [\citeyear{berk2013valid}] post-selection inference (PoSI). 
+Specifically, we construct *restricted estimates* and *plausible bounds* by using data-driven regularization to select an approximation to the treatment path from a pre-specified class. We consider a default universe motivated by a preference for smooth dynamics that eventually die out. The restricted estimates are the resulting regularized point estimates of the treatment path. Our plausible bounds are sup-t bands under the selected approximation, adjusted to account for data-dependent selection using Berk et al.'s [2014] post-selection inference (PoSI).
 
 Intuitively, the plausible bounds represent a compromise between inference under no restrictions --- which may yield very wide confidence intervals --- and inference based on a single, prespecified model that does not adapt to the data and may therefore be overly restrictive.
+
 
 ## Basic Usage
 
@@ -47,333 +48,135 @@ Let's start by examining the structure of the example datasets included in the p
 
 ``` r
 # Load example datasets
-data(estimates_wiggly)
-data(var_iid)
-data(var_corr)
+data(estimates_smooth)
+data(var_smooth)
 
 # Examine the data structures
-print(estimates_wiggly)
-#>  [1]  0.09554212 -0.10861223 -0.29680478 -0.32634657 -0.44833415
-#>  [6] -0.33276043 -0.15294343 -0.27116602 -0.18957586 -0.33455712
-#> [11] -0.28824851 -0.17782216
-dim(var_iid)
-#> [1] 12 12
-dim(var_corr)
-#> [1] 12 12
+print(estimates_smooth)
+#>  [1] -0.17482676 -0.02004318 -0.10031844  0.07229334 -0.31769306  0.01454694  0.06322594 -0.04186633  0.12340034 -0.04534908
+#> [11] -0.16169097 -0.20259667 -0.03298893 -0.02878808 -0.11865547 -0.33781817 -0.04988252 -0.23286451 -0.34721788 -0.31989801
+#> [21] -0.37015145 -0.18439333 -0.08283743 -0.06628430  0.07793498 -0.16041782  0.08020676 -0.26365956 -0.09156697 -0.08646877
+#> [31]  0.17552747 -0.26331948  0.26817909  0.21390666  0.02886865 -0.03854033 -0.17947818 -0.04629705 -0.26782818  0.03586062
+#> [41]  0.17248994 -0.01214121 -0.08781408  0.12013731
+print(var_smooth)
+#>             [,1]       [,2]       [,3]       [,4]       [,5]       [,6]       [,7]       [,8]      [,9]     [,10]     [,11]
+#>  [1,] 0.01981023 0.00000000 0.00000000 0.00000000 0.00000000 0.00000000 0.00000000 0.00000000 0.0000000 0.0000000 0.0000000
+#>  [2,] 0.00000000 0.01981023 0.00000000 0.00000000 0.00000000 0.00000000 0.00000000 0.00000000 0.0000000 0.0000000 0.0000000
+#>  [3,] 0.00000000 0.00000000 0.01981023 0.00000000 0.00000000 0.00000000 0.00000000 0.00000000 0.0000000 0.0000000 0.0000000
+#>  [4,] 0.00000000 0.00000000 0.00000000 0.01981023 0.00000000 0.00000000 0.00000000 0.00000000 0.0000000 0.0000000 0.0000000
+#>  [5,] 0.00000000 0.00000000 0.00000000 0.00000000 0.01981023 0.00000000 0.00000000 0.00000000 0.0000000 0.0000000 0.0000000
+#>  [6,] 0.00000000 0.00000000 0.00000000 0.00000000 0.00000000 0.01981023 0.00000000 0.00000000 0.0000000 0.0000000 0.0000000
+#>  [7,] 0.00000000 0.00000000 0.00000000 0.00000000 0.00000000 0.00000000 0.01981023 0.00000000 0.0000000 0.0000000 0.0000000
+#>  [8,] 0.00000000 0.00000000 0.00000000 0.00000000 0.00000000 0.00000000 0.00000000 0.01981023 0.0000000 0.0000000 0.0000000
+#>  [9,] 0.00000000 0.00000000 0.00000000 0.00000000 0.00000000 0.00000000 0.00000000 0.00000000 0.0142814 0.0000000 0.0000000
+#> [10,] 0.00000000 0.00000000 0.00000000 0.00000000 0.00000000 0.00000000 0.00000000 0.00000000 0.0000000 0.0145656 0.0000000
+#> [11,] 0.00000000 0.00000000 0.00000000 0.00000000 0.00000000 0.00000000 0.00000000 0.00000000 0.0000000 0.0000000 0.0148526
+#> [12,] 0.00000000 0.00000000 0.00000000 0.00000000 0.00000000 0.00000000 0.00000000 0.00000000 0.0000000 0.0000000 0.0000000
+#> [13,] 0.00000000 0.00000000 0.00000000 0.00000000 0.00000000 0.00000000 0.00000000 0.00000000 0.0000000 0.0000000 0.0000000
+#> [14,] 0.00000000 0.00000000 0.00000000 0.00000000 0.00000000 0.00000000 0.00000000 0.00000000 0.0000000 0.0000000 0.0000000
+#> [15,] 0.00000000 0.00000000 0.00000000 0.00000000 0.00000000 0.00000000 0.00000000 0.00000000 0.0000000 0.0000000 0.0000000
+#> [16,] 0.00000000 0.00000000 0.00000000 0.00000000 0.00000000 0.00000000 0.00000000 0.00000000 0.0000000 0.0000000 0.0000000
+#> [17,] 0.00000000 0.00000000 0.00000000 0.00000000 0.00000000 0.00000000 0.00000000 0.00000000 0.0000000 0.0000000 0.0000000
+#> [18,] 0.00000000 0.00000000 0.00000000 0.00000000 0.00000000 0.00000000 0.00000000 0.00000000 0.0000000 0.0000000 0.0000000
+#> [19,] 0.00000000 0.00000000 0.00000000 0.00000000 0.00000000 0.00000000 0.00000000 0.00000000 0.0000000 0.0000000 0.0000000
+#> [20,] 0.00000000 0.00000000 0.00000000 0.00000000 0.00000000 0.00000000 0.00000000 0.00000000 0.0000000 0.0000000 0.0000000
+#> [21,] 0.00000000 0.00000000 0.00000000 0.00000000 0.00000000 0.00000000 0.00000000 0.00000000 0.0000000 0.0000000 0.0000000
+#> [22,] 0.00000000 0.00000000 0.00000000 0.00000000 0.00000000 0.00000000 0.00000000 0.00000000 0.0000000 0.0000000 0.0000000
+#>           [,12]    [,13]     [,14]     [,15]     [,16]     [,17]   [,18]     [,19]     [,20]     [,21]     [,22]    [,23]
+#>  [1,] 0.0000000 0.000000 0.0000000 0.0000000 0.0000000 0.0000000 0.00000 0.0000000 0.0000000 0.0000000 0.0000000 0.000000
+#>  [2,] 0.0000000 0.000000 0.0000000 0.0000000 0.0000000 0.0000000 0.00000 0.0000000 0.0000000 0.0000000 0.0000000 0.000000
+#>  [3,] 0.0000000 0.000000 0.0000000 0.0000000 0.0000000 0.0000000 0.00000 0.0000000 0.0000000 0.0000000 0.0000000 0.000000
+#>  [4,] 0.0000000 0.000000 0.0000000 0.0000000 0.0000000 0.0000000 0.00000 0.0000000 0.0000000 0.0000000 0.0000000 0.000000
+#>  [5,] 0.0000000 0.000000 0.0000000 0.0000000 0.0000000 0.0000000 0.00000 0.0000000 0.0000000 0.0000000 0.0000000 0.000000
+#>  [6,] 0.0000000 0.000000 0.0000000 0.0000000 0.0000000 0.0000000 0.00000 0.0000000 0.0000000 0.0000000 0.0000000 0.000000
+#>  [7,] 0.0000000 0.000000 0.0000000 0.0000000 0.0000000 0.0000000 0.00000 0.0000000 0.0000000 0.0000000 0.0000000 0.000000
+#>  [8,] 0.0000000 0.000000 0.0000000 0.0000000 0.0000000 0.0000000 0.00000 0.0000000 0.0000000 0.0000000 0.0000000 0.000000
+#>  [9,] 0.0000000 0.000000 0.0000000 0.0000000 0.0000000 0.0000000 0.00000 0.0000000 0.0000000 0.0000000 0.0000000 0.000000
+#> [10,] 0.0000000 0.000000 0.0000000 0.0000000 0.0000000 0.0000000 0.00000 0.0000000 0.0000000 0.0000000 0.0000000 0.000000
+#> [11,] 0.0000000 0.000000 0.0000000 0.0000000 0.0000000 0.0000000 0.00000 0.0000000 0.0000000 0.0000000 0.0000000 0.000000
+#> [12,] 0.0151424 0.000000 0.0000000 0.0000000 0.0000000 0.0000000 0.00000 0.0000000 0.0000000 0.0000000 0.0000000 0.000000
+#> [13,] 0.0000000 0.015435 0.0000000 0.0000000 0.0000000 0.0000000 0.00000 0.0000000 0.0000000 0.0000000 0.0000000 0.000000
+#> [14,] 0.0000000 0.000000 0.0157304 0.0000000 0.0000000 0.0000000 0.00000 0.0000000 0.0000000 0.0000000 0.0000000 0.000000
+#> [15,] 0.0000000 0.000000 0.0000000 0.0160286 0.0000000 0.0000000 0.00000 0.0000000 0.0000000 0.0000000 0.0000000 0.000000
+#> [16,] 0.0000000 0.000000 0.0000000 0.0000000 0.0163296 0.0000000 0.00000 0.0000000 0.0000000 0.0000000 0.0000000 0.000000
+#> [17,] 0.0000000 0.000000 0.0000000 0.0000000 0.0000000 0.0166334 0.00000 0.0000000 0.0000000 0.0000000 0.0000000 0.000000
+#> [18,] 0.0000000 0.000000 0.0000000 0.0000000 0.0000000 0.0000000 0.01694 0.0000000 0.0000000 0.0000000 0.0000000 0.000000
+#> [19,] 0.0000000 0.000000 0.0000000 0.0000000 0.0000000 0.0000000 0.00000 0.0172494 0.0000000 0.0000000 0.0000000 0.000000
+#> [20,] 0.0000000 0.000000 0.0000000 0.0000000 0.0000000 0.0000000 0.00000 0.0000000 0.0175616 0.0000000 0.0000000 0.000000
+#> [21,] 0.0000000 0.000000 0.0000000 0.0000000 0.0000000 0.0000000 0.00000 0.0000000 0.0000000 0.0178766 0.0000000 0.000000
+#> [22,] 0.0000000 0.000000 0.0000000 0.0000000 0.0000000 0.0000000 0.00000 0.0000000 0.0000000 0.0000000 0.0181944 0.000000
+#>           [,24]     [,25]     [,26]     [,27]   [,28]     [,29]     [,30]     [,31]     [,32]    [,33]     [,34]     [,35]
+#>  [1,] 0.0000000 0.0000000 0.0000000 0.0000000 0.00000 0.0000000 0.0000000 0.0000000 0.0000000 0.000000 0.0000000 0.0000000
+#>  [2,] 0.0000000 0.0000000 0.0000000 0.0000000 0.00000 0.0000000 0.0000000 0.0000000 0.0000000 0.000000 0.0000000 0.0000000
+#>  [3,] 0.0000000 0.0000000 0.0000000 0.0000000 0.00000 0.0000000 0.0000000 0.0000000 0.0000000 0.000000 0.0000000 0.0000000
+#>  [4,] 0.0000000 0.0000000 0.0000000 0.0000000 0.00000 0.0000000 0.0000000 0.0000000 0.0000000 0.000000 0.0000000 0.0000000
+#>  [5,] 0.0000000 0.0000000 0.0000000 0.0000000 0.00000 0.0000000 0.0000000 0.0000000 0.0000000 0.000000 0.0000000 0.0000000
+#>  [6,] 0.0000000 0.0000000 0.0000000 0.0000000 0.00000 0.0000000 0.0000000 0.0000000 0.0000000 0.000000 0.0000000 0.0000000
+#>  [7,] 0.0000000 0.0000000 0.0000000 0.0000000 0.00000 0.0000000 0.0000000 0.0000000 0.0000000 0.000000 0.0000000 0.0000000
+#>  [8,] 0.0000000 0.0000000 0.0000000 0.0000000 0.00000 0.0000000 0.0000000 0.0000000 0.0000000 0.000000 0.0000000 0.0000000
+#>  [9,] 0.0000000 0.0000000 0.0000000 0.0000000 0.00000 0.0000000 0.0000000 0.0000000 0.0000000 0.000000 0.0000000 0.0000000
+#> [10,] 0.0000000 0.0000000 0.0000000 0.0000000 0.00000 0.0000000 0.0000000 0.0000000 0.0000000 0.000000 0.0000000 0.0000000
+#> [11,] 0.0000000 0.0000000 0.0000000 0.0000000 0.00000 0.0000000 0.0000000 0.0000000 0.0000000 0.000000 0.0000000 0.0000000
+#> [12,] 0.0000000 0.0000000 0.0000000 0.0000000 0.00000 0.0000000 0.0000000 0.0000000 0.0000000 0.000000 0.0000000 0.0000000
+#> [13,] 0.0000000 0.0000000 0.0000000 0.0000000 0.00000 0.0000000 0.0000000 0.0000000 0.0000000 0.000000 0.0000000 0.0000000
+#> [14,] 0.0000000 0.0000000 0.0000000 0.0000000 0.00000 0.0000000 0.0000000 0.0000000 0.0000000 0.000000 0.0000000 0.0000000
+#> [15,] 0.0000000 0.0000000 0.0000000 0.0000000 0.00000 0.0000000 0.0000000 0.0000000 0.0000000 0.000000 0.0000000 0.0000000
+#> [16,] 0.0000000 0.0000000 0.0000000 0.0000000 0.00000 0.0000000 0.0000000 0.0000000 0.0000000 0.000000 0.0000000 0.0000000
+#> [17,] 0.0000000 0.0000000 0.0000000 0.0000000 0.00000 0.0000000 0.0000000 0.0000000 0.0000000 0.000000 0.0000000 0.0000000
+#> [18,] 0.0000000 0.0000000 0.0000000 0.0000000 0.00000 0.0000000 0.0000000 0.0000000 0.0000000 0.000000 0.0000000 0.0000000
+#> [19,] 0.0000000 0.0000000 0.0000000 0.0000000 0.00000 0.0000000 0.0000000 0.0000000 0.0000000 0.000000 0.0000000 0.0000000
+#> [20,] 0.0000000 0.0000000 0.0000000 0.0000000 0.00000 0.0000000 0.0000000 0.0000000 0.0000000 0.000000 0.0000000 0.0000000
+#> [21,] 0.0000000 0.0000000 0.0000000 0.0000000 0.00000 0.0000000 0.0000000 0.0000000 0.0000000 0.000000 0.0000000 0.0000000
+#> [22,] 0.0000000 0.0000000 0.0000000 0.0000000 0.00000 0.0000000 0.0000000 0.0000000 0.0000000 0.000000 0.0000000 0.0000000
+#>           [,36]     [,37]   [,38]     [,39]     [,40]     [,41]     [,42]    [,43]     [,44]
+#>  [1,] 0.0000000 0.0000000 0.00000 0.0000000 0.0000000 0.0000000 0.0000000 0.000000 0.0000000
+#>  [2,] 0.0000000 0.0000000 0.00000 0.0000000 0.0000000 0.0000000 0.0000000 0.000000 0.0000000
+#>  [3,] 0.0000000 0.0000000 0.00000 0.0000000 0.0000000 0.0000000 0.0000000 0.000000 0.0000000
+#>  [4,] 0.0000000 0.0000000 0.00000 0.0000000 0.0000000 0.0000000 0.0000000 0.000000 0.0000000
+#>  [5,] 0.0000000 0.0000000 0.00000 0.0000000 0.0000000 0.0000000 0.0000000 0.000000 0.0000000
+#>  [6,] 0.0000000 0.0000000 0.00000 0.0000000 0.0000000 0.0000000 0.0000000 0.000000 0.0000000
+#>  [7,] 0.0000000 0.0000000 0.00000 0.0000000 0.0000000 0.0000000 0.0000000 0.000000 0.0000000
+#>  [8,] 0.0000000 0.0000000 0.00000 0.0000000 0.0000000 0.0000000 0.0000000 0.000000 0.0000000
+#>  [9,] 0.0000000 0.0000000 0.00000 0.0000000 0.0000000 0.0000000 0.0000000 0.000000 0.0000000
+#> [10,] 0.0000000 0.0000000 0.00000 0.0000000 0.0000000 0.0000000 0.0000000 0.000000 0.0000000
+#> [11,] 0.0000000 0.0000000 0.00000 0.0000000 0.0000000 0.0000000 0.0000000 0.000000 0.0000000
+#> [12,] 0.0000000 0.0000000 0.00000 0.0000000 0.0000000 0.0000000 0.0000000 0.000000 0.0000000
+#> [13,] 0.0000000 0.0000000 0.00000 0.0000000 0.0000000 0.0000000 0.0000000 0.000000 0.0000000
+#> [14,] 0.0000000 0.0000000 0.00000 0.0000000 0.0000000 0.0000000 0.0000000 0.000000 0.0000000
+#> [15,] 0.0000000 0.0000000 0.00000 0.0000000 0.0000000 0.0000000 0.0000000 0.000000 0.0000000
+#> [16,] 0.0000000 0.0000000 0.00000 0.0000000 0.0000000 0.0000000 0.0000000 0.000000 0.0000000
+#> [17,] 0.0000000 0.0000000 0.00000 0.0000000 0.0000000 0.0000000 0.0000000 0.000000 0.0000000
+#> [18,] 0.0000000 0.0000000 0.00000 0.0000000 0.0000000 0.0000000 0.0000000 0.000000 0.0000000
+#> [19,] 0.0000000 0.0000000 0.00000 0.0000000 0.0000000 0.0000000 0.0000000 0.000000 0.0000000
+#> [20,] 0.0000000 0.0000000 0.00000 0.0000000 0.0000000 0.0000000 0.0000000 0.000000 0.0000000
+#> [21,] 0.0000000 0.0000000 0.00000 0.0000000 0.0000000 0.0000000 0.0000000 0.000000 0.0000000
+#> [22,] 0.0000000 0.0000000 0.00000 0.0000000 0.0000000 0.0000000 0.0000000 0.000000 0.0000000
+#>  [ reached 'max' / getOption("max.print") -- omitted 22 rows ]
 ```
 
-The `estimates_wiggly` vector contains 12 treatment effect estimates at different horizons. The `var_iid` matrix is a diagonal variance-covariance matrix (independent errors), while `var_corr` includes positive correlation across horizons.
+The `estimates_smooth` vector contains 36 treatment effect estimates at different horizons and 8 preperiods. The `var_smooth` matrix is a diagonal variance-covariance matrix with no correlation between periods.
 
 ### Example 1: Independent Errors
 
 The simplest case uses the `plausible_bounds()` function with just the estimates and variance-covariance matrix. The `alpha` parameter controls the confidence level (default is 0.05 for 95% confidence):
 
 
-``` r
-pb_iid <- plausible_bounds(
-  estimates = estimates_wiggly,
-  var = var_iid,
-  alpha = 0.05
-)
-#> 
-Calculating restricted bounds: ■■■■■■                           K = 2/…
-
-Calculating restricted bounds: ■■■■■■■■■                        K = 3/…
-
-Calculating restricted bounds: ■■■■■■■■■■■■                     K = 4/…
-
-Calculating restricted bounds: ■■■■■■■■■■■■■■■                  K = 5/…
-
-Calculating restricted bounds: ■■■■■■■■■■■■■■■■■                K = 6/…
-
-Calculating restricted bounds: ■■■■■■■■■■■■■■■■■■■■             K = 7/…
-
-Calculating restricted bounds: ■■■■■■■■■■■■■■■■■■■■■■■          K = 8/…
-
-Calculating restricted bounds: ■■■■■■■■■■■■■■■■■■■■■■■■■■       K = 9/…
-
-Calculating restricted bounds: ■■■■■■■■■■■■■■■■■■■■■■■■■■■■     K = 10…
-
-Calculating restricted bounds: ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■  K = 11…
-
-```
-
-The returned object is a list containing the bounds, test statistics, and metadata. The `summary()` method extracts the key results in a tabular format, showing the horizon, original coefficient estimates, surrogate path, and restricted bounds for that path:
-
-
-``` r
-summary(pb_iid)
-#> Summary of Plausible Bounds Results
-#> -----------------------------------
-#> 
-#>  horizon        coef   surrogate restr_lower  restr_upper
-#>        1  0.09554212  0.08003022  -0.2527747  0.412835169
-#>        2 -0.10861223 -0.12484663  -0.3276764  0.077983159
-#>        3 -0.29680478 -0.25702728  -0.4548122 -0.059242328
-#>        4 -0.32634657 -0.32916484  -0.5343129 -0.124016817
-#>        5 -0.44833415 -0.35391239  -0.5462388 -0.161585995
-#>        6 -0.33276043 -0.34392303  -0.5199829 -0.167863120
-#>        7 -0.15294343 -0.31184986  -0.4910514 -0.132648319
-#>        8 -0.27116602 -0.27034598  -0.4697459 -0.070946071
-#>        9 -0.18957586 -0.23206449  -0.4449509 -0.019178092
-#>       10 -0.33455712 -0.20965848  -0.4161487 -0.003168222
-#>       11 -0.28824851 -0.21578106  -0.4359691  0.004406975
-#>       12 -0.17782216 -0.26308531  -0.6277410  0.101570332
-```
-
-For a more detailed view of the object structure:
-
-
-``` r
-str(pb_iid)
-#> List of 8
-#>  $ alpha                     : num 0.05
-#>  $ preperiods                : num 0
-#>  $ wald_test                 :List of 1
-#>   ..$ post:List of 2
-#>   .. ..$ statistic: num 55.8
-#>   .. ..$ p_value  : num 1.29e-07
-#>  $ restricted_bounds         :'data.frame':	12 obs. of  5 variables:
-#>   ..$ horizon  : int [1:12] 1 2 3 4 5 6 7 8 9 10 ...
-#>   ..$ coef     : num [1:12] 0.0955 -0.1086 -0.2968 -0.3263 -0.4483 ...
-#>   ..$ surrogate: num [1:12] 0.08 -0.125 -0.257 -0.329 -0.354 ...
-#>   ..$ lower    : num [1:12] -0.253 -0.328 -0.455 -0.534 -0.546 ...
-#>   ..$ upper    : num [1:12] 0.4128 0.078 -0.0592 -0.124 -0.1616 ...
-#>  $ restricted_bounds_metadata:List of 8
-#>   ..$ supt_critval      : num 2.85
-#>   ..$ supt_b            : num 3.18
-#>   ..$ degrees_of_freedom: int 4
-#>   ..$ K                 : logi NA
-#>   ..$ lambda1           : logi NA
-#>   ..$ lambda2           : logi NA
-#>   ..$ surrogate_class   : chr "polynomial"
-#>   ..$ best_fit_model    :List of 4
-#>   .. ..$ estimates_proj: num [1:12, 1] 0.08 -0.125 -0.257 -0.329 -0.354 ...
-#>   .. ..$ var_proj      : num [1:12, 1:12] 0.01096 0.005009 0.001171 -0.000937 -0.001697 ...
-#>   .. ..$ bic           : num [1, 1] 4.05
-#>   .. ..$ model_fit_pval: num [1, 1] 0.853
-#>  $ avg_treatment_effect      :List of 4
-#>   ..$ estimate: num -0.236
-#>   ..$ se      : num 0.0364
-#>   ..$ lower   : num -0.307
-#>   ..$ upper   : num -0.165
-#>  $ pointwise_bounds          :List of 3
-#>   ..$ lower  : num [1:12] -0.139 -0.345 -0.536 -0.568 -0.692 ...
-#>   ..$ upper  : num [1:12] 0.3298 0.1279 -0.0579 -0.0852 -0.2048 ...
-#>   ..$ critval: num 1.96
-#>  $ supt_bounds               :List of 3
-#>   ..$ lower  : num [1:12] -0.249 -0.457 -0.648 -0.681 -0.807 ...
-#>   ..$ upper  : num [1:12] 0.4403 0.2395 0.0547 0.0286 -0.09 ...
-#>   ..$ critval: num 2.88
-#>  - attr(*, "class")= chr "plausible_bounds"
-```
 
-The object contains several components. The `restricted_bounds` data frame is identical to that produced with the `summary()` method. 
-The `restricted_bounds_metadata` list stores information about the model selection process, including the surrogate class selected (e.g., polynomial degree or penalized smoothing parameters), the degrees of freedom, and the sup-t critical value used in constructing the bounds. 
-The `avg_treatment_effect` component provides the average treatment effect estimate, its standard error, and confidence interval. 
 
-When arguments `include_pointwise` and `include_supt` of `plausible_bounds()` are `TRUE` (the default), the object also contains `pointwise_bounds` and `supt_bounds` lists with the corresponding confidence bounds. 
-Finally, `wald_test` contains test statistics and p-values for testing the joint null hypothesis of no treatment effect.
 
-### Visualization with `create_plot()`
 
-Next let's plot the results:
 
 
-``` r
-create_plot(pb_iid)
-```
 
-<div class="figure" style="text-align: center">
-<img src="figs/plot-iid-1.png" alt="Plausible bounds for treatment path estimates with independent errors"  />
-<p class="caption">Plausible bounds for treatment path estimates with independent errors</p>
-</div>
 
-The plot displays several types of bounds and statistics, each serving a different inferential purpose:
 
-**Point estimates (black dots)**: The original treatment effect estimates $\hat{\beta}_h$ at each horizon. 
 
-**Restricted bounds (blue dashed lines)**: The main contribution of this package. These bounds provide uniform $(1-\alpha)$ coverage for the selected surrogate path (the smooth blue line), not the true treatment path itself. The surrogate path is chosen via BIC from the pre-specified model universe and represents a data-dependent smoothed approximation to the true treatment path. The restricted bounds adapt to the smoothness and correlation structure, often remaining narrower than sup-t intervals.
 
-**Pointwise bounds (gray horizontal bars)**: Standard confidence intervals for each horizon separately, constructed as $\hat{\beta}_h \pm z_{1-\alpha/2} \sqrt{V_{\beta,hh}}$. 
 
-**Sup-t bounds (gray vertical lines)**: Uniform confidence bands that provide $(1-\alpha)$ joint coverage of the entire treatment path. These are constructed using the supremum of $t$-statistics from individual coefficients. Guarantee full-path coverage but can become quite wide.
 
-**Annotations**: The bottom of the plot shows several summary statistics. The "No effect p-value" comes from a Wald test of the null hypothesis that all treatment effects are zero. The "Average effect [CI]" provides the average treatment effect (ATE) $\bar{\beta} = \frac{1}{H}\sum_h \beta_h$ along with its confidence interval—this quantifies the overall magnitude of the treatment.
 
-### Example 2: Correlated Errors
 
-When errors are correlated across horizons (common in dynamic settings), the restricted bounds adapt to the correlation structure. While high correlation can widen the restricted bounds compared to the independent error case, they usually remain narrower than sup-t bands:
 
 
-``` r
-pb_corr <- plausible_bounds(
-  estimates = estimates_wiggly,
-  var = var_corr,
-  alpha = 0.05
-)
-#> 
-Calculating restricted bounds: ■■■■■■                           K = 2/…
 
-Calculating restricted bounds: ■■■■■■■■■                        K = 3/…
 
-Calculating restricted bounds: ■■■■■■■■■■■■                     K = 4/…
-
-Calculating restricted bounds: ■■■■■■■■■■■■■■■                  K = 5/…
-
-Calculating restricted bounds: ■■■■■■■■■■■■■■■■■                K = 6/…
-
-Calculating restricted bounds: ■■■■■■■■■■■■■■■■■■■■             K = 7/…
-
-Calculating restricted bounds: ■■■■■■■■■■■■■■■■■■■■■■■          K = 8/…
-
-Calculating restricted bounds: ■■■■■■■■■■■■■■■■■■■■■■■■■■       K = 9/…
-
-Calculating restricted bounds: ■■■■■■■■■■■■■■■■■■■■■■■■■■■■     K = 10…
-
-Calculating restricted bounds: ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■  K = 11…
-
-
-create_plot(pb_corr)
-```
-
-<div class="figure" style="text-align: center">
-<img src="figs/corr-example-1.png" alt="Plausible bounds for treatment path estimates with correlated errors"  />
-<p class="caption">Plausible bounds for treatment path estimates with correlated errors</p>
-</div>
-
-In this example, the restricted bounds are wider than in the IID case due to the correlation structure.
-
-
-## Pre-Treatment Periods
-
-The package supports designs where some periods occur before treatment. This allows testing for pre-trends and distinguishing them from treatment effects. When specifying the `preperiods` argument, the function automatically computes two Wald tests: one testing $H_0$: no pre-trends in the pre-treatment periods, and another testing $H_0$: no treatment effect in the post-treatment periods. Both p-values appear in the plot annotations.
-
-### Specifying Pre-Treatment Periods
-
-Use the `preperiods` argument to indicate how many of the initial estimates correspond to pre-treatment periods. Note that period 0 (the period immediately before treatment) is assumed to be normalized to zero and should not be included in the estimates vector:
-
-
-``` r
-data(estimates_pretrends)
-data(var_pretrends)
-
-pb_event <- plausible_bounds(
-  estimates = estimates_pretrends,
-  var = var_pretrends,
-  alpha = 0.05,
-  preperiods = 6  # First 6 elements are pre-treatment periods
-)
-#> 
-Calculating restricted bounds: ■■■■■■                           K = 2/…
-
-Calculating restricted bounds: ■■■■■■■■■                        K = 3/…
-
-Calculating restricted bounds: ■■■■■■■■■■■■                     K = 4/…
-
-Calculating restricted bounds: ■■■■■■■■■■■■■■■                  K = 5/…
-
-Calculating restricted bounds: ■■■■■■■■■■■■■■■■■                K = 6/…
-
-Calculating restricted bounds: ■■■■■■■■■■■■■■■■■■■■             K = 7/…
-
-Calculating restricted bounds: ■■■■■■■■■■■■■■■■■■■■■■■          K = 8/…
-
-Calculating restricted bounds: ■■■■■■■■■■■■■■■■■■■■■■■■■■       K = 9/…
-
-Calculating restricted bounds: ■■■■■■■■■■■■■■■■■■■■■■■■■■■■     K = 10…
-
-Calculating restricted bounds: ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■  K = 11…
-
-
-print(pb_event)
-#> Plausible Bounds Results
-#> ========================
-#> 
-#> Wald Tests:
-#>   Post-treatment (H0: no effect): stat = 274.594, p = 0.0000
-#>   Pre-treatment (H0: no pre-trends): stat = 120.157, p = 0.0000
-#> 
-#> Average Treatment Effect:
-#>   Estimate: -0.2558 (SE: 0.0178)
-#>   95% CI: [-0.2907, -0.2209]
-#> 
-#> Restricted Bounds:
-#>   Surrogate class: M
-#>   Degrees of freedom: 8.74
-#> 
-#> Bounds by horizon:
-#>  horizon        coef  surrogate      lower       upper
-#>       -6  0.33364690         NA         NA          NA
-#>       -5  0.30169214         NA         NA          NA
-#>       -4  0.21240381         NA         NA          NA
-#>       -3  0.14240603         NA         NA          NA
-#>       -2  0.17324430         NA         NA          NA
-#>       -1  0.06520045         NA         NA          NA
-#>        1 -0.05268953 -0.0529454 -0.1777636  0.07187278
-#>        2 -0.14839197 -0.1459116 -0.2687530 -0.02307024
-#>        3 -0.15822442 -0.1645885 -0.2857590 -0.04341790
-#>        4 -0.23873936 -0.2318391 -0.3539368 -0.10974127
-#>        5 -0.17385437 -0.1835984 -0.3065016 -0.06069529
-#>        6 -0.21249874 -0.2056813 -0.3286999 -0.08266262
-#>        7 -0.12378336 -0.1538464 -0.2708490 -0.03684388
-#>        8 -0.33345619 -0.3491464 -0.4444958 -0.25379702
-#>        9 -0.34319526 -0.3661420 -0.4562150 -0.27606895
-#>       10 -0.40464036 -0.3916900 -0.4796216 -0.30375831
-#>       11 -0.48159116 -0.4180416 -0.5088658 -0.32721736
-#>       12 -0.39875157 -0.4010240 -0.4990513 -0.30299657
-```
-
-
-``` r
-create_plot(pb_event)
-```
-
-<div class="figure" style="text-align: center">
-<img src="figs/plot-pretrends-1.png" alt="Event study with pre-treatment periods showing pre-trends"  />
-<p class="caption">Event study with pre-treatment periods showing pre-trends</p>
-</div>
-
-The vertical dashed line at event time 0 separates pre- and post-treatment periods. Pre-treatment estimates appear at negative horizons, revealing any pre-existing trends. The restricted bounds and surrogate path are only computed for the post-treatment periods, since the goal is inference on the treatment effect path.
-
-The annotations now include both Wald test p-values. The "Pretrends p-value" tests whether the pre-treatment coefficients are jointly zero—a rejection indicates violations of parallel trends. The "No effect p-value" tests whether the post-treatment coefficients are jointly zero. In this example, the pre-trends test rejects, suggesting that parallel trends may not hold.
-
-
-## Customizing plots
-
-The `create_plot()` function provides a few arguments to customize which elements appear in the plot. 
-The `show_annotations` argument controls whether the Wald test results and average treatment effect are displayed at the bottom. 
-The `show_supt` and `show_pointwise` arguments control whether sup-t and pointwise bounds are included. 
-For a cleaner display focusing only on the restricted and pointwise bounds:
-
-
-``` r
-create_plot(pb_corr, show_annotations = FALSE, show_supt = FALSE)
-```
-
-<div class="figure" style="text-align: center">
-<img src="figs/viz-custom-1.png" alt="Customized plot showing only point estimates and restricted bounds"  />
-<p class="caption">Customized plot showing only point estimates and restricted bounds</p>
-</div>
-
-
-## Parallel Processing
-
-For datasets with many horizons, the restricted bounds calculation can be time-consuming due to the model selection procedure. The `parallel` argument enables parallel computation across the model universe. Use `n_cores` to specify the number of cores (the default uses all available cores minus one):
-
-
-``` r
-pb_parallel <- plausible_bounds(
-  estimates = estimates_wiggly,
-  var = var_corr,
-  alpha = 0.05,
-  parallel = TRUE,
-  n_cores = 4
-)
-```
-
-
-## References
-
-* Freyaldenhoven, S. and Hansen, C. (2025). "(Visualizing) Plausible Treatment Effect Paths." Federal Reserve Bank of Philadelphia and University of Chicago.
-* Berk, R., Brown, L., Buja, A., Zhang, K., and Zhao, L. (2013). "Valid post-selection inference." *Annals of Statistics*, 41(2):802-837.

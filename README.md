@@ -11,7 +11,13 @@ downloads](https://cranlogs.r-pkg.org/badges/grand-total/plausibounds)](https://
 
 ## Overview
 
-The `plausibounds` package implements the additions to dynamic effect plots suggested in [Freyaldenhoven and Hansen (2026)](https://simonfreyaldenhoven.github.io/papers/Plausible_bounds.pdf). Data-driven smoothing delivers a smooth estimated path with potentially improved point estimation properties and confidence regions covering a surrogate that can be substantially tighter than conventional pointwise or uniform bands.
+The `plausibounds` package implements the additions to dynamic effect
+plots suggested in [Freyaldenhoven and Hansen
+(2026)](https://simonfreyaldenhoven.github.io/papers/Plausible_bounds.pdf).
+Data-driven smoothing delivers a smooth estimated path with potentially
+improved point estimation properties and confidence regions covering a
+surrogate that can be substantially tighter than conventional pointwise
+or uniform bands.
 
 ## Installation
 
@@ -36,46 +42,47 @@ library(plausibounds)
 library(ggplot2)
 
 # Load example data
-data(estimates_wiggly)
-data(var_iid)
+data(estimates_bighump)
+data(var_bighump)
 
 # Compute restricted bounds
 pb <- plausible_bounds(
-  estimates = estimates_wiggly,
-  var = var_iid
+  estimates = estimates_bighump[1:12],
+  var = var_bighump[1:12, 1:12]
 )
-#> Calculating restricted bounds: ■■■■■■                           K = 2/11 [ 18%]Calculating restricted bounds: ■■■■■■■■■                        K = 3/11 [ 27%]Calculating restricted bounds: ■■■■■■■■■■■■                     K = 4/11 [ 36%]Calculating restricted bounds: ■■■■■■■■■■■■■■■                  K = 5/11 [ 45%]Calculating restricted bounds: ■■■■■■■■■■■■■■■■■                K = 6/11 [ 55%]Calculating restricted bounds: ■■■■■■■■■■■■■■■■■■■■             K = 7/11 [ 64%]Calculating restricted bounds: ■■■■■■■■■■■■■■■■■■■■■■■          K = 8/11 [ 73%]Calculating restricted bounds: ■■■■■■■■■■■■■■■■■■■■■■■■■■       K = 9/11 [ 82%]Calculating restricted bounds: ■■■■■■■■■■■■■■■■■■■■■■■■■■■■     K = 10/11 [ 91%]Calculating restricted bounds: ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■  K = 11/11 [100%]
+```
 
+``` r
 # View results
 summary(pb)
 #> Summary of Plausible Bounds Results
 #> -----------------------------------
 #> 
-#>  horizon        coef   surrogate restr_lower  restr_upper
-#>        1  0.09554212  0.08003022  -0.2527747  0.412835169
-#>        2 -0.10861223 -0.12484663  -0.3276764  0.077983159
-#>        3 -0.29680478 -0.25702728  -0.4548122 -0.059242328
-#>        4 -0.32634657 -0.32916484  -0.5343129 -0.124016817
-#>        5 -0.44833415 -0.35391239  -0.5462388 -0.161585995
-#>        6 -0.33276043 -0.34392303  -0.5199829 -0.167863120
-#>        7 -0.15294343 -0.31184986  -0.4910514 -0.132648319
-#>        8 -0.27116602 -0.27034598  -0.4697459 -0.070946071
-#>        9 -0.18957586 -0.23206449  -0.4449509 -0.019178092
-#>       10 -0.33455712 -0.20965848  -0.4161487 -0.003168222
-#>       11 -0.28824851 -0.21578106  -0.4359691  0.004406975
-#>       12 -0.17782216 -0.26308531  -0.6277410  0.101570332
+#>  horizon         coef   surrogate restr_lower restr_upper
+#>        1 -0.644857526 -0.65289039 -1.01866591 -0.28711487
+#>        2 -0.787000641 -0.74451476 -1.05739145 -0.43163808
+#>        3 -0.675417155 -0.63299852 -0.94473053 -0.32126650
+#>        4 -0.317197460 -0.39668676 -0.68754974 -0.10582377
+#>        5 -0.262353065 -0.17237281 -0.42806525  0.08331963
+#>        6  0.002879266  0.04037154 -0.18097423  0.26171731
+#>        7  0.189086269  0.16708990 -0.06548864  0.39966844
+#>        8  0.202281931  0.16777565 -0.06504176  0.40059306
+#>        9  0.210778688  0.16762896 -0.06514118  0.40039911
+#>       10  0.221185124  0.16767121 -0.06512633  0.40046875
+#>       11  0.230834836  0.16766272 -0.06515858  0.40048402
+#>       12  0.120426905  0.16738237 -0.06545694  0.40022168
 
 # Visualize bounds
 create_plot(pb)
 ```
 
-![](man/figures/README-example-1.png)<!-- -->
+![](man/figures/README-view-plot-1.png)<!-- -->
 
 ``` r
 # Example with parallel processing
 pb_parallel <- plausible_bounds(
-  estimates = estimates_wiggly,
-  var = var_iid,
+  estimates = estimates_bighump,
+  var = var_bighump,
   alpha = 0.05,
   parallel = TRUE,
   n_cores = 4
@@ -86,7 +93,8 @@ pb_parallel <- plausible_bounds(
 
 Simon Freyaldenhoven, Christian Hansen. “(Visualizing) Plausible
 Treatment Effect Paths.” Federal Reserve Bank of Philadelphia and
-University of Chicago, 2025.
+University of Chicago, 2026.
 
-Simon Freyaldenhoven, Christian Hansen, Ryan Kobler. “`plausibounds` package.” Code and data repository at
-<https://github.com/SimonFreyaldenhoven/plausibounds>, 2025.
+Simon Freyaldenhoven, Christian Hansen, Ryan Kobler. “`plausibounds`
+package.” Code and data repository at
+<https://github.com/SimonFreyaldenhoven/plausibounds>, 2026.

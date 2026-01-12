@@ -52,7 +52,7 @@ vignettes_to_precompile <- list(
 
 # Main execution
 cat("========================================\n")
-cat("Precompiling vignettes for plausiblebounds\n")
+cat("Precompiling vignettes for plausibounds\n")
 cat("========================================\n\n")
 
 # Check if required packages are available
