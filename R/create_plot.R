@@ -14,10 +14,10 @@
 #'
 #' @examples
 #'
-#' # Example with wiggly estimates and correlated errors
-#' data(estimates_wiggly)
-#' data(var_corr)
-#' result_complex <- plausible_bounds(estimates_wiggly[1:4], var_corr[1:4, 1:4])
+#' # Example with bighump estimates and correlated errors
+#' data(estimates_bighump)
+#' data(var_bighump)
+#' result_complex <- plausible_bounds(estimates_bighump[1:4], var_bighump[1:4, 1:4])
 #' plot_complex <- create_plot(result_complex)
 #'
 #' @importFrom magrittr %>%

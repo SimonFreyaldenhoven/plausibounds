@@ -14,10 +14,10 @@
 #' \itemize{
 #'   \item \code{\link{estimates_constant}} and \code{\link{var_iid}}:
 #'         A simple case with constant estimates and independent errors
-#'   \item \code{\link{estimates_wiggly}} and \code{\link{var_corr}}:
-#'         A case with wiggly estimates and strongly correlated errors
-#'   \item \code{\link{estimates_pretrends}} and \code{\link{var_pretrends}}:
-#'         A case with 6 preperiods, 12 post
+#'   \item \code{\link{estimates_bighump}} and \code{\link{var_bighump}}:
+#'         A case with sinusoidal estimates and moderate correlation
+#'   \item \code{\link{estimates_smooth}} and \code{\link{var_smooth}}:
+#'         Real-world treatment effects with 8 preperiods
 #' }
 #'
 #' 

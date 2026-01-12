@@ -56,6 +56,11 @@ calculate_restricted_bounds <- function(estimates, var, alpha = 0.05,
   if (preperiods >= length(estimates)) {
     stop("preperiods must be less than the length of estimates")
   }
+  if (!is.null(n_cores)) {
+    if (!is.numeric(n_cores) || length(n_cores) != 1 || n_cores < 1 || n_cores != floor(n_cores)) {
+      stop("n_cores must be a positive integer")
+    }
+  }
 
   # Store full data
   estimatesAll <- estimates
@@ -92,7 +97,6 @@ calculate_restricted_bounds <- function(estimates, var, alpha = 0.05,
   d_nonzero <- stdv_all > .Machine$double.eps
   cV_all <- diag(1 / stdv_all[d_nonzero]) %*% varAll[d_nonzero, d_nonzero] %*% diag(1 / stdv_all[d_nonzero])
 
-  set.seed(42)
   kk <- 10000
 
   Corrmat <- cV_all
@@ -167,7 +171,7 @@ calculate_restricted_bounds <- function(estimates, var, alpha = 0.05,
   
   if (p >= 6) {
     target_df <- p - 1
-    lam_bounds <- find_lam_bounds(p, var, target_df)
+    lam_bounds <- find_lam_bounds(p, var, 4)
     loglam1_range <- lam_bounds$lam1_range
     loglam2_range <- lam_bounds$lam2_range
     
@@ -474,7 +478,7 @@ MDproj2 <- function(delta, V, X) {
   return(list(estimates_proj = estimates_proj, var_proj = var_proj, bic = bic, J = J, model_fit_pval = model_fit_pval))
 }
 
-find_lam_bounds <- function(p, V, target_df) {
+find_lam_bounds <- function(p, V, target_df = 4) {
   lim <- 10
   V <- V / mean(diag(V))
   
@@ -482,7 +486,7 @@ find_lam_bounds <- function(p, V, target_df) {
     diff_df(-lim, lam2, 1, V, target_df)
   }
   
-  result <- stats::optim(par = 1, fn = f, method = "Brent", lower = -50, upper = 50)
+  result <- stats::optim(par = 1, fn = f, method = "BFGS")
   lam2_upper <- result$par
   
   lam1_range <- matrix(0, nrow = p-1, ncol = 2)
