@@ -11,14 +11,7 @@ downloads](https://cranlogs.r-pkg.org/badges/grand-total/plausibounds)](https://
 
 ## Overview
 
-The `plausibounds` package implements methods from [Freyaldenhoven and
-Hansen
-(2026)](https://simonfreyaldenhoven.github.io/papers/Plausible_bounds.pdf)
-to compute restricted bounds for treatment path estimates from event
-studies and dynamic panel data models. The package provides an
-alternative solution between pointwise confidence intervals and uniform
-confidence bands through data-driven surrogate paths that adapt to
-smoothness and correlation structure.
+The `plausibounds` package implements the additions to dynamic effect plots suggested in [Freyaldenhoven and Hansen (2026)](https://simonfreyaldenhoven.github.io/papers/Plausible_bounds.pdf). Data-driven smoothing delivers a smooth estimated path with potentially improved point estimation properties and confidence regions covering a surrogate that can be substantially tighter than conventional pointwise or uniform bands.
 
 ## Installation
 
@@ -95,5 +88,5 @@ Simon Freyaldenhoven, Christian Hansen. “(Visualizing) Plausible
 Treatment Effect Paths.” Federal Reserve Bank of Philadelphia and
 University of Chicago, 2025.
 
-Ryan Kobler. “`plausibounds` package.” Code and data repository at
+Simon Freyaldenhoven, Christian Hansen, Ryan Kobler. “`plausibounds` package.” Code and data repository at
 <https://github.com/SimonFreyaldenhoven/plausibounds>, 2025.

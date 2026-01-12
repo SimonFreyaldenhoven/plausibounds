@@ -1,5 +1,5 @@
 ---
-title: "Introduction to plausibounds: Computing Plausible Bounds for Treatment Path Estimates"
+title: "Introduction to plausibounds: Computing Plausible Bounds for dynamic effect plots"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Introduction to plausibounds}
@@ -14,68 +14,31 @@ vignette: >
 library(plausibounds)
 library(ggplot2)
 ```
+##Dynamic Effect Plots
+
+To understand the dynamic effects of a policy, it is common to summarize estimated effects over time in a dynamic effect (or event-study) plot. For example, a macroeconomist may estimate the response of the Consumer Price Index to a monetary shock via local projections, or a microeconomist may estimate the response of labor market outcomes to a change in welfare policies via distributed lag models. 
 
 ## Overview
 
-When estimating treatment effect paths from event studies or dynamic panel data models, researchers often face a tension: pointwise confidence intervals fail to account for multiple testing, while uniform confidence bands (such as sup-t bands) can be too wide to provide useful inference. The `plausibounds` package implements methods from Freyaldenhoven and Hansen (2025) that provide an intermediate solution through *restricted bounds*: confidence regions that adapt to the smoothness and correlation structure of the data with valid post-selection coverage.
+The plausibounds package provides simple additions to standard visualizations of dynamic treatment effects aimed at enhancing their informativeness. In particular, it provides functionality to:
+
+* include joint hypothesis tests and summary measures that are often of direct interest alongside the standard event-study plot. 
+
+* compute a smooth approximation to the treatment-effect path from a prespecified, economically motivated class and produces corresponding confidence regions. The resulting intervals can be substantially tighter than conventional uniform bands while maintaining formal coverage guarantees through post-selection inference (Berk et al. [2013]).
 
 ## Background
 
-Let $\hat{\beta} = (\hat{\beta}_1, \ldots, \hat{\beta}_H)$ denote estimates of treatment effects at horizons $h=1,\dots,H$, with
+We write $\theta=(\beta^{pre'},\beta')'$ for the $p \times 1$ vector that collects the elements of the dynamic treatment effect path depicted on the dynamic effect plot. Here, $\beta_{pre} = \{\beta^{pre}_h\}_{h={-L}}^{-1}$ denotes the displayed pre-event effects, $\beta=\{\beta_h\}_{h={1}}^{H}$ collects the dynamic treatment effect path after the event up to the fixed maximum horizon of interest $H$, and thus $p = H+L$. We assume access to point estimates of the parameters $\theta_h$, denoted by $\hat{\theta}_h$, that correspond to the cumulative effect of the policy at horizon $h$ relative to period 0. Throughout, we assume the vector that collects the estimated dynamic treatment effect path, $\hat\theta$, satisfies $\hat\theta \sim N(\theta,V_{\theta})$ and that we have access to the covariance matrix $V_{\theta}$. Leading examples to obtain such estimates include distributed lag models, local projections, and event studies.
 
-$$
-\hat{\beta} \sim N(\beta, V_\beta),
-$$
-
-where $\beta$ is the true treatment path vector and $V_{\beta}$ is the variance matrix. This setup encompasses common estimators like distributed lag models, local projections, and two-way fixed effects event studies.
+The package takes $\theta$ and $V_{\theta}$ as input.
 
 ### Finding the surrogate path
 
-The key contribution of this research is the construction of restricted bounds via a data-driven "surrogate path." Rather than attempting uniform coverage of the raw estimates, restricted bounds provide valid inference for a smoothed approximation of the true treatment path and thus may better capture policy-relevant features.
-The approximation is restricted to a set of reasonable path shapes, and specifically, the dynamic effect is assumed to be (1) smooth and (2) to die off eventually. 
+The main contribution is to include new visual elements meant to depict approximations to the underlying effect path constrained to exhibit economically and statistically plausible shapes. Intuitively, these elements formalize ``visual data snooping'': Our proposal approximates looking at a dynamic effect plot and then choosing a specification that ``captures the main dynamics'' while a) providing a notion of valid inference that explicitly accounts for the data-dependent choice of specification and b) using the full covariance structure of the estimates when choosing the specification.
 
-The approach approximates $\beta$ by a *surrogate path* $\beta_M = P(M)\beta$, where $M$ indexes a model in a pre-specified universe $\mathcal{M}$. 
-The model universe is specified as follows: it includes polynomial specifications (up to cubic) and penalized smoothing that shrinks first (effect is "smooth") and third (effects "die off") differences. 
+Specifically, we construct \emph{restricted estimates} and \emph{plausible bounds} by using data-driven regularization to select an approximation to the treatment path from a pre-specified class. We consider a default universe motivated by a preference for smooth dynamics that eventually die out. The restricted estimates are the resulting regularized point estimates of the treatment path. Our plausible bounds are sup-t bands under the selected approximation, adjusted to account for data-dependent selection using Berk et al.'s [\citeyear{berk2013valid}] post-selection inference (PoSI). 
 
-Given estimates $\hat{\beta}$, the (non-polynomial) surrogate for a given model $M$ is obtained by solving a penalized least squares problem:
-
-$$
-\begin{align}
-\tilde{\beta}(M)
-&= \tilde{\beta}(\lambda_1, \lambda_2, K) \\
-&= \arg\min_{b}\Bigg(
-\underbrace{(\hat{\beta}-b)^{\prime}V^{-1}(\hat{\beta}-b)}_{\text{distance from $\hat{\beta}$}}
-+\lambda_1\,\underbrace{b^{\prime}D_1^{\prime}W_1(K)D_1 b}_{\text{penalty on first difference after horizon $K$}}
-+\lambda_2\,\underbrace{b^{\prime}D_3^{\prime}W_3 D_3 b}_{\text{penalty on third difference}}
-\Bigg).
-\end{align}
-$$
-
-where $D_1$ and $D_3$ are first- and third-difference operators, and $\lambda_1$, $\lambda_2$, and $K$ are tuning parameters that control smoothness and the timing of decay toward zero. The solution has closed form:
-
-$$
-\tilde{\beta}(M) = P(M)\hat{\beta}, \quad P(M) = \Big(V_\beta^{-1} + \lambda_1 D_1'W_1(K)D_1 + \lambda_2 D_3'W_3D_3\Big)^{-1} V_\beta^{-1}.
-$$
-
-Then, the best-fitting surrogate model $\hat{M}$ is selected by minimizing a BIC-type criterion:
-
-$$
-\hat{M} = \arg\min_{M \in \mathcal{M}} \; (\hat{\beta}-\tilde{\beta}(M))'V_\beta^{-1}(\hat{\beta}-\tilde{\beta}(M)) + \log(H)\,\text{df}(M),
-$$
-
-where the degrees of freedom is $\text{df}(M) = \mathrm{trace}(P(M))$. 
-Therefore, the main algorithm of the package simply iterates over all models in the pre-specified universe to find $\hat{M}$. 
-
-### Post-Selection Inference
-
-Once $\hat{M}$ is chosen, the package constructs confidence regions using post-selection inference (Berk et al. 2013), which accounts for the model selection step to guarantee valid coverage:
-
-$$
-\Pr\!\big(\beta_{\hat{M}} \in \text{CR}_{\text{PoSI}}\big) \ge 1-\alpha.
-$$
-
-The restricted bounds provide uniform coverage for the *selected surrogate path*, not the true treatment path itself. Because the surrogate is smoother than the raw estimates, this inferential target may be more interpretable for policy analysis.
-
+Intuitively, the plausible bounds represent a compromise between inference under no restrictions --- which may yield very wide confidence intervals --- and inference based on a single, prespecified model that does not adapt to the data and may therefore be overly restrictive.
 
 ## Basic Usage
 
@@ -112,7 +75,27 @@ pb_iid <- plausible_bounds(
   var = var_iid,
   alpha = 0.05
 )
-#> Calculating restricted bounds: ■■■■■■                           K = 2/…Calculating restricted bounds: ■■■■■■■■■                        K = 3/…Calculating restricted bounds: ■■■■■■■■■■■■                     K = 4/…Calculating restricted bounds: ■■■■■■■■■■■■■■■                  K = 5/…Calculating restricted bounds: ■■■■■■■■■■■■■■■■■                K = 6/…Calculating restricted bounds: ■■■■■■■■■■■■■■■■■■■■             K = 7/…Calculating restricted bounds: ■■■■■■■■■■■■■■■■■■■■■■■          K = 8/…Calculating restricted bounds: ■■■■■■■■■■■■■■■■■■■■■■■■■■       K = 9/…Calculating restricted bounds: ■■■■■■■■■■■■■■■■■■■■■■■■■■■■     K = 10…Calculating restricted bounds: ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■  K = 11…
+#> 
+Calculating restricted bounds: ■■■■■■                           K = 2/…
+
+Calculating restricted bounds: ■■■■■■■■■                        K = 3/…
+
+Calculating restricted bounds: ■■■■■■■■■■■■                     K = 4/…
+
+Calculating restricted bounds: ■■■■■■■■■■■■■■■                  K = 5/…
+
+Calculating restricted bounds: ■■■■■■■■■■■■■■■■■                K = 6/…
+
+Calculating restricted bounds: ■■■■■■■■■■■■■■■■■■■■             K = 7/…
+
+Calculating restricted bounds: ■■■■■■■■■■■■■■■■■■■■■■■          K = 8/…
+
+Calculating restricted bounds: ■■■■■■■■■■■■■■■■■■■■■■■■■■       K = 9/…
+
+Calculating restricted bounds: ■■■■■■■■■■■■■■■■■■■■■■■■■■■■     K = 10…
+
+Calculating restricted bounds: ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■  K = 11…
+
 ```
 
 The returned object is a list containing the bounds, test statistics, and metadata. The `summary()` method extracts the key results in a tabular format, showing the horizon, original coefficient estimates, surrogate path, and restricted bounds for that path:
@@ -229,7 +212,27 @@ pb_corr <- plausible_bounds(
   var = var_corr,
   alpha = 0.05
 )
-#> Calculating restricted bounds: ■■■■■■                           K = 2/…Calculating restricted bounds: ■■■■■■■■■                        K = 3/…Calculating restricted bounds: ■■■■■■■■■■■■                     K = 4/…Calculating restricted bounds: ■■■■■■■■■■■■■■■                  K = 5/…Calculating restricted bounds: ■■■■■■■■■■■■■■■■■                K = 6/…Calculating restricted bounds: ■■■■■■■■■■■■■■■■■■■■             K = 7/…Calculating restricted bounds: ■■■■■■■■■■■■■■■■■■■■■■■          K = 8/…Calculating restricted bounds: ■■■■■■■■■■■■■■■■■■■■■■■■■■       K = 9/…Calculating restricted bounds: ■■■■■■■■■■■■■■■■■■■■■■■■■■■■     K = 10…Calculating restricted bounds: ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■  K = 11…
+#> 
+Calculating restricted bounds: ■■■■■■                           K = 2/…
+
+Calculating restricted bounds: ■■■■■■■■■                        K = 3/…
+
+Calculating restricted bounds: ■■■■■■■■■■■■                     K = 4/…
+
+Calculating restricted bounds: ■■■■■■■■■■■■■■■                  K = 5/…
+
+Calculating restricted bounds: ■■■■■■■■■■■■■■■■■                K = 6/…
+
+Calculating restricted bounds: ■■■■■■■■■■■■■■■■■■■■             K = 7/…
+
+Calculating restricted bounds: ■■■■■■■■■■■■■■■■■■■■■■■          K = 8/…
+
+Calculating restricted bounds: ■■■■■■■■■■■■■■■■■■■■■■■■■■       K = 9/…
+
+Calculating restricted bounds: ■■■■■■■■■■■■■■■■■■■■■■■■■■■■     K = 10…
+
+Calculating restricted bounds: ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■  K = 11…
+
 
 create_plot(pb_corr)
 ```
@@ -261,7 +264,27 @@ pb_event <- plausible_bounds(
   alpha = 0.05,
   preperiods = 6  # First 6 elements are pre-treatment periods
 )
-#> Calculating restricted bounds: ■■■■■■                           K = 2/…Calculating restricted bounds: ■■■■■■■■■                        K = 3/…Calculating restricted bounds: ■■■■■■■■■■■■                     K = 4/…Calculating restricted bounds: ■■■■■■■■■■■■■■■                  K = 5/…Calculating restricted bounds: ■■■■■■■■■■■■■■■■■                K = 6/…Calculating restricted bounds: ■■■■■■■■■■■■■■■■■■■■             K = 7/…Calculating restricted bounds: ■■■■■■■■■■■■■■■■■■■■■■■          K = 8/…Calculating restricted bounds: ■■■■■■■■■■■■■■■■■■■■■■■■■■       K = 9/…Calculating restricted bounds: ■■■■■■■■■■■■■■■■■■■■■■■■■■■■     K = 10…Calculating restricted bounds: ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■  K = 11…
+#> 
+Calculating restricted bounds: ■■■■■■                           K = 2/…
+
+Calculating restricted bounds: ■■■■■■■■■                        K = 3/…
+
+Calculating restricted bounds: ■■■■■■■■■■■■                     K = 4/…
+
+Calculating restricted bounds: ■■■■■■■■■■■■■■■                  K = 5/…
+
+Calculating restricted bounds: ■■■■■■■■■■■■■■■■■                K = 6/…
+
+Calculating restricted bounds: ■■■■■■■■■■■■■■■■■■■■             K = 7/…
+
+Calculating restricted bounds: ■■■■■■■■■■■■■■■■■■■■■■■          K = 8/…
+
+Calculating restricted bounds: ■■■■■■■■■■■■■■■■■■■■■■■■■■       K = 9/…
+
+Calculating restricted bounds: ■■■■■■■■■■■■■■■■■■■■■■■■■■■■     K = 10…
+
+Calculating restricted bounds: ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■  K = 11…
+
 
 print(pb_event)
 #> Plausible Bounds Results
