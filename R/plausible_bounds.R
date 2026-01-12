@@ -4,8 +4,9 @@
 #' average treatment effect, Wald tests, and optional pointwise/sup-t bounds.
 #' Supports pre-treatment periods for event study designs.
 #'
-#' @param estimates A vector of point estimates. If preperiods > 0, the first preperiods
-#'   elements are pre-treatment estimates, followed by post-treatment estimates.
+#' @param estimates A numeric vector or single-row/single-column matrix of point estimates.
+#'   If preperiods > 0, the first preperiods elements are pre-treatment estimates,
+#'   followed by post-treatment estimates.
 #' @param var The variance-covariance matrix of the estimates
 #' @param alpha Significance level (default: 0.05)
 #' @param preperiods Number of pre-treatment periods (default: 0). Period 0 is assumed
@@ -40,9 +41,20 @@ plausible_bounds <- function(estimates, var, alpha = 0.05,
                             preperiods = 0,
                             include_pointwise = TRUE, include_supt = TRUE,
                             parallel = FALSE, n_cores = NULL) {
-  # Check inputs
-  if (!is.numeric(estimates) || !is.vector(estimates)) {
-    stop("estimates must be a numeric vector")
+  # Coerce estimates to plain numeric vector
+  if (is.matrix(estimates)) {
+    if (ncol(estimates) == 1) {
+      estimates <- as.vector(estimates)
+    } else if (nrow(estimates) == 1) {
+      estimates <- as.vector(t(estimates))
+    } else {
+      stop("If estimates is a matrix, it must have exactly one row or one column")
+    }
+  } else if (is.numeric(estimates) && length(estimates) > 0) {
+    # Accept any numeric object with length (e.g., vectors, numeric with attributes)
+    estimates <- as.vector(estimates)
+  } else {
+    stop("estimates must be a numeric vector or single-row/single-column matrix")
   }
   if (!is.matrix(var) || nrow(var) != length(estimates) || ncol(var) != length(estimates)) {
     stop("var must be a square matrix with dimensions matching the length of estimates")
