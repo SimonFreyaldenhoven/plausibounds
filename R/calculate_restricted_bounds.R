@@ -1,6 +1,6 @@
-#' Calculate Restricted Bounds
+#' Calculate Plausible Bounds
 #'
-#' This function calculates restricted bounds for a vector of estimates using model selection.
+#' This function calculates the plausible (or "restricted") bounds for a vector of estimates using model selection.
 #' Supports pre-treatment periods for event study designs.
 #'
 #'

@@ -1,11 +1,11 @@
 #' plausibounds: Plausible Bounds for Treatment Path Estimates
 #'
-#' Calculate and visualize plausible bounds as proposed in Freyaldenhoven (2025)
-#' for dynamic treatment path estimates. Given a treatment path, variance matrix, and significance level, plot various uncertainty measures.
+#' Implements the additions to dynamic effect plots suggested in Freyaldenhoven and Hansen (2026). 
+#' Data-driven smoothing delivers a smooth estimated path with potentially improved point estimation properties and confidence regions covering a surrogate that can be substantially tighter than conventional pointwise or uniform bands.
 #'
 #' @section Main Functions:
 #' \itemize{
-#'   \item \code{\link{plausible_bounds}}: Calculate restricted bounds
+#'   \item \code{\link{plausible_bounds}}: Calculate plausible bounds
 #'   \item \code{\link{create_plot}}: Create plots of the bounds
 #' }
 #'

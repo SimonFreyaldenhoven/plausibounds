@@ -1,8 +1,8 @@
 #' Create Plot for Plausible Bounds
 #'
 #' This function creates a plot of plausible bounds from a plausible_bounds object.
-#' The plot displays restricted bounds as the main visualization, with optional
-#' pointwise and sup-t bounds overlays. Cumulative bounds are shown as annotations.
+#' The plot displays plausible bounds as the main visualization, with optional
+#' pointwise and sup-t bounds overlays.
 #' Supports event study designs with pre-treatment periods.
 #'
 #' @param result A plausible_bounds object returned by the plausible_bounds() function
