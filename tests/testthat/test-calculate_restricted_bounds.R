@@ -33,15 +33,15 @@ test_that("calculate_restricted_bounds works with real example data", {
   expect_true(width > 0)
 })
 
-test_that("calculate_restricted_bounds works with wiggly correlated data", {
-  # Test with smaller subset of wiggly strong correlation data
-  data(estimates_wiggly)
-  data(var_corr)
+test_that("calculate_restricted_bounds works with bighump data", {
+  # Test with smaller subset of bighump data
+  data(estimates_bighump)
+  data(var_bighump)
 
   # Use first 8 observations for faster testing
-  n_test <- min(8, length(estimates_wiggly))
-  estimates_subset <- estimates_wiggly[1:n_test]
-  var_subset <- var_corr[1:n_test, 1:n_test]
+  n_test <- min(8, length(estimates_bighump))
+  estimates_subset <- estimates_bighump[1:n_test]
+  var_subset <- var_bighump[1:n_test, 1:n_test]
   
   result <- calculate_restricted_bounds(estimates_subset, var_subset)
   
@@ -314,7 +314,7 @@ test_that("calculate_restricted_bounds validates n_cores parameter", {
   set.seed(123)
   n <- 6
   estimates <- rnorm(n)
-  var <- diag(n) * 0.1
+  var <- diag(n) * 0.5
 
   # Invalid: non-numeric
   expect_error(

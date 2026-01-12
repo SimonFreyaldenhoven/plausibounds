@@ -17,6 +17,82 @@ test_that("plausible_bounds functions work with simple test data", {
   expect_error(create_plot(pb, show_supt = FALSE, show_pointwise = TRUE), NA)
 })
 
+# Test estimates parameter validation and coercion
+test_that("plausible_bounds accepts and coerces different estimate formats", {
+  set.seed(123)
+  p <- 5
+  est_vec <- stats::rnorm(p)
+  var_mat <- diag(p) * 0.1
+
+  # Standard numeric vector (baseline)
+  result_vec <- plausible_bounds(est_vec, var_mat)
+  expect_s3_class(result_vec, "plausible_bounds")
+  expect_equal(length(result_vec$restricted_bounds$coef), p)
+
+  # Single-column matrix (should be coerced)
+  est_col <- matrix(est_vec, ncol = 1)
+  result_col <- plausible_bounds(est_col, var_mat)
+  expect_s3_class(result_col, "plausible_bounds")
+  expect_equal(result_col$restricted_bounds$coef, result_vec$restricted_bounds$coef)
+
+  # Single-row matrix (should be transposed and coerced)
+  est_row <- matrix(est_vec, nrow = 1)
+  result_row <- plausible_bounds(est_row, var_mat)
+  expect_s3_class(result_row, "plausible_bounds")
+  expect_equal(result_row$restricted_bounds$coef, result_vec$restricted_bounds$coef)
+
+  # Named numeric vector (should work)
+  est_named <- est_vec
+  names(est_named) <- paste0("t", 1:p)
+  result_named <- plausible_bounds(est_named, var_mat)
+  expect_s3_class(result_named, "plausible_bounds")
+  expect_equal(result_named$restricted_bounds$coef, result_vec$restricted_bounds$coef)
+})
+
+test_that("plausible_bounds rejects invalid estimate formats", {
+  set.seed(123)
+  p <- 5
+  var_mat <- diag(p) * 0.1
+
+  # Multi-row, multi-column matrix
+  est_matrix <- matrix(stats::rnorm(p * 3), nrow = 3, ncol = p)
+  expect_error(
+    plausible_bounds(est_matrix, var_mat),
+    "If estimates is a matrix, it must have exactly one row or one column"
+  )
+
+  # Character vector
+  est_char <- as.character(1:p)
+  expect_error(
+    plausible_bounds(est_char, var_mat),
+    "estimates must be a numeric vector or single-row/single-column matrix"
+  )
+
+  # NULL
+  expect_error(
+    plausible_bounds(NULL, var_mat),
+    "estimates must be a numeric vector or single-row/single-column matrix"
+  )
+
+  # Empty numeric vector
+  expect_error(
+    plausible_bounds(numeric(0), var_mat),
+    "estimates must be a numeric vector or single-row/single-column matrix"
+  )
+
+  # List
+  expect_error(
+    plausible_bounds(list(1, 2, 3), var_mat),
+    "estimates must be a numeric vector or single-row/single-column matrix"
+  )
+
+  # Data frame
+  expect_error(
+    plausible_bounds(data.frame(x = 1:p), var_mat),
+    "estimates must be a numeric vector or single-row/single-column matrix"
+  )
+})
+
 # Test comparison with original function using pre-computed fixtures
 test_that("new functions match original full_eventplot_l2tf results", {
   # Skip this test if the fixture files don't exist
@@ -75,23 +151,23 @@ test_that("parallel and non-parallel results are identical", {
 
   l <- 8
 
-  # Test with wiggly estimates and strong correlation
-  data(estimates_wiggly)
-  data(var_corr)
+  # Test with bighump estimates and corresponding variance
+  data(estimates_bighump)
+  data(var_bighump)
 
   # Run with parallel = TRUE
   set.seed(42)  # Set seed for reproducibility
   result_parallel <- plausible_bounds(
-    estimates_wiggly[1:l],
-    var_corr[1:l,1:l],
+    estimates_bighump[1:l],
+    var_bighump[1:l,1:l],
     parallel = TRUE
   )
 
   # Run with parallel = FALSE
   set.seed(42)  # Reset seed to ensure same random numbers
   result_sequential <- plausible_bounds(
-    estimates_wiggly[1:l],
-    var_corr[1:l, 1:l],
+    estimates_bighump[1:l],
+    var_bighump[1:l, 1:l],
     parallel = FALSE
   )
   

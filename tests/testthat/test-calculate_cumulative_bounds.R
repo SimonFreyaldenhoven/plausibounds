@@ -32,14 +32,14 @@ test_that("calculate_cumulative_bounds works with real example data", {
   expect_true(width > 0)
 })
 
-test_that("calculate_cumulative_bounds works with wiggly correlated data", {
-  # Test with wiggly strong correlation data (use subset for CRAN efficiency)
-  data(estimates_wiggly)
-  data(var_corr)
+test_that("calculate_cumulative_bounds works with bighump data", {
+  # Test with bighump data (use subset for CRAN efficiency)
+  data(estimates_bighump)
+  data(var_bighump)
 
   n_test <- 6
-  result <- calculate_cumulative_bounds(estimates_wiggly[1:n_test],
-                                       var_corr[1:n_test, 1:n_test])
+  result <- calculate_cumulative_bounds(estimates_bighump[1:n_test],
+                                       var_bighump[1:n_test, 1:n_test])
   
   expect_s3_class(result, "cumulative_bounds")
   expect_equal(nrow(result$cumulative_bounds), n_test)
@@ -222,12 +222,12 @@ test_that("calculate_cumulative_bounds ATE calculation is correct", {
 })
 
 test_that("calculate_cumulative_bounds metadata is correct", {
-  data(estimates_wiggly)
-  data(var_corr)
+  data(estimates_bighump)
+  data(var_bighump)
 
   n_test <- 6
-  result <- calculate_cumulative_bounds(estimates_wiggly[1:n_test],
-                                       var_corr[1:n_test, 1:n_test],
+  result <- calculate_cumulative_bounds(estimates_bighump[1:n_test],
+                                       var_bighump[1:n_test, 1:n_test],
                                        alpha = 0.10)
 
   # Check metadata structure
