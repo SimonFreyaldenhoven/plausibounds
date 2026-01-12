@@ -28,67 +28,80 @@
 #' create_plot(result)
 "var_iid"
 
-#' Wiggly Estimates with Correlated Errors
+#' Smooth Estimates from Empirical Data
 #'
-#' A dataset containing estimates from a wiggly (oscillating) design with
-#' correlated errors. The true effect follows an oscillating path,
-#' representing a treatment effect with complex dynamics. The errors have
-#' strong correlation structure.
+#' A dataset containing smooth treatment effect estimates from empirical data.
+#' This dataset represents real-world treatment effects with gradual changes
+#' over time. The first 8 observations comprise the preperiods.
 #'
-#' @format A numeric vector with 12 elements
-#' @source Generated from simulation with wiggly design and correlated errors
+#' @format A numeric vector with estimates over time (starting after preperiod 8)
+#' @source Point estimates in Figure 1 of Freyaldenhoven and Hansen (2026)
 #' @examples
-#' data(estimates_wiggly)
-#' data(var_corr)
-#' result <- plausible_bounds(estimates_wiggly[1:4], var_corr[1:4, 1:4])
+#' data(estimates_smooth)
+#' data(var_smooth)
+#' result <- plausible_bounds(estimates_smooth[9:13], var_smooth[9:13, 9:13])
 #' create_plot(result)
-"estimates_wiggly"
+"estimates_smooth"
 
-#' Variance Matrix for Wiggly Estimates with Correlated Errors
+#' Variance Matrix for Smooth Estimates
 #'
-#' A variance-covariance matrix for the wiggly estimates with correlated errors.
-#' This is a full matrix with non-zero off-diagonal elements representing
-#' correlation across time periods.
+#' A variance-covariance matrix for the smooth estimates. This matrix captures
+#' the correlation structure of the estimation errors from the empirical data.
+#' The first 8 rows and 8 columns comprise the variance matrix for the 8 preperiods.
+#'
+#' @format A square matrix matching the length of estimates_smooth
+#' @source Variance Matrix in Figure 1 of Freyaldenhoven and Hansen (2026)
+#' @examples
+#' data(estimates_smooth)
+#' data(var_smooth)
+#' result <- plausible_bounds(estimates_smooth[9:13], var_smooth[9:13, 9:13])
+#' create_plot(result)
+"var_smooth"
+
+#' Variance Matrix with Correlated Errors
+#'
+#' A variance-covariance matrix with correlated errors. This is a full matrix
+#' with non-zero off-diagonal elements representing correlation across time
+#' periods.
 #'
 #' @format A 12 x 12 matrix
-#' @source Generated from simulation with wiggly design and correlated errors
+#' @source Generated from simulation with correlated errors (rho = 0.8)
 #' @examples
-#' data(estimates_wiggly)
 #' data(var_corr)
-#' result <- plausible_bounds(estimates_wiggly[1:4], var_corr[1:4, 1:4])
+#' # Can be used with any estimates of appropriate dimension
+#' data(estimates_constant)
+#' result <- plausible_bounds(estimates_constant[1:4], var_corr[1:4, 1:4])
 #' create_plot(result)
 "var_corr"
 
-#' Pretrends Estimates with Significant Pre-Treatment Trends
+#' Sinusoidal Estimates with Moderate Correlation
 #'
-#' A dataset containing estimates with significant pretrends in the first 6
-#' pre-treatment periods followed by 12 post-treatment periods. This dataset
-#' exhibits a linear trend before treatment that violates the parallel trends
-#' assumption, making it useful for testing pretrend detection methods.
-#' Statistical tests would reject the null hypothesis of no pretrends.
+#' A dataset containing estimates with a curved sinusoidal pattern in the first
+#' 6 periods that then converges to zero for the remaining 30 periods. The
+#' initial effect follows the formula -0.35 - 0.35*sin(3/2*(1:6)*pi/6),
+#' creating a smooth curved trajectory before the treatment effect dissipates
+#' completely. Generated with moderate correlation (rho = 0.5).
 #'
-#' @format A numeric vector with 18 elements (6 pre-treatment, 12 post-treatment)
-#' @source Generated from simulation with linear pretrend design and moderate correlation (rho = 0.4)
+#' @format A numeric vector with 36 elements (6 sinusoidal periods + 30 zero periods)
+#' @source Generated from simulation with sinusoidal design and moderate correlation (rho = 0.5)
 #' @examples
-#' data(estimates_pretrends)
-#' data(var_pretrends)
-#' # Use first 4 post-treatment estimates (indices 1:10 = 6 pre + 4 post)
-#' result <- plausible_bounds(estimates_pretrends[1:10], var_pretrends[1:10, 1:10], preperiods = 6)
+#' data(estimates_bighump)
+#' data(var_bighump)
+#' result <- plausible_bounds(estimates_bighump[1:4], var_bighump[1:4, 1:4])
 #' create_plot(result)
-"estimates_pretrends"
+"estimates_bighump"
 
-#' Variance Matrix for Pretrends Estimates
+#' Variance Matrix for Sinusoidal Estimates
 #'
-#' A variance-covariance matrix for the pretrends estimates with moderate
-#' correlation structure (rho = 0.4). This matrix has non-zero off-diagonal
+#' A variance-covariance matrix for the sinusoidal estimates with moderate
+#' correlation structure (rho = 0.5). This matrix has non-zero off-diagonal
 #' elements representing moderate correlation across time periods.
 #'
-#' @format A 18 x 18 matrix
-#' @source Generated from simulation with linear pretrend design and moderate correlation (rho = 0.4)
+#' @format A 36 x 36 matrix
+#' @source Generated from simulation with sinusoidal design and moderate correlation (rho = 0.5)
 #' @examples
-#' data(estimates_pretrends)
-#' data(var_pretrends)
-#' # Use first 4 post-treatment estimates (indices 1:10 = 6 pre + 4 post)
-#' result <- plausible_bounds(estimates_pretrends[1:10], var_pretrends[1:10, 1:10], preperiods = 6)
+#' data(estimates_bighump)
+#' data(var_bighump)
+#' result <- plausible_bounds(estimates_bighump[1:4], var_bighump[1:4, 1:4])
 #' create_plot(result)
-"var_pretrends"
+"var_bighump"
