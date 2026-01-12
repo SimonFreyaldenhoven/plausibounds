@@ -6,43 +6,20 @@
 #' Create Dynamic Path (Treatment Effect Path)
 create_dynamic_path <- function(design_name, p = 12) {
 
-  if (design_name == "quadratic") {
-    # Hump-shaped, eventually flat
-    peak_period <- ceiling(p * 16/36)
-    delta <- -0.3 + (peak_period - (1:p))^2 / 150
-    if (peak_period <= p) {
-      delta[peak_period:p] <- -0.3
-    }
-
-  } else if (design_name == "wiggly") {
-    # Wiggly (oscillating) path with noise, eventually flat
-    set.seed(12082023)
-    flat_period <- ceiling(p * 20/36)
-    delta <- -0.4 * sin((0:(p-1)) * pi / (p-1))
-    if (flat_period <= p) {
-      delta[flat_period:p] <- -0.4
-    }
-    noise <- 0.1 * rnorm(p)
-    delta <- delta + noise - mean(noise)
-
-  } else if (design_name == "constant") {
+  if (design_name == "constant") {
     # Smooth, flat (constant effect)
     delta <- rep(-0.4, p)
 
-  } else if (design_name == "pretrends") {
-    # Design with significant pretrends in first 6 periods
-    # Linear pretrend that violates parallel trends assumption
-    pretrend_periods <- 6
-    # Strong linear trend in pre-treatment periods
-    delta <- numeric(p)
-    delta[1:pretrend_periods] <- seq(-0.5, -0.8, length.out = pretrend_periods)
-    # Post-treatment periods show treatment effect
-    if (p > pretrend_periods) {
-      delta[(pretrend_periods+1):p] <- seq(-0.8, -1.2, length.out = p - pretrend_periods)
+  } else if (design_name == "bighump") {
+    # Big hump design: sinusoidal pattern in first 6 periods, then flat at zero
+    delta <- -0.35 - 0.35 * sin(3/2 * (1:6) * pi / 6)
+    # Pad with zeros for remaining periods
+    if (p > 6) {
+      delta <- c(delta, rep(0, p - 6))
     }
 
   } else {
-    stop("Invalid design name. Choose from: 'quadratic', 'wiggly', 'constant', 'pretrends'")
+    stop("Invalid design name. Choose from: 'constant', 'bighump'")
   }
 
   return(delta)
@@ -96,23 +73,23 @@ sim_constant <- simulate_dgp("constant", rho = 0, se = 0.014, p = 12)
 estimates_constant <- sim_constant$dhat
 var_iid <- sim_constant$Vhat
 
-# Generate wiggly estimates with correlated errors (rho = 0.8)
-sim_wiggly <- simulate_dgp("wiggly", rho = 0.8, se = 0.014, p = 12)
-estimates_wiggly <- sim_wiggly$dhat
-var_corr <- sim_wiggly$Vhat
-
-# Generate pretrends estimates with moderate correlation (rho = 0.4)
-# These have 6 periods of pretrends + 12 post periods = 18 total
-sim_pretrends <- simulate_dgp("pretrends", rho = 0.4, se = 0.014, p = 18)
-estimates_pretrends <- sim_pretrends$dhat
-var_pretrends <- sim_pretrends$Vhat
+# Generate bighump estimates with moderate correlation (rho = 0.5)
+# Big hump in first 6 periods, then flat at zero for remaining 30 periods = 36 total
+sim_bighump <- simulate_dgp("bighump", rho = 0.5, se = 0.014, p = 36)
+estimates_bighump <- sim_bighump$dhat
+var_bighump <- sim_bighump$Vhat
 
 # Save datasets to data/ directory -----------------------------------------
+library(R.matlab)
+smooth <- readMat("analysis/preperiod_data.mat")
 
+var_smooth <- ex$Vall
+estimates_smooth <- as.numeric(ex$dall)
+
+usethis::use_data(estimates_smooth, overwrite = TRUE)
+usethis::use_data(var_smooth, overwrite = TRUE)
 usethis::use_data(estimates_constant, overwrite = TRUE)
 usethis::use_data(var_iid, overwrite = TRUE)
-usethis::use_data(estimates_wiggly, overwrite = TRUE)
-usethis::use_data(var_corr, overwrite = TRUE)
-usethis::use_data(estimates_pretrends, overwrite = TRUE)
-usethis::use_data(var_pretrends, overwrite = TRUE)
+usethis::use_data(estimates_bighump, overwrite = TRUE)
+usethis::use_data(var_bighump, overwrite = TRUE)
 
