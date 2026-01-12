@@ -1,6 +1,6 @@
 #' Calculate Plausible Bounds
 #'
-#' This function calculates restricted bounds for a vector of estimates along with
+#' This function calculates the plausible bounds for a vector of estimates along with
 #' average treatment effect, Wald tests, and optional pointwise/sup-t bounds.
 #' Supports pre-treatment periods for event study designs.
 #'
