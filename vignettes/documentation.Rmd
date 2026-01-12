@@ -169,7 +169,7 @@ str(pb_iid)
 ```
 
 The object contains several components. The `restricted_bounds` data frame is identical to that produced with the `summary()` method. 
-The `restricted_bounds_metadata` list stores important information about the model selection process, including the surrogate class selected (e.g., polynomial degree or penalized smoothing parameters), the degrees of freedom, and the sup-t critical value used in constructing the bounds. 
+The `restricted_bounds_metadata` list stores information about the model selection process, including the surrogate class selected (e.g., polynomial degree or penalized smoothing parameters), the degrees of freedom, and the sup-t critical value used in constructing the bounds. 
 The `avg_treatment_effect` component provides the average treatment effect estimate, its standard error, and confidence interval. 
 
 When arguments `include_pointwise` and `include_supt` of `plausible_bounds()` are `TRUE` (the default), the object also contains `pointwise_bounds` and `supt_bounds` lists with the corresponding confidence bounds. 
