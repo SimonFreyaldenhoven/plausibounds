@@ -172,7 +172,8 @@ test_that("parallel and non-parallel results are identical", {
 
 # Test n_cores parameter validation and edge cases
 test_that("plausible_bounds validates n_cores parameter", {
-  skip_if_not_installed("parallel")
+  skip_if_not_installed("doParallel")
+  skip_if_not_installed("foreach")
 
   set.seed(123)
   p <- 6

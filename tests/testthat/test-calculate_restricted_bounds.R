@@ -87,18 +87,19 @@ test_that("calculate_restricted_bounds handles different alpha values", {
 
 test_that("calculate_restricted_bounds handles parallel parameter", {
   skip_on_cran()
-  skip_if_not_installed("parallel")
+  skip_if_not_installed("doParallel")
+  skip_if_not_installed("foreach")
 
   # Use small sample for speed
   set.seed(456)
   n <- 8
   estimates <- rnorm(n)
   var <- diag(n) * 0.1
-  
+
   # Test with parallel = FALSE
   set.seed(100)
   result_seq <- calculate_restricted_bounds(estimates, var, parallel = FALSE)
-  
+
   # Test with parallel = TRUE
   set.seed(100)
   result_par <- calculate_restricted_bounds(estimates, var, parallel = TRUE)
@@ -309,7 +310,8 @@ test_that("calculate_restricted_bounds produces reproducible results", {
 
 test_that("calculate_restricted_bounds validates n_cores parameter", {
   skip_on_cran()
-  skip_if_not_installed("parallel")
+  skip_if_not_installed("doParallel")
+  skip_if_not_installed("foreach")
 
   set.seed(123)
   n <- 6
@@ -349,7 +351,8 @@ test_that("calculate_restricted_bounds validates n_cores parameter", {
 
 test_that("calculate_restricted_bounds works with n_cores = 1", {
   skip_on_cran()
-  skip_if_not_installed("parallel")
+  skip_if_not_installed("doParallel")
+  skip_if_not_installed("foreach")
 
   set.seed(789)
   n <- 8
