@@ -8,11 +8,10 @@ vignette: >
 ---
 
 
-
+ 
 
 ``` r
 library(plausibounds)
-library(ggplot2)
 ```
 ## Dynamic Effect Plots
 
@@ -95,21 +94,20 @@ data(var_smooth)
 
 # Examine the data structures
 print(estimates_smooth)
-#>  [1] -0.17482676 -0.02004318 -0.10031844  0.07229334
-#>  [5] -0.31769306  0.01454694  0.06322594 -0.04186633
-#>  [9]  0.12340034 -0.04534908 -0.16169097 -0.20259667
-#> [13] -0.03298893 -0.02878808 -0.11865547 -0.33781817
-#> [17] -0.04988252 -0.23286451 -0.34721788 -0.31989801
-#> [21] -0.37015145 -0.18439333 -0.08283743 -0.06628430
-#> [25]  0.07793498 -0.16041782  0.08020676 -0.26365956
-#> [29] -0.09156697 -0.08646877  0.17552747 -0.26331948
-#> [33]  0.26817909  0.21390666  0.02886865 -0.03854033
-#> [37] -0.17947818 -0.04629705 -0.26782818  0.03586062
-#> [41]  0.17248994 -0.01214121 -0.08781408  0.12013731
+#>  [1] -0.17482676 -0.02004318 -0.10031844  0.07229334 -0.31769306  0.01454694
+#>  [7]  0.06322594 -0.04186633  0.12340034 -0.04534908 -0.16169097 -0.20259667
+#> [13] -0.03298893 -0.02878808 -0.11865547 -0.33781817 -0.04988252 -0.23286451
+#> [19] -0.34721788 -0.31989801 -0.37015145 -0.18439333 -0.08283743 -0.06628430
+#> [25]  0.07793498 -0.16041782  0.08020676 -0.26365956 -0.09156697 -0.08646877
+#> [31]  0.17552747 -0.26331948  0.26817909  0.21390666  0.02886865 -0.03854033
+#> [37] -0.17947818 -0.04629705 -0.26782818  0.03586062  0.17248994 -0.01214121
+#> [43] -0.08781408  0.12013731
 print(var_smooth[1:4, 1:4])
-#> Warning in print(var_smooth[1:4, 1:4]): internal error 1
-#> in R_decompress1 with libdeflate
-#> Error in print(var_smooth[1:4, 1:4]): lazy-load database 'C:\Users\c1rak01\AppData\Local\R\win-library\4.4\plausibounds/data/Rdata.rdb' is corrupt
+#>            [,1]       [,2]       [,3]       [,4]
+#> [1,] 0.01981023 0.00000000 0.00000000 0.00000000
+#> [2,] 0.00000000 0.01981023 0.00000000 0.00000000
+#> [3,] 0.00000000 0.00000000 0.01981023 0.00000000
+#> [4,] 0.00000000 0.00000000 0.00000000 0.01981023
 ```
 
 The `estimates_smooth` vector contains 36 treatment effect estimates at different horizons and 8 preperiods. The `var_smooth` matrix is a diagonal variance matrix with no correlation between periods.
@@ -123,15 +121,13 @@ A simple case uses the `plausible_bounds()` function with just the estimates and
 # Remove pretrends from the example dataset
 estimates_smooth_nopretrends <- estimates_smooth[9:44]
 var_smooth_nopretrends <- var_smooth[9:44, 9:44]
-#> Warning: restarting interrupted promise evaluation
-#> Warning: internal error 1 in R_decompress1 with libdeflate
-#> Error: lazy-load database 'C:\Users\c1rak01\AppData\Local\R\win-library\4.4\plausibounds/data/Rdata.rdb' is corrupt
+
+set.seed(916)
 
 pb <- plausible_bounds(
   estimates = estimates_smooth_nopretrends,
   var = var_smooth_nopretrends
 )
-#> Error: object 'var_smooth_nopretrends' not found
 ```
 
 The returned object is a list containing the bounds, test statistics, and metadata. The `summary()` method extracts the key results in a tabular format, showing the horizon, original coefficient estimates, surrogate path, and restricted bounds for that path:
@@ -139,7 +135,46 @@ The returned object is a list containing the bounds, test statistics, and metada
 
 ``` r
 summary(pb)
-#> Error: object 'pb' not found
+#> Summary of Plausible Bounds Results
+#> -----------------------------------
+#> 
+#>  horizon        coef   surrogate restr_lower   restr_upper
+#>        1  0.12340034  0.05029379  -0.2819062  0.3824937465
+#>        2 -0.04534908 -0.01242527  -0.2383862  0.2135356268
+#>        3 -0.16169097 -0.06083759  -0.2497435  0.1280683432
+#>        4 -0.20259667 -0.09671456  -0.2846543  0.0912251955
+#>        5 -0.03298893 -0.12450103  -0.3145739  0.0655718335
+#>        6 -0.02878808 -0.14990419  -0.3364671  0.0366587233
+#>        7 -0.11865547 -0.17627685  -0.3569812  0.0044275224
+#>        8 -0.33781817 -0.20310332  -0.3800159 -0.0261907311
+#>        9 -0.04988252 -0.22699284  -0.4032329 -0.0507527280
+#>       10 -0.23286451 -0.24373054  -0.4200712 -0.0673898601
+#>       11 -0.34721788 -0.24771659  -0.4212750 -0.0741582232
+#>       12 -0.31989801 -0.23460638  -0.3994920 -0.0697207153
+#>       13 -0.37015145 -0.20399763  -0.3533966 -0.0545986687
+#>       14 -0.18439333 -0.16031714  -0.2899628 -0.0306714683
+#>       15 -0.08283743 -0.11228840  -0.2247302  0.0001534092
+#>       16 -0.06628430 -0.06984725  -0.1753613  0.0356668159
+#>       17  0.07793498 -0.04085456  -0.1491331  0.0674239407
+#>       18 -0.16041782 -0.02840299  -0.1404036  0.0835976486
+#>       19  0.08020676 -0.02831138  -0.1403457  0.0837229600
+#>       20 -0.26365956 -0.02835239  -0.1403724  0.0836676030
+#>       21 -0.09156697 -0.02833664  -0.1403591  0.0836857877
+#>       22 -0.08646877 -0.02831674  -0.1403418  0.0837083324
+#>       23  0.17552747 -0.02829484  -0.1403223  0.0837325887
+#>       24 -0.26331948 -0.02828204  -0.1403116  0.0837475461
+#>       25  0.26817909 -0.02825973  -0.1402913  0.0837717988
+#>       26  0.21390666 -0.02824996  -0.1402832  0.0837833350
+#>       27  0.02886865 -0.02825026  -0.1402851  0.0837846093
+#>       28 -0.03854033 -0.02825289  -0.1402892  0.0837833835
+#>       29 -0.17947818 -0.02825500  -0.1402925  0.0837824992
+#>       30 -0.04629705 -0.02825160  -0.1402902  0.0837869723
+#>       31 -0.26782818 -0.02824739  -0.1402869  0.0837920884
+#>       32  0.03586062 -0.02823508  -0.1402753  0.0838051517
+#>       33  0.17248994 -0.02822505  -0.1402659  0.0838157747
+#>       34 -0.01214121 -0.02822171  -0.1402630  0.0838195630
+#>       35 -0.08781408 -0.02821898  -0.1402605  0.0838225789
+#>       36  0.12013731 -0.02821446  -0.1402562  0.0838272500
 ```
 
 For a more detailed view of the object structure:
@@ -147,7 +182,47 @@ For a more detailed view of the object structure:
 
 ``` r
 str(pb)
-#> Error: object 'pb' not found
+#> List of 8
+#>  $ alpha                     : num 0.05
+#>  $ preperiods                : num 0
+#>  $ wald_test                 :List of 1
+#>   ..$ post:List of 2
+#>   .. ..$ statistic: num 62.9
+#>   .. ..$ p_value  : num 0.00368
+#>  $ restricted_bounds         :'data.frame':	36 obs. of  5 variables:
+#>   ..$ horizon  : int [1:36] 1 2 3 4 5 6 7 8 9 10 ...
+#>   ..$ coef     : num [1:36] 0.1234 -0.0453 -0.1617 -0.2026 -0.033 ...
+#>   ..$ surrogate: num [1:36] 0.0503 -0.0124 -0.0608 -0.0967 -0.1245 ...
+#>   ..$ lower    : num [1:36] -0.282 -0.238 -0.25 -0.285 -0.315 ...
+#>   ..$ upper    : num [1:36] 0.3825 0.2135 0.1281 0.0912 0.0656 ...
+#>  $ restricted_bounds_metadata:List of 8
+#>   ..$ supt_critval      : num 3.17
+#>   ..$ supt_b            : num 3.59
+#>   ..$ degrees_of_freedom: num 4.14
+#>   ..$ K                 : int 18
+#>   ..$ lambda1           : num 22026
+#>   ..$ lambda2           : num 77
+#>   ..$ surrogate_class   : chr "M"
+#>   ..$ best_fit_model    :List of 5
+#>   .. ..$ estimates_proj: num [1:36] 0.0503 -0.0124 -0.0608 -0.0967 -0.1245 ...
+#>   .. ..$ var_proj      : num [1:36, 1:36] 0.008577 0.005264 0.002701 0.000868 -0.000297 ...
+#>   .. ..$ bic           : num 32
+#>   .. ..$ model_fit_pval: num 0.459
+#>   .. ..$ df            : num 4.14
+#>  $ avg_treatment_effect      :List of 4
+#>   ..$ estimate: num -0.0773
+#>   ..$ se      : num 0.0235
+#>   ..$ lower   : num -0.123
+#>   ..$ upper   : num -0.0313
+#>  $ pointwise_bounds          :List of 3
+#>   ..$ lower  : num [1:36] -0.111 -0.282 -0.401 -0.444 -0.276 ...
+#>   ..$ upper  : num [1:36] 0.3576 0.1912 0.0772 0.0386 0.2105 ...
+#>   ..$ critval: num 1.96
+#>  $ supt_bounds               :List of 3
+#>   ..$ lower  : num [1:36] -0.259 -0.431 -0.552 -0.596 -0.43 ...
+#>   ..$ upper  : num [1:36] 0.506 0.341 0.228 0.191 0.364 ...
+#>   ..$ critval: num 3.2
+#>  - attr(*, "class")= chr "plausible_bounds"
 ```
 
 The object contains several components. The `restricted_bounds` data frame is identical to that produced with the `summary()` method.
@@ -166,8 +241,12 @@ Next let's plot the results:
 
 ``` r
 create_plot(pb)
-#> Error: object 'pb' not found
 ```
+
+<div class="figure" style="text-align: center">
+<img src="figs/plot-iid-1.png" alt="Plausible bounds for treatment path estimates with independent errors"  />
+<p class="caption">Plausible bounds for treatment path estimates with independent errors</p>
+</div>
 
 The plot displays several types of bounds and statistics, each serving a different inferential purpose:
 
@@ -204,9 +283,6 @@ create_plot(pb_corr)
 <p class="caption">Plausible bounds for treatment path estimates with correlated errors</p>
 </div>
 
-The restricted bounds tend to be wider than in the IID case due to the correlation structure.
-
-
 ## Pre-Treatment Periods
 
 The package supports designs where some periods occur before treatment. This allows testing for pre-trends and distinguishing them from treatment effects. When specifying the `preperiods` argument, the function automatically computes two Wald tests: one testing $H_0$: no pre-trends in the pre-treatment periods, and another testing $H_0$: no treatment effect in the post-treatment periods. Both p-values appear in the plot annotations.
@@ -223,20 +299,17 @@ pb_pre <- plausible_bounds(
   alpha = 0.05,
   preperiods = 8  # First 8 elements are pre-treatment periods
 )
-#> Warning in plausible_bounds(estimates = estimates_smooth,
-#> var = var_smooth, : restarting interrupted promise
-#> evaluation
-#> Warning in plausible_bounds(estimates = estimates_smooth,
-#> var = var_smooth, : internal error 1 in R_decompress1 with
-#> libdeflate
-#> Error in plausible_bounds(estimates = estimates_smooth, var = var_smooth, : lazy-load database 'C:\Users\c1rak01\AppData\Local\R\win-library\4.4\plausibounds/data/Rdata.rdb' is corrupt
 ```
 
 
 ``` r
 create_plot(pb_pre)
-#> Error: object 'pb_pre' not found
 ```
+
+<div class="figure" style="text-align: center">
+<img src="figs/plot-pretrends-1.png" alt="Event study with pre-treatment periods showing pre-trends"  />
+<p class="caption">Event study with pre-treatment periods showing pre-trends</p>
+</div>
 
 The vertical dashed line at event time 0 separates pre- and post-treatment periods. Pre-treatment estimates appear at negative horizons, revealing any pre-existing trends. The restricted bounds and surrogate path are only computed for the post-treatment periods, since the goal is inference on the treatment effect path.
 
@@ -253,8 +326,12 @@ For a cleaner display focusing only on the restricted and pointwise bounds:
 
 ``` r
 create_plot(pb, show_annotations = FALSE, show_pointwise = FALSE, show_supt = FALSE)
-#> Error: object 'pb' not found
 ```
+
+<div class="figure" style="text-align: center">
+<img src="figs/viz-custom-1.png" alt="Customized plot showing only point estimates and restricted bounds"  />
+<p class="caption">Customized plot showing only point estimates and restricted bounds</p>
+</div>
 
 
 ## Parallel Processing

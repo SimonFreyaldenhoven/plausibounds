@@ -16,10 +16,9 @@ knitr::opts_chunk$set(
   fig.align = "center"
 )
 ```
-
+ 
 ```{r setup}
 library(plausibounds)
-library(ggplot2)
 ```
 ## Dynamic Effect Plots
 
@@ -110,10 +109,12 @@ The `estimates_smooth` vector contains 36 treatment effect estimates at differen
 
 A simple case uses the `plausible_bounds()` function with just the estimates and variance. The `alpha` parameter controls the confidence level (default is 0.05 for 95% confidence):
 
-```{r iid-example, results = FALSE, message = FALSE, cache = TRUE}
+```{r iid-example, results = FALSE, message = FALSE, cache = FALSE}
 # Remove pretrends from the example dataset
 estimates_smooth_nopretrends <- estimates_smooth[9:44]
 var_smooth_nopretrends <- var_smooth[9:44, 9:44]
+
+set.seed(916)
 
 pb <- plausible_bounds(
   estimates = estimates_smooth_nopretrends,
@@ -166,7 +167,7 @@ The plot displays several types of bounds and statistics, each serving a differe
 
 When errors are correlated across horizons (common in dynamic settings), the restricted bounds adapt to the correlation structure. While high correlation can widen the restricted bounds compared to the independent error case, they usually remain narrower than sup-t bands:
 
-```{r corr-example, results = FALSE, message = FALSE, cache = TRUE}
+```{r corr-example, results = FALSE, message = FALSE, cache = FALSE}
 pb_corr <- plausible_bounds(
   estimates = estimates_bighump[1:12],
   var = var_bighump[1:12, 1:12],
@@ -178,9 +179,6 @@ pb_corr <- plausible_bounds(
 create_plot(pb_corr)
 ```
 
-The restricted bounds tend to be wider than in the IID case due to the correlation structure.
-
-
 ## Pre-Treatment Periods
 
 The package supports designs where some periods occur before treatment. This allows testing for pre-trends and distinguishing them from treatment effects. When specifying the `preperiods` argument, the function automatically computes two Wald tests: one testing $H_0$: no pre-trends in the pre-treatment periods, and another testing $H_0$: no treatment effect in the post-treatment periods. Both p-values appear in the plot annotations.
@@ -189,7 +187,7 @@ The package supports designs where some periods occur before treatment. This all
 
 Use the `preperiods` argument to indicate how many of the initial estimates correspond to pre-treatment periods. Note that period 0 (the period immediately before treatment) is assumed to be normalized to zero and should not be included in the estimates vector:
 
-```{r pretrends-example, results = FALSE, message = FALSE, cache = TRUE}
+```{r pretrends-example, results = FALSE, message = FALSE, cache = FALSE}
 pb_pre <- plausible_bounds(
   estimates = estimates_smooth,
   var = var_smooth,

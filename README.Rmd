@@ -38,11 +38,12 @@ Find a minimal example below. For more information see the package [documentatio
 
 ```{r example, results = FALSE, message = FALSE}
 library(plausibounds)
-library(ggplot2)
 
 # Load example data
 data(estimates_bighump)
 data(var_bighump)
+
+set.seed(916)
 
 # Compute restricted bounds
 pb <- plausible_bounds(
