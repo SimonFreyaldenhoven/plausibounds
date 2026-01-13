@@ -5,7 +5,7 @@
 \alias{estimates_bighump}
 \title{Sinusoidal Estimates with Moderate Correlation}
 \format{
-A numeric vector with 36 elements (6 sinusoidal periods + 30 zero periods)
+A numeric vector with 36 elements
 }
 \source{
 Generated from simulation with sinusoidal design and moderate correlation (rho = 0.5)
@@ -15,10 +15,9 @@ estimates_bighump
 }
 \description{
 A dataset containing estimates with a curved sinusoidal pattern in the first
-6 periods that then converges to zero for the remaining 30 periods. The
-initial effect follows the formula -0.35 - 0.35\emph{sin(3/2}(1:6)*pi/6),
-creating a smooth curved trajectory before the treatment effect dissipates
-completely. Generated with moderate correlation (rho = 0.5).
+6 periods that then converges to zero for the remaining 30 periods. The effect
+is a smooth curved trajectory with a large dip before the treatment effect quickly returns to 0.
+Generated with moderate correlation (rho = 0.5).
 }
 \examples{
 data(estimates_bighump)

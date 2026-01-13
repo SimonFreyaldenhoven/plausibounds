@@ -14,7 +14,7 @@ Generated from simulation with sinusoidal design and moderate correlation (rho =
 var_bighump
 }
 \description{
-A variance-covariance matrix for the sinusoidal estimates with moderate
+A variance matrix for the sinusoidal estimates with moderate
 correlation structure (rho = 0.5). This matrix has non-zero off-diagonal
 elements representing moderate correlation across time periods.
 }

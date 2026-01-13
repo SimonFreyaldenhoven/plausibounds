@@ -14,9 +14,8 @@ Generated from simulation with constant design and IID errors
 estimates_constant
 }
 \description{
-A dataset containing estimates from a constant design with independent and
-identically distributed errors. The true effect is approximately constant,
-representing a simple treatment effect scenario.
+A dataset containing estimates from a constant design, independent across horizons.
+The true effect is approximately constant, representing a simple treatment effect scenario.
 }
 \examples{
 data(estimates_constant)

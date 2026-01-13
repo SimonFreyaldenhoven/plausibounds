@@ -5,17 +5,17 @@
 \alias{var_smooth}
 \title{Variance Matrix for Smooth Estimates}
 \format{
-A square matrix matching the length of estimates_smooth
+A 44 x 44 matrix
 }
 \source{
-Variance Matrix in Figure 1 of Freyaldenhoven and Hansen (2026)
+Variance Matrix of Figure 1 of Freyaldenhoven and Hansen (2026)
 }
 \usage{
 var_smooth
 }
 \description{
-A variance-covariance matrix for the smooth estimates. This matrix captures
-the correlation structure of the estimation errors from the empirical data.
+A variance matrix for the smooth estimates. This matrix captures
+the correlation structure of the estimates.
 The first 8 rows and 8 columns comprise the variance matrix for the 8 preperiods.
 }
 \examples{

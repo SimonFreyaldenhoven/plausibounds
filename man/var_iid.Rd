@@ -5,7 +5,7 @@
 \alias{var_iid}
 \title{Variance Matrix for Constant Estimates with IID Errors}
 \format{
-A 12 x 12 diagonal matrix
+A 12 x 12 matrix
 }
 \source{
 Generated from simulation with constant design and IID errors
@@ -14,9 +14,8 @@ Generated from simulation with constant design and IID errors
 var_iid
 }
 \description{
-A variance-covariance matrix for the constant estimates with independent
-and identically distributed errors. This is a diagonal matrix representing
-no correlation across time periods.
+A variance matrix for the constant, independent, and identically distributed estimates.
+This is a diagonal matrix representing no correlation across time periods.
 }
 \examples{
 data(estimates_constant)

@@ -3,20 +3,19 @@
 \docType{data}
 \name{estimates_smooth}
 \alias{estimates_smooth}
-\title{Smooth Estimates from Empirical Data}
+\title{Smooth Estimates from Freyaldenhoven and Hansen (2026)}
 \format{
-A numeric vector with estimates over time (starting after preperiod 8)
+A numeric vector with 44 elements (8 preperiods, 36 postperiods)
 }
 \source{
-Point estimates in Figure 1 of Freyaldenhoven and Hansen (2026)
+Point estimates from in Figure 1 of Freyaldenhoven and Hansen (2026)
 }
 \usage{
 estimates_smooth
 }
 \description{
-A dataset containing smooth treatment effect estimates from empirical data.
-This dataset represents real-world treatment effects with gradual changes
-over time. The first 8 observations comprise the preperiods.
+A dataset containing smooth treatment effect estimates that dip down and then level off.
+The first 8 observations comprise the preperiods, the next 36 are post-period.
 }
 \examples{
 data(estimates_smooth)
