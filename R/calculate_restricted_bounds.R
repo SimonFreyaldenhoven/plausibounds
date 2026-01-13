@@ -486,9 +486,10 @@ find_lam_bounds <- function(p, V, target_df = 4) {
     diff_df(-lim, lam2, 1, V, target_df)
   }
   
-  result <- stats::optim(par = 1, fn = f, method = "BFGS")
+  result <- stats::optim(par = 1, fn = f, method = "Brent", lower = -50, upper = 40)
+                         
   lam2_upper <- result$par
-  
+
   lam1_range <- matrix(0, nrow = p-1, ncol = 2)
   lam2_range <- matrix(0, nrow = p-1, ncol = 2)
   
