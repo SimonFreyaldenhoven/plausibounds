@@ -14,7 +14,7 @@
 #'
 #' @examples
 #'
-#' # Example with bighump estimates and correlated errors
+#' # Example with bighump estimates and correlation between estimates
 #' data(estimates_bighump)
 #' data(var_bighump)
 #' result_complex <- plausible_bounds(estimates_bighump[1:4], var_bighump[1:4, 1:4])

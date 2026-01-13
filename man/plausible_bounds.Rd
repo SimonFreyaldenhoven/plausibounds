@@ -54,11 +54,12 @@ average treatment effect, Wald tests, and optional pointwise/sup-t bounds.
 Supports pre-treatment periods for event study designs.
 }
 \examples{
-# Example with constant estimates and IID errors (simple case)
+# Example with constant estimates and no correlation (simple case)
 data(estimates_constant)
 data(var_constant)
-result1 <- plausible_bounds(estimates_constant[1:4], var_constant[1:4, 1:4])
-print(result1)
+pb <- plausible_bounds(estimates_constant[1:4], var_constant[1:4, 1:4])
+print(pb)
+summary(pb)
 
 
 }

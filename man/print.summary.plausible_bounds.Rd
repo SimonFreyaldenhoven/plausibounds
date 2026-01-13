@@ -11,6 +11,18 @@
 
 \item{...}{Additional arguments passed to print}
 }
+\value{
+Invisibly returns the input summary.plausible_bounds object and displays summary data.frame of restricted estimates and plausible bounds.
+}
 \description{
 Print method for summary.plausible_bounds objects
+}
+\examples{
+# Example with constant design and no correlation
+data(estimates_constant)
+data(var_constant)
+pb <- plausible_bounds(estimates_constant[1:4], var_constant[1:4, 1:4])
+pb_df <- summary(pb)
+print(pb_df)
+
 }

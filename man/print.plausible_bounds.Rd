@@ -11,6 +11,17 @@
 
 \item{...}{Additional arguments passed to print}
 }
+\value{
+Invisibly returns a plausible_bounds object and displays summary of main results
+}
 \description{
 Print method for plausible_bounds objects
+}
+\examples{
+# Example with constant estimates and no correlation (simple case)
+data(estimates_constant)
+data(var_constant)
+pb <- plausible_bounds(estimates_constant[1:4], var_constant[1:4, 1:4])
+print(pb)
+
 }

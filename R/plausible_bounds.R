@@ -29,11 +29,12 @@
 #'   \item{supt_bounds}{List with lower and upper vectors (if include_supt = TRUE)}
 #'
 #' @examples
-#' # Example with constant estimates and IID errors (simple case)
+#' # Example with constant estimates and no correlation (simple case)
 #' data(estimates_constant)
 #' data(var_constant)
-#' result1 <- plausible_bounds(estimates_constant[1:4], var_constant[1:4, 1:4])
-#' print(result1)
+#' pb <- plausible_bounds(estimates_constant[1:4], var_constant[1:4, 1:4])
+#' print(pb)
+#' summary(pb)
 #'
 #'
 #' @export
@@ -169,6 +170,15 @@ plausible_bounds <- function(estimates, var, alpha = 0.05,
 #' @param object A plausible_bounds object
 #' @param ... Additional arguments passed to summary
 #'
+#' @return A data.frame containing the horizon, unrestricted estimates, restricted estimates, and plausible bounds
+#' @examples
+#' # Example with constant estimates and no correlation (simple case)
+#' data(estimates_constant)
+#' data(var_constant)
+#' pb <- plausible_bounds(estimates_constant[1:4], var_constant[1:4, 1:4])
+#' print(pb)
+#' summary(pb)
+#'
 #' @export
 summary.plausible_bounds <- function(object, ...) {
   # Build summary from restricted_bounds (which has unrestr_est, restr_est, lower, upper)
@@ -184,6 +194,14 @@ summary.plausible_bounds <- function(object, ...) {
 #' @param x A plausible_bounds object
 #' @param ... Additional arguments passed to print
 #'
+#' @return Invisibly returns a plausible_bounds object and displays summary of main results 
+#' @examples
+#' # Example with constant estimates and no correlation (simple case)
+#' data(estimates_constant)
+#' data(var_constant)
+#' pb <- plausible_bounds(estimates_constant[1:4], var_constant[1:4, 1:4])
+#' print(pb)
+#' 
 #' @export
 print.plausible_bounds <- function(x, ...) {
   cat("Plausible Bounds Results\n")
@@ -222,6 +240,15 @@ print.plausible_bounds <- function(x, ...) {
 #' @param x A summary.plausible_bounds object
 #' @param ... Additional arguments passed to print
 #'
+#' @return Invisibly returns the input summary.plausible_bounds object and displays summary data.frame of restricted estimates and plausible bounds.
+#' @examples
+#' # Example with constant design and no correlation
+#' data(estimates_constant)
+#' data(var_constant)
+#' pb <- plausible_bounds(estimates_constant[1:4], var_constant[1:4, 1:4])
+#' pb_df <- summary(pb)
+#' print(pb_df)
+#' 
 #' @export
 print.summary.plausible_bounds <- function(x, ...) {
   cat("Summary of Plausible Bounds Results\n")
