@@ -16,8 +16,9 @@ plausible_bounds(
 )
 }
 \arguments{
-\item{estimates}{A vector of point estimates. If preperiods > 0, the first preperiods
-elements are pre-treatment estimates, followed by post-treatment estimates.}
+\item{estimates}{A numeric vector or single-row/single-column matrix of point estimates.
+If preperiods > 0, the first preperiods elements are pre-treatment estimates,
+followed by post-treatment estimates.}
 
 \item{var}{The variance-covariance matrix of the estimates}
 
@@ -48,7 +49,7 @@ degrees_of_freedom, K, lambda1, lambda2, surrogate_class, best_fit_model}
 \item{supt_bounds}{List with lower and upper vectors (if include_supt = TRUE)}
 }
 \description{
-This function calculates restricted bounds for a vector of estimates along with
+This function calculates the plausible bounds for a vector of estimates along with
 average treatment effect, Wald tests, and optional pointwise/sup-t bounds.
 Supports pre-treatment periods for event study designs.
 }

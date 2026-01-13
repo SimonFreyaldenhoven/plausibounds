@@ -58,22 +58,6 @@
 #' create_plot(result)
 "var_smooth"
 
-#' Variance Matrix with Correlated Errors
-#'
-#' A variance-covariance matrix with correlated errors. This is a full matrix
-#' with non-zero off-diagonal elements representing correlation across time
-#' periods.
-#'
-#' @format A 12 x 12 matrix
-#' @source Generated from simulation with correlated errors (rho = 0.8)
-#' @examples
-#' data(var_corr)
-#' # Can be used with any estimates of appropriate dimension
-#' data(estimates_constant)
-#' result <- plausible_bounds(estimates_constant[1:4], var_corr[1:4, 1:4])
-#' create_plot(result)
-"var_corr"
-
 #' Sinusoidal Estimates with Moderate Correlation
 #'
 #' A dataset containing estimates with a curved sinusoidal pattern in the first

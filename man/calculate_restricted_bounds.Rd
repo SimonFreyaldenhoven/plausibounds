@@ -2,7 +2,7 @@
 % Please edit documentation in R/calculate_restricted_bounds.R
 \name{calculate_restricted_bounds}
 \alias{calculate_restricted_bounds}
-\title{Calculate Restricted Bounds}
+\title{Calculate Plausible Bounds}
 \usage{
 calculate_restricted_bounds(
   estimates,
@@ -38,7 +38,7 @@ coefficients, surrogate values, and bounds}
 \item{metadata}{A list with metadata about the calculation}
 }
 \description{
-This function calculates restricted bounds for a vector of estimates using model selection.
+This function calculates the plausible (or "restricted") bounds for a vector of estimates using model selection.
 Supports pre-treatment periods for event study designs.
 }
 \keyword{internal}
