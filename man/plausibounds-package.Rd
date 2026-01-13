@@ -5,7 +5,7 @@
 \alias{plausibounds}
 \title{plausibounds: Plausible Bounds for Treatment Path Estimates}
 \description{
-Implements the additions to dynamic effect plots suggested in Freyaldenhoven and Hansen (2026).
+Enhances dynamic effect plots as suggested in Freyaldenhoven and Hansen (2026).
 Data-driven smoothing delivers a smooth estimated path with potentially improved point estimation properties and confidence regions covering a surrogate that can be substantially tighter than conventional pointwise or uniform bands.
 }
 \section{Main Functions}{
