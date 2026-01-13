@@ -31,7 +31,7 @@ We write $\theta=(\beta^{pre'},\beta')'$ for the $p \times 1$ vector that collec
 
 The package takes $\hat{\theta}$ and $\hat{V}_{\theta}$ as input.
 
-## Finding the surrogate path
+## Choosing the surrogate model
 
 The main contribution is to include new visual elements meant to depict approximations to the underlying effect path constrained to exhibit economically and statistically plausible shapes. Intuitively, these elements formalize "visual data snooping": Our proposal approximates looking at a dynamic effect plot and then choosing a specification that "captures the main dynamics." 
 This specification should a) provide a notion of valid inference that explicitly accounts for the data-dependent choice of specification and b) use the full covariance structure of the estimates when choosing the specification.
@@ -90,7 +90,7 @@ pb <- plausible_bounds(
 )
 ```
 
-The returned object is a list containing the bounds, test statistics, and metadata. The `summary()` method extracts the key results in a tabular format, showing the horizon, original coefficient estimates, surrogate path, and restricted bounds for that path:
+The returned object is a list containing the bounds, test statistics, and metadata. The `summary()` method extracts the key results in a tabular format, showing the horizon, unrestricted coefficient estimates, restricted esitmates, and restricted bounds for that path:
 
 
 ``` r
@@ -98,7 +98,7 @@ summary(pb)
 #> Summary of Plausible Bounds Results
 #> -----------------------------------
 #> 
-#>  horizon        coef   surrogate restr_lower   restr_upper
+#>  horizon unrestr_est   restr_est restr_lower   restr_upper
 #>        1  0.12340034  0.05029379  -0.2819062  0.3824937465
 #>        2 -0.04534908 -0.01242527  -0.2383862  0.2135356268
 #>        3 -0.16169097 -0.06083759  -0.2497435  0.1280683432
@@ -150,11 +150,11 @@ str(pb)
 #>   .. ..$ statistic: num 62.9
 #>   .. ..$ p_value  : num 0.00368
 #>  $ restricted_bounds         :'data.frame':	36 obs. of  5 variables:
-#>   ..$ horizon  : int [1:36] 1 2 3 4 5 6 7 8 9 10 ...
-#>   ..$ coef     : num [1:36] 0.1234 -0.0453 -0.1617 -0.2026 -0.033 ...
-#>   ..$ surrogate: num [1:36] 0.0503 -0.0124 -0.0608 -0.0967 -0.1245 ...
-#>   ..$ lower    : num [1:36] -0.282 -0.238 -0.25 -0.285 -0.315 ...
-#>   ..$ upper    : num [1:36] 0.3825 0.2135 0.1281 0.0912 0.0656 ...
+#>   ..$ horizon    : int [1:36] 1 2 3 4 5 6 7 8 9 10 ...
+#>   ..$ unrestr_est: num [1:36] 0.1234 -0.0453 -0.1617 -0.2026 -0.033 ...
+#>   ..$ restr_est  : num [1:36] 0.0503 -0.0124 -0.0608 -0.0967 -0.1245 ...
+#>   ..$ lower      : num [1:36] -0.282 -0.238 -0.25 -0.285 -0.315 ...
+#>   ..$ upper      : num [1:36] 0.3825 0.2135 0.1281 0.0912 0.0656 ...
 #>  $ restricted_bounds_metadata:List of 8
 #>   ..$ supt_critval      : num 3.17
 #>   ..$ supt_b            : num 3.59
@@ -210,19 +210,21 @@ create_plot(pb)
 
 The plot displays several types of bounds and statistics, each serving a different inferential purpose:
 
-**Point estimates (black dots)**: The original treatment effect estimates $\hat{\beta}_h$ at each horizon. 
+**Unrestricted estimates (black dots)**: The original treatment effect estimates $\hat{\beta}_h$ at each horizon. 
 
-**Restricted bounds (blue dashed lines)**: The main contribution of this package. These bounds provide uniform $(1-\alpha)$ coverage for the selected surrogate path (the smooth blue line), not the true treatment path itself. The surrogate path is chosen via BIC from the pre-specified model universe and represents a data-dependent smoothed approximation to the true treatment path. The restricted bounds adapt to the smoothness and correlation structure, often remaining narrower than sup-t intervals.
+**Plausible bounds (blue dashed lines)**: These bounds provide uniform $(1-\alpha)$ coverage for the selected surrogate, not the true treatment path itself. The surrogate path is chosen via BIC from the pre-specified model universe and represents a data-dependent smoothed approximation to the true treatment path.
+
+**Restricted estimates (blue line)**: The restricted estimates are the smoothed point estimates under the selected regularization.
 
 **Pointwise bounds (gray horizontal bars)**: Standard confidence intervals for each horizon separately, constructed as $\hat{\beta}_h \pm z_{1-\alpha/2} \sqrt{V_{\beta,hh}}$. 
 
 **Sup-t bounds (gray vertical lines)**: Uniform confidence bands that provide $(1-\alpha)$ joint coverage of the entire treatment path. These are constructed using the supremum of $t$-statistics from individual coefficients. Guarantee full-path coverage but can become quite wide.
 
-**Annotations**: The bottom of the plot shows several summary statistics. The "No effect p-value" comes from a Wald test of the null hypothesis that all treatment effects are zero. The "Average effect [CI]" provides the average treatment effect (ATE) $\bar{\beta} = \frac{1}{H}\sum_h \beta_h$ along with its confidence interval—this quantifies the overall magnitude of the treatment.
+**Annotations**: The bottom of the plot shows several summary statistics. The "No effect p-value" comes from a Wald test of the null hypothesis that all treatment effects are zero. The "Average effect [CI]" provides the average effect $\bar{\beta} = \frac{1}{H}\sum_h \beta_h$ along with its confidence interval.
 
 ### Example 2: Correlated Errors
 
-When errors are correlated across horizons (common in dynamic settings), the restricted bounds adapt to the correlation structure. While high correlation can widen the restricted bounds compared to the independent error case, they usually remain narrower than sup-t bands:
+When errors are correlated across horizons (common in dynamic settings), the plausible bounds adapt to the correlation structure and will tend to become wider:
 
 
 ``` r
@@ -271,7 +273,7 @@ create_plot(pb_pre)
 <p class="caption">Event study with pre-treatment periods showing pre-trends</p>
 </div>
 
-The vertical dashed line at event time 0 separates pre- and post-treatment periods. Pre-treatment estimates appear at negative horizons, revealing any pre-existing trends. The restricted bounds and surrogate path are only computed for the post-treatment periods, since the goal is inference on the treatment effect path.
+The vertical dashed line at event time 0 separates pre- and post-treatment periods. Pre-treatment estimates appear at negative horizons, revealing any pre-existing trends. The plausible bounds and restricted estimates are only computed for the post-treatment periods, since the goal is inference on the treatment effect path.
 
 The annotations now include both Wald test p-values. The "Pretrends p-value" tests whether the pre-treatment coefficients are jointly zero—a rejection indicates violations of parallel trends. The "No effect p-value" tests whether the post-treatment coefficients are jointly zero. In this example, the pre-trends test rejects, suggesting that parallel trends may not hold.
 
@@ -281,7 +283,7 @@ The annotations now include both Wald test p-values. The "Pretrends p-value" tes
 The `create_plot()` function provides a few arguments to customize which elements appear in the plot. 
 The `show_annotations` argument controls whether the Wald test results and average treatment effect are displayed at the bottom. 
 The `show_supt` and `show_pointwise` arguments control whether sup-t and pointwise bounds are included. 
-For a cleaner display focusing only on the restricted and pointwise bounds:
+For example, displaying only the plausible and pointwise bounds:
 
 
 ``` r

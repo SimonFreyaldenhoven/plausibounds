@@ -59,7 +59,7 @@ summary(pb)
 #> Summary of Plausible Bounds Results
 #> -----------------------------------
 #> 
-#>  horizon         coef   surrogate restr_lower restr_upper
+#>  horizon  unrestr_est   restr_est restr_lower restr_upper
 #>        1 -0.644857526 -0.65289039 -1.01968259 -0.28609819
 #>        2 -0.787000641 -0.74451476 -1.05826109 -0.43076844
 #>        3 -0.675417155 -0.63299852 -0.94559699 -0.32040004
