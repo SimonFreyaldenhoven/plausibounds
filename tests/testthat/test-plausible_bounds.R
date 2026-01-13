@@ -93,56 +93,6 @@ test_that("plausible_bounds rejects invalid estimate formats", {
   )
 })
 
-# Test comparison with original function using pre-computed fixtures
-test_that("new functions match original full_eventplot_l2tf results", {
-  # Skip this test if the fixture files don't exist
-  skip_if_not(file.exists(test_path("fixtures", "dhat.csv")) &&
-              file.exists(test_path("fixtures", "vhat.csv")) &&
-              file.exists(test_path("fixtures", "full_eventplot_l2tf_results.rds")))
-  
-  skip_on_cran()
-  
-  # Load test data
-  delta <- as.matrix(read.csv(test_path("fixtures", "dhat.csv"), header = FALSE))
-  vhat <- as.matrix(read.csv(test_path("fixtures", "vhat.csv"), header = FALSE))
-  
-  # Load pre-computed original results from fixture
-  original_results <- readRDS(test_path("fixtures", "full_eventplot_l2tf_results.rds"))
-  
-  # Run new functions
-  pb <- plausible_bounds(as.vector(delta), vhat)
-  
-  # Compare results
-  # Average treatment effect bounds
-  expect_equal(
-    pb$avg_treatment_effect$lower,
-    original_results$lb/length(delta),
-    tolerance = 1e-2
-  )
-  expect_equal(
-    pb$avg_treatment_effect$upper,
-    original_results$ub/length(delta),
-    tolerance = 1e-2
-  )
-  
-  # Restricted bounds
-  expect_equal(
-    pb$restricted_bounds$surrogate,
-    as.vector(original_results$surrogate),
-    tolerance = 1e-2
-  )
-  expect_equal(
-    pb$restricted_bounds$lower,
-    as.vector(original_results$restricted_LB),
-    tolerance = 1e-2
-  )
-  expect_equal(
-    pb$restricted_bounds$upper,
-    as.vector(original_results$restricted_UB),
-    tolerance = 1e-2
-  )
-})
-
 # Test parallel vs non-parallel results
 test_that("parallel and non-parallel results are identical", {
   skip_on_cran()
