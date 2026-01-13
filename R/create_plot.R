@@ -172,9 +172,9 @@ create_bounds_plot <- function(bounds_data, availability, annotations = NULL) {
   # Add surrogate and bounds only for post-periods
   if (nrow(df_post) > 0 && !all(is.na(df_post$restr_est))) {
     p <- p +
-      ggplot2::geom_line(data = df_post, ggplot2::aes(y = restr_est, color = "restr_est", linetype = "restr_est")) +
-      ggplot2::geom_line(data = df_post, ggplot2::aes(y = lower, color = "restr_bounds", linetype = "restr_bounds")) +
-      ggplot2::geom_line(data = df_post, ggplot2::aes(y = upper, color = "restr_bounds", linetype = "restr_bounds"))
+      ggplot2::geom_line(data = df_post, ggplot2::aes(y = restr_est, color = "restr_est", linetype = "restr_est"), linewidth = 1) +
+      ggplot2::geom_line(data = df_post, ggplot2::aes(y = lower, color = "restr_bounds", linetype = "restr_bounds"), linewidth = 1) +
+      ggplot2::geom_line(data = df_post, ggplot2::aes(y = upper, color = "restr_bounds", linetype = "restr_bounds"), linewidth = 1)
   }
 
   # Add vertical line at event time 0 if we have pre-periods
@@ -258,6 +258,9 @@ create_bounds_plot <- function(bounds_data, availability, annotations = NULL) {
       values = colors,
       breaks = c("estimate", "restr_est"),
       labels = c("Point Estimates", "Restricted")
+    ) +
+    ggplot2::scale_linetype_manual(
+      values = line_types
     ) +
     # Hide linetype from legend
     ggplot2::guides(linetype = "none")

@@ -16,9 +16,10 @@ knitr::opts_chunk$set(
   fig.align = "center"
 )
 ```
- 
+
 ```{r setup}
 library(plausibounds)
+library(ggplot2)
 ```
 ## Dynamic Effect Plots
 
@@ -26,7 +27,7 @@ To understand the dynamic effects of a policy, it is common to summarize estimat
 
 ## Overview
 
-The `plausibounds` package provides simple additions to standard visualizations of dynamic treatment effects aimed at enhancing their informativeness. In particular, it provides functionality to:
+The `plausibounds` package provides simple additions to standard visualizations of dynamic treatment effects aimed at enhancing their informativeness following [Freyaldenhoven and Hansen (2026)](https://simonfreyaldenhoven.github.io/papers/Plausible_bounds.pdf). In particular, it provides functionality to:
 
 * include joint hypothesis tests and summary measures that are often of direct interest alongside the standard event-study plot.
 
@@ -38,7 +39,7 @@ We write $\theta=(\beta^{pre'},\beta')'$ for the $p \times 1$ vector that collec
 
 The package takes $\hat{\theta}$ and $\hat{V}_{\theta}$ as input.
 
-### Finding the surrogate path
+## Choosing the surrogate model
 
 The main contribution is to include new visual elements meant to depict approximations to the underlying effect path constrained to exhibit economically and statistically plausible shapes. Intuitively, these elements formalize "visual data snooping": Our proposal approximates looking at a dynamic effect plot and then choosing a specification that "captures the main dynamics." 
 This specification should a) provide a notion of valid inference that explicitly accounts for the data-dependent choice of specification and b) use the full covariance structure of the estimates when choosing the specification.
@@ -47,46 +48,7 @@ Specifically, we construct *restricted estimates* and *plausible bounds* by usin
 
 Intuitively, the plausible bounds represent a compromise between inference under no restrictions --- which may yield very wide confidence intervals --- and inference based on a single, prespecified model that does not adapt to the data and may therefore be overly restrictive.
 
-
-The approach approximates $\hat{\beta}$ (assumed to be jointly normal with $\hat{\beta} \sim N(\beta, V_{\beta})$) by a *surrogate path* $\beta_M = P(M)\beta$, where $M$ indexes a model in a pre-specified universe $\mathcal{M}$. 
-The model universe is specified as follows: it includes polynomial specifications (up to cubic) and penalized smoothing that shrinks first (effect eventually dies out) and third (effect is smooth) differences. 
-
-Given estimates $\hat{\beta}$, the (non-polynomial) surrogate for a given model $M$ is obtained by solving a penalized least squares problem:
-
-$$
-\begin{align}
-\tilde{\beta}(M)
-&= \tilde{\beta}(\lambda_1, \lambda_2, K) \\
-&= \arg\min_{b}\Bigg(
-\underbrace{(\hat{\beta}-b)^{\prime}V^{-1}(\hat{\beta}-b)}_{\text{distance from $\hat{\beta}$}}
-+\lambda_1\,\underbrace{b^{\prime}D_1^{\prime}W_1(K)D_1 b}_{\text{penalty on first difference after horizon $K$}}
-+\lambda_2\,\underbrace{b^{\prime}D_3^{\prime}W_3 D_3 b}_{\text{penalty on third difference}}
-\Bigg).
-\end{align}
-$$
-
-where $D_1$ and $D_3$ are first- and third-difference operators, and $\lambda_1$, $\lambda_2$, and $K$ are tuning parameters that control smoothness and the timing of decay toward zero. The solution has closed form:
-
-$$
-\tilde{\beta}(M) = P(M)\hat{\beta}, \quad P(M) = \Big(V_\beta^{-1} + \lambda_1 D_1'W_1(K)D_1 + \lambda_2 D_3'W_3D_3\Big)^{-1} V_\beta^{-1}.
-$$
-
-Then, the best-fitting surrogate model $\hat{M}$ is selected by minimizing a BIC-type criterion:
-
-$$
-\hat{M} = \arg\min_{M \in \mathcal{M}} \; (\hat{\beta}-\tilde{\beta}(M))'V_\beta^{-1}(\hat{\beta}-\tilde{\beta}(M)) + \log(H)\,\text{df}(M),
-$$
-
-where the degrees of freedom is $\text{df}(M) = \mathrm{trace}(P(M))$. 
-Therefore, the main algorithm of the package simply iterates over all models in the pre-specified universe to find $\hat{M}$. 
-
-### Post-Selection Inference
-
-Once $\hat{M}$ is chosen, the package constructs confidence regions using post-selection inference (Berk et al. 2013), which accounts for the model selection step:
-
-$$
-\Pr\!\big(\beta_{\hat{M}} \in \text{CR}_{\text{PoSI}}\big) \ge 1-\alpha.
-$$
+For the technical details, see Section 3 of Freyaldenhoven and Hansen (2026).
 
 
 ## Basic Usage
@@ -105,7 +67,7 @@ print(var_smooth[1:4, 1:4])
 
 The `estimates_smooth` vector contains 36 treatment effect estimates at different horizons and 8 preperiods. The `var_smooth` matrix is a diagonal variance matrix with no correlation between periods.
 
-### Example 1: Independent Errors
+### Example 1: No Correlation Estimates
 
 A simple case uses the `plausible_bounds()` function with just the estimates and variance. The `alpha` parameter controls the confidence level (default is 0.05 for 95% confidence):
 
@@ -122,7 +84,7 @@ pb <- plausible_bounds(
 )
 ```
 
-The returned object is a list containing the bounds, test statistics, and metadata. The `summary()` method extracts the key results in a tabular format, showing the horizon, original coefficient estimates, surrogate path, and restricted bounds for that path:
+The returned object is a list containing the bounds, test statistics, and metadata. The `summary()` method extracts the key results in a tabular format, showing the horizon, unrestricted estimates, restricted estimates, and restricted/plausible bounds for that path:
 
 ```{r summary}
 summary(pb)
@@ -135,7 +97,7 @@ str(pb)
 ```
 
 The object contains several components. The `restricted_bounds` data frame is identical to that produced with the `summary()` method.
-The `restricted_bounds_metadata` list stores information about the model selection process, including the surrogate class selected (e.g., polynomial degree or penalized smoothing parameters), the degrees of freedom, and the sup-t critical value used in constructing the bounds.
+The `restricted_bounds_metadata` list stores information about the model selection process, including the model class selected (e.g., polynomial or penalized smoothing), the degrees of freedom, and the sup-t critical value used in constructing the bounds.
 The `avg_treatment_effect` component provides the average treatment effect estimate, its standard error, and confidence interval. 
 
 When arguments `include_pointwise` and `include_supt` of `plausible_bounds()` are `TRUE` (the default), the object also contains `pointwise_bounds` and `supt_bounds` lists with the corresponding confidence bounds. 
@@ -147,25 +109,27 @@ Finally, `wald_test` contains test statistics and p-values for testing the joint
 
 Next let's plot the results:
 
-```{r plot-iid, fig.cap="Plausible bounds for treatment path estimates with independent errors"}
+```{r plot-iid, fig.cap="Plausible bounds for treatment path estimates with no correlation"}
 create_plot(pb)
 ```
 
 The plot displays several types of bounds and statistics, each serving a different inferential purpose:
 
-**Point estimates (black dots)**: The original treatment effect estimates $\hat{\beta}_h$ at each horizon. 
+**Unrestricted estimates (black dots)**: The original treatment effect estimates $\hat{\beta}_h$ at each horizon.
 
-**Restricted bounds (blue dashed lines)**: The main contribution of this package. These bounds provide uniform $(1-\alpha)$ coverage for the selected surrogate path (the smooth blue line), not the true treatment path itself. The surrogate path is chosen via BIC from the pre-specified model universe and represents a data-dependent smoothed approximation to the true treatment path. The restricted bounds adapt to the smoothness and correlation structure, often remaining narrower than sup-t intervals.
+**Plausible bounds (blue dashed lines)**: These bounds provide uniform $(1-\alpha)$ coverage for the selected restricted estimates, not the true treatment path itself. The restricted path is chosen via BIC from the pre-specified model universe and represents a data-dependent smoothed approximation to the true treatment path.
+
+**Restricted estimates (blue line)**: The restricted estimates are the smoothed point estimates under the selected regularization.
 
 **Pointwise bounds (gray horizontal bars)**: Standard confidence intervals for each horizon separately, constructed as $\hat{\beta}_h \pm z_{1-\alpha/2} \sqrt{V_{\beta,hh}}$. 
 
-**Sup-t bounds (gray vertical lines)**: Uniform confidence bands that provide $(1-\alpha)$ joint coverage of the entire treatment path. These are constructed using the supremum of $t$-statistics from individual coefficients. Guarantee full-path coverage but can become quite wide.
+**Sup-t bounds (gray vertical lines)**: Uniform confidence bands that provide $(1-\alpha)$ joint coverage of the entire treatment path. These are constructed using the supremum of $t$-statistics from individual estimates. Guarantee full-path coverage but can become quite wide.
 
-**Annotations**: The bottom of the plot shows several summary statistics. The "No effect p-value" comes from a Wald test of the null hypothesis that all treatment effects are zero. The "Average effect [CI]" provides the average treatment effect (ATE) $\bar{\beta} = \frac{1}{H}\sum_h \beta_h$ along with its confidence interval—this quantifies the overall magnitude of the treatment.
+**Annotations**: The bottom of the plot shows several summary statistics. The "No effect p-value" comes from a Wald test of the null hypothesis that all treatment effects are zero. The "Average effect [CI]" provides the average effect $\bar{\beta} = \frac{1}{H}\sum_h \beta_h$ along with its confidence interval.
 
-### Example 2: Correlated Errors
+### Example 2: Correlated Estimates
 
-When errors are correlated across horizons (common in dynamic settings), the restricted bounds adapt to the correlation structure. While high correlation can widen the restricted bounds compared to the independent error case, they usually remain narrower than sup-t bands:
+When estimates are correlated across horizons (common in dynamic settings), the plausible bounds adapt to the correlation structure and will tend to become wider:
 
 ```{r corr-example, results = FALSE, message = FALSE, cache = FALSE}
 pb_corr <- plausible_bounds(
@@ -175,7 +139,7 @@ pb_corr <- plausible_bounds(
 )
 ```
 
-```{r corr-plot, fig.cap="Plausible bounds for treatment path estimates with correlated errors"}
+```{r corr-plot, fig.cap="Plausible bounds for treatment path estimates with correlated estimates"}
 create_plot(pb_corr)
 ```
 
@@ -200,17 +164,17 @@ pb_pre <- plausible_bounds(
 create_plot(pb_pre)
 ```
 
-The vertical dashed line at event time 0 separates pre- and post-treatment periods. Pre-treatment estimates appear at negative horizons, revealing any pre-existing trends. The restricted bounds and surrogate path are only computed for the post-treatment periods, since the goal is inference on the treatment effect path.
+The vertical dashed line at event time 0 separates pre- and post-treatment periods. Pre-treatment estimates appear at negative horizons, revealing any pre-existing trends. The plausible bounds and restricted estimates are only computed for the post-treatment periods, since the goal is inference on the treatment effect path.
 
-The annotations now include both Wald test p-values. The "Pretrends p-value" tests whether the pre-treatment coefficients are jointly zero—a rejection indicates violations of parallel trends. The "No effect p-value" tests whether the post-treatment coefficients are jointly zero. In this example, the pre-trends test rejects, suggesting that parallel trends may not hold.
+The annotations now include both Wald test p-values. The "Pretrends p-value" tests whether the pre-treatment coefficients are jointly zero—a rejection indicates violations of parallel trends. The "No effect p-value" tests whether the post-treatment coefficients are jointly zero.
 
 
 ## Customizing plots
 
-The `create_plot()` function provides a few arguments to customize which elements appear in the plot. 
-The `show_annotations` argument controls whether the Wald test results and average treatment effect are displayed at the bottom. 
-The `show_supt` and `show_pointwise` arguments control whether sup-t and pointwise bounds are included. 
-For a cleaner display focusing only on the restricted and pointwise bounds:
+The `create_plot()` function provides a few arguments to customize which elements appear in the plot.
+The `show_annotations` argument controls whether the Wald test results and average treatment effect are displayed at the bottom.
+The `show_supt` and `show_pointwise` arguments control whether sup-t and pointwise bounds are included.
+For example, displaying only the plausible and pointwise bounds:
 
 ```{r viz-custom, fig.cap="Customized plot showing only point estimates and restricted bounds"}
 create_plot(pb, show_annotations = FALSE, show_pointwise = FALSE, show_supt = FALSE)
@@ -234,5 +198,5 @@ pb_parallel <- plausible_bounds(
 
 ## References
 
-* Freyaldenhoven, S. and Hansen, C. (2025). "(Visualizing) Plausible Treatment Effect Paths." Federal Reserve Bank of Philadelphia and University of Chicago.
+* Freyaldenhoven, S. and Hansen, C. (2026). "(Visualizing) Plausible Treatment Effect Paths." Federal Reserve Bank of Philadelphia and University of Chicago.
 * Berk, R., Brown, L., Buja, A., Zhang, K., and Zhao, L. (2013). "Valid post-selection inference." *Annals of Statistics*, 41(2):802-837.

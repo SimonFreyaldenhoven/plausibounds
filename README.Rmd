@@ -38,14 +38,15 @@ Find a minimal example below. For more information see the package [documentatio
 
 ```{r example, results = FALSE, message = FALSE}
 library(plausibounds)
+library(ggplot2)
+
+set.seed(916)
 
 # Load example data
 data(estimates_bighump)
 data(var_bighump)
 
-set.seed(916)
-
-# Compute restricted bounds
+# Compute restricted bounds for 1 year of estimates
 pb <- plausible_bounds(
   estimates = estimates_bighump[1:12],
   var = var_bighump[1:12, 1:12]
