@@ -27,26 +27,26 @@ test_that("plausible_bounds accepts and coerces different estimate formats", {
   # Standard numeric vector (baseline)
   result_vec <- plausible_bounds(est_vec, var_mat)
   expect_s3_class(result_vec, "plausible_bounds")
-  expect_equal(length(result_vec$restricted_bounds$coef), p)
+  expect_equal(length(result_vec$restricted_bounds$unrestr_est), p)
 
   # Single-column matrix (should be coerced)
   est_col <- matrix(est_vec, ncol = 1)
   result_col <- plausible_bounds(est_col, var_mat)
   expect_s3_class(result_col, "plausible_bounds")
-  expect_equal(result_col$restricted_bounds$coef, result_vec$restricted_bounds$coef)
+  expect_equal(result_col$restricted_bounds$unrestr_est, result_vec$restricted_bounds$unrestr_est)
 
   # Single-row matrix (should be transposed and coerced)
   est_row <- matrix(est_vec, nrow = 1)
   result_row <- plausible_bounds(est_row, var_mat)
   expect_s3_class(result_row, "plausible_bounds")
-  expect_equal(result_row$restricted_bounds$coef, result_vec$restricted_bounds$coef)
+  expect_equal(result_row$restricted_bounds$unrestr_est, result_vec$restricted_bounds$unrestr_est)
 
   # Named numeric vector (should work)
   est_named <- est_vec
   names(est_named) <- paste0("t", 1:p)
   result_named <- plausible_bounds(est_named, var_mat)
   expect_s3_class(result_named, "plausible_bounds")
-  expect_equal(result_named$restricted_bounds$coef, result_vec$restricted_bounds$coef)
+  expect_equal(result_named$restricted_bounds$unrestr_est, result_vec$restricted_bounds$unrestr_est)
 })
 
 test_that("plausible_bounds rejects invalid estimate formats", {
@@ -237,9 +237,9 @@ test_that("plausible_bounds works with specific n_cores values", {
   # Results should be very similar across different n_cores
   expect_equal(result_1core$restricted_bounds$horizon,
                result_2cores$restricted_bounds$horizon)
-  expect_equal(result_1core$restricted_bounds$coef,
-               result_2cores$restricted_bounds$coef)
-  expect_equal(result_1core$restricted_bounds$surrogate,
-               result_2cores$restricted_bounds$surrogate,
+  expect_equal(result_1core$restricted_bounds$unrestr_est,
+               result_2cores$restricted_bounds$unrestr_est)
+  expect_equal(result_1core$restricted_bounds$restr_est,
+               result_2cores$restricted_bounds$restr_est,
                tolerance = 0.01)
 })

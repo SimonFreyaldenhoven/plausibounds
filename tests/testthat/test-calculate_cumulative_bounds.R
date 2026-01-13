@@ -16,8 +16,8 @@ test_that("calculate_cumulative_bounds works with real example data", {
   # Check cumulative bounds data frame
   expect_s3_class(result$cumulative_bounds, "data.frame")
   expect_equal(nrow(result$cumulative_bounds), n_test)
-  expect_named(result$cumulative_bounds, c("horizon", "coef", "lower", "upper"))
-  expect_equal(result$cumulative_bounds$coef, estimates_constant[1:n_test])
+  expect_named(result$cumulative_bounds, c("horizon", "unrestr_est", "lower", "upper"))
+  expect_equal(result$cumulative_bounds$unrestr_est, estimates_constant[1:n_test])
   
   # Check that bounds contain the estimates (for constant case)
   expect_true(all(result$cumulative_bounds$lower <= result$cumulative_bounds$upper))
@@ -120,7 +120,7 @@ test_that("calculate_cumulative_bounds works with edge cases", {
   result_single <- calculate_cumulative_bounds(estimates_single, var_single)
   expect_s3_class(result_single, "cumulative_bounds")
   expect_equal(nrow(result_single$cumulative_bounds), 1)
-  expect_equal(result_single$cumulative_bounds$coef, estimates_single)
+  expect_equal(result_single$cumulative_bounds$unrestr_est, estimates_single)
   
   # Two estimates
   estimates_two <- c(0.5, -0.3)
@@ -129,7 +129,7 @@ test_that("calculate_cumulative_bounds works with edge cases", {
   result_two <- calculate_cumulative_bounds(estimates_two, var_two)
   expect_s3_class(result_two, "cumulative_bounds")
   expect_equal(nrow(result_two$cumulative_bounds), 2)
-  expect_equal(result_two$cumulative_bounds$coef, estimates_two)
+  expect_equal(result_two$cumulative_bounds$unrestr_est, estimates_two)
   
   # Zero estimates
   estimates_zero <- rep(0, 5)
@@ -137,7 +137,7 @@ test_that("calculate_cumulative_bounds works with edge cases", {
   
   result_zero <- calculate_cumulative_bounds(estimates_zero, var_zero)
   expect_s3_class(result_zero, "cumulative_bounds")
-  expect_equal(result_zero$cumulative_bounds$coef, estimates_zero)
+  expect_equal(result_zero$cumulative_bounds$unrestr_est, estimates_zero)
   # Bounds should be symmetric around zero
   expect_true(all(abs(result_zero$cumulative_bounds$lower + 
                      result_zero$cumulative_bounds$upper) < 1e-10))

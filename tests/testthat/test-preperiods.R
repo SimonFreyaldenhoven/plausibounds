@@ -157,14 +157,14 @@ test_that("core functionality with 8 preperiods (mean0 scenario)", {
 
   # Test 4: Restricted bounds are NA for preperiods but not for post-periods
   pre_rows <- result$restricted_bounds$horizon < 0
-  expect_true(all(is.na(result$restricted_bounds$surrogate[pre_rows])))
+  expect_true(all(is.na(result$restricted_bounds$restr_est[pre_rows])))
   expect_true(all(is.na(result$restricted_bounds$lower[pre_rows])))
   expect_true(all(is.na(result$restricted_bounds$upper[pre_rows])))
   post_rows <- result$restricted_bounds$horizon > 0
-  expect_false(any(is.na(result$restricted_bounds$surrogate[post_rows])))
+  expect_false(any(is.na(result$restricted_bounds$restr_est[post_rows])))
   expect_false(any(is.na(result$restricted_bounds$lower[post_rows])))
   expect_false(any(is.na(result$restricted_bounds$upper[post_rows])))
-  expect_false(any(is.na(result$restricted_bounds$coef)))
+  expect_false(any(is.na(result$restricted_bounds$unrestr_est)))
 
   # Test 5: Wpre passes for mean0 scenario (no pre-trends)
   expect_true(result$wald_test$pre$p_value >= 0.05)
@@ -180,7 +180,7 @@ test_that("core functionality with 8 preperiods (mean0 scenario)", {
   post_rows_cumul <- cumul$cumulative_bounds$horizon > 0
   expect_false(any(is.na(cumul$cumulative_bounds$lower[post_rows_cumul])))
   expect_false(any(is.na(cumul$cumulative_bounds$upper[post_rows_cumul])))
-  expect_false(any(is.na(cumul$cumulative_bounds$coef)))
+  expect_false(any(is.na(cumul$cumulative_bounds$unrestr_est)))
 
   # Test 8: Pre and post periods treated as independent blocks
   var_block <- matrix(0, npre + npost, npre + npost)
@@ -191,7 +191,7 @@ test_that("core functionality with 8 preperiods (mean0 scenario)", {
   expect_true(all(var_block[1:npre, (npre + 1):(npre + npost)] == 0))
   expect_true(all(var_block[(npre + 1):(npre + npost), 1:npre] == 0))
   post_rows_block <- result_block$restricted_bounds$horizon > 0
-  expect_false(any(is.na(result_block$restricted_bounds$surrogate[post_rows_block])))
+  expect_false(any(is.na(result_block$restricted_bounds$restr_est[post_rows_block])))
 
   # Test 9: Metadata correctly populated
   expect_equal(result$preperiods, 8)

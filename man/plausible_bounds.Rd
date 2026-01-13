@@ -41,9 +41,9 @@ A list containing:
 \item{alpha}{Significance level}
 \item{preperiods}{Number of pre-treatment periods}
 \item{wald_test}{List with post (and pre if preperiods > 0) Wald test results}
-\item{restricted_bounds}{Data frame with horizon, coef, surrogate, lower, upper}
+\item{restricted_bounds}{Data frame with horizon, unrestr_est, restr_est, lower, upper}
 \item{restricted_bounds_metadata}{List with supt_critval, supt_b,
-degrees_of_freedom, K, lambda1, lambda2, surrogate_class, best_fit_model}
+degrees_of_freedom, K, lambda1, lambda2, restr_class, best_fit_model}
 \item{avg_treatment_effect}{List with estimate, se, lower, upper}
 \item{pointwise_bounds}{List with lower and upper vectors (if include_pointwise = TRUE)}
 \item{supt_bounds}{List with lower and upper vectors (if include_supt = TRUE)}

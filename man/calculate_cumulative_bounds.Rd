@@ -19,7 +19,7 @@ to be normalized and not included in estimates.}
 }
 \value{
 A list containing:
-\item{cumulative_bounds}{A data frame with columns for horizon (event time), coefficients, and bounds}
+\item{cumulative_bounds}{A data frame with columns for horizon (event time), unrestricted estimates, and bounds}
 \item{ate}{Average treatment effect with standard error}
 \item{metadata}{A list with metadata about the calculation}
 }

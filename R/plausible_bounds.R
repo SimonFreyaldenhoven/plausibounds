@@ -23,7 +23,7 @@
 #'   \item{wald_test}{List with post (and pre if preperiods > 0) Wald test results}
 #'   \item{restricted_bounds}{Data frame with horizon, unrestr_est, restr_est, lower, upper}
 #'   \item{restricted_bounds_metadata}{List with supt_critval, supt_b,
-#'     degrees_of_freedom, K, lambda1, lambda2, surrogate_class, best_fit_model}
+#'     degrees_of_freedom, K, lambda1, lambda2, restr_class, best_fit_model}
 #'   \item{avg_treatment_effect}{List with estimate, se, lower, upper}
 #'   \item{pointwise_bounds}{List with lower and upper vectors (if include_pointwise = TRUE)}
 #'   \item{supt_bounds}{List with lower and upper vectors (if include_supt = TRUE)}
@@ -101,7 +101,7 @@ plausible_bounds <- function(estimates, var, alpha = 0.05,
     K = restr_bd$metadata$K,
     lambda1 = restr_bd$metadata$lambda1,
     lambda2 = restr_bd$metadata$lambda2,
-    surrogate_class = restr_bd$metadata$surrogate_class,
+    restr_class = restr_bd$metadata$restr_class,
     best_fit_model = restr_bd$metadata$best_fit_model
   )
 
@@ -208,7 +208,7 @@ print.plausible_bounds <- function(x, ...) {
 
   # Restricted bounds info
   cat("\nRestricted Bounds:\n")
-  cat(sprintf("  Surrogate class: %s\n", x$restricted_bounds_metadata$surrogate_class))
+  cat(sprintf("  Surrogate class: %s\n", x$restricted_bounds_metadata$restr_class))
   cat(sprintf("  Degrees of freedom: %.2f\n", x$restricted_bounds_metadata$degrees_of_freedom))
 
   cat("\nBounds by horizon:\n")

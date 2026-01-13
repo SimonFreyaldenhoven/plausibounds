@@ -12,7 +12,7 @@
 #'   to be normalized and not included in estimates.
 #'
 #' @return A list containing:
-#'   \item{cumulative_bounds}{A data frame with columns for horizon (event time), coefficients, and bounds}
+#'   \item{cumulative_bounds}{A data frame with columns for horizon (event time), unrestricted estimates, and bounds}
 #'   \item{ate}{Average treatment effect with standard error}
 #'   \item{metadata}{A list with metadata about the calculation}
 
@@ -80,14 +80,14 @@ calculate_cumulative_bounds <- function(estimates, var, alpha = 0.05,
     # Post-period bounds
     bounds_df_post <- data.frame(
       horizon = 1:p,
-      coef = estimates_post,
+      unrestr_est =estimates_post,
       lower = lb,
       upper = ub
     )
     # Pre-period (no ATE bounds for pre-periods)
     bounds_df_pre <- data.frame(
       horizon = -preperiods:-1,
-      coef = estimates_pre,
+      unrestr_est =estimates_pre,
       lower = NA_real_,
       upper = NA_real_
     )
@@ -95,7 +95,7 @@ calculate_cumulative_bounds <- function(estimates, var, alpha = 0.05,
   } else {
     bounds_df <- data.frame(
       horizon = 1:p,
-      coef = estimates_post,
+      unrestr_est =estimates_post,
       lower = lb,
       upper = ub
     )

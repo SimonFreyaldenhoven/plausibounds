@@ -17,8 +17,8 @@ test_that("calculate_restricted_bounds works with real example data", {
   # Check restricted bounds data frame
   expect_s3_class(result$restricted_bounds, "data.frame")
   expect_equal(nrow(result$restricted_bounds), n_test)
-  expect_named(result$restricted_bounds, c("horizon", "coef", "surrogate", "lower", "upper"))
-  expect_equal(result$restricted_bounds$coef, estimates_subset)
+  expect_named(result$restricted_bounds, c("horizon", "unrestr_est", "restr_est", "lower", "upper"))
+  expect_equal(result$restricted_bounds$unrestr_est, estimates_subset)
   
   # Check that bounds are properly ordered
   expect_true(all(result$restricted_bounds$lower <= result$restricted_bounds$upper))
@@ -48,15 +48,15 @@ test_that("calculate_restricted_bounds works with bighump data", {
   expect_s3_class(result, "restricted_bounds")
   expect_equal(nrow(result$restricted_bounds), n_test)
   
-  # Check that surrogate is smooth (restricted)
-  surrogate_diff <- diff(result$restricted_bounds$surrogate)
-  # Surrogate should be relatively smooth compared to original estimates
+  # Check that restr_est is smooth (restricted)
+  restr_est_diff <- diff(result$restricted_bounds$restr_est)
+  # Restricted estimate should be relatively smooth compared to original estimates
   estimates_diff <- diff(estimates_subset)
-  expect_true(var(surrogate_diff) <= var(estimates_diff))
-  
-  # Bounds should contain the surrogate
-  expect_true(all(result$restricted_bounds$lower <= result$restricted_bounds$surrogate))
-  expect_true(all(result$restricted_bounds$surrogate <= result$restricted_bounds$upper))
+  expect_true(var(restr_est_diff) <= var(estimates_diff))
+
+  # Bounds should contain the restr_est
+  expect_true(all(result$restricted_bounds$lower <= result$restricted_bounds$restr_est))
+  expect_true(all(result$restricted_bounds$restr_est <= result$restricted_bounds$upper))
 })
 
 test_that("calculate_restricted_bounds handles different alpha values", {
@@ -104,14 +104,14 @@ test_that("calculate_restricted_bounds handles parallel parameter", {
   result_par <- calculate_restricted_bounds(estimates, var, parallel = TRUE)
   
   # Results should be very similar
-  expect_equal(result_seq$restricted_bounds$horizon, 
+  expect_equal(result_seq$restricted_bounds$horizon,
                result_par$restricted_bounds$horizon)
-  expect_equal(result_seq$restricted_bounds$coef, 
-               result_par$restricted_bounds$coef)
-  
-  # Surrogate and bounds might have small numerical differences
-  expect_equal(result_seq$restricted_bounds$surrogate,
-               result_par$restricted_bounds$surrogate,
+  expect_equal(result_seq$restricted_bounds$unrestr_est,
+               result_par$restricted_bounds$unrestr_est)
+
+  # Restricted estimate and bounds might have small numerical differences
+  expect_equal(result_seq$restricted_bounds$restr_est,
+               result_par$restricted_bounds$restr_est,
                tolerance = 0.01)
 })
 
@@ -152,7 +152,7 @@ test_that("calculate_restricted_bounds works with edge cases", {
   result_two <- calculate_restricted_bounds(estimates_two, var_two)
   expect_s3_class(result_two, "restricted_bounds")
   expect_equal(nrow(result_two$restricted_bounds), 2)
-  expect_equal(result_two$restricted_bounds$coef, estimates_two)
+  expect_equal(result_two$restricted_bounds$unrestr_est, estimates_two)
   
   # Three estimates (minimum for meaningful restriction)
   estimates_three <- c(0.5, -0.3, 0.2)
@@ -195,24 +195,24 @@ test_that("calculate_restricted_bounds handles different variance structures", {
   expect_s3_class(result_corr, "restricted_bounds")
 })
 
-test_that("calculate_restricted_bounds produces smooth surrogates", {
+test_that("calculate_restricted_bounds produces smooth restricted estimates", {
   # Generate wiggly estimates
   set.seed(111)
   n <- 8
   t <- seq(0, 1, length.out = n)
   estimates <- sin(4 * pi * t) + rnorm(n, 0, 0.2)
   var <- diag(n) * 0.1
-  
+
   result <- calculate_restricted_bounds(estimates, var)
-  
-  # Surrogate should be smoother than original estimates
-  surrogate_roughness <- sum(diff(result$restricted_bounds$surrogate)^2)
+
+  # Restricted estimate should be smoother than original estimates
+  restr_est_roughness <- sum(diff(result$restricted_bounds$restr_est)^2)
   estimates_roughness <- sum(diff(estimates)^2)
-  
-  expect_true(surrogate_roughness < estimates_roughness)
-  
-  # Check that surrogate is within reasonable range of estimates
-  expect_true(all(abs(result$restricted_bounds$surrogate) <= 
+
+  expect_true(restr_est_roughness < estimates_roughness)
+
+  # Check that restr_est is within reasonable range of estimates
+  expect_true(all(abs(result$restricted_bounds$restr_est) <=
                  max(abs(estimates)) + 2 * sqrt(max(diag(var)))))
 })
 
@@ -252,13 +252,13 @@ test_that("calculate_restricted_bounds optimization works correctly", {
   var <- diag(n) * 0.1
   
   result <- calculate_restricted_bounds(estimates, var)
-  
-  # Surrogate should capture the trend
-  expect_true(all(diff(result$restricted_bounds$surrogate) >= -0.5))
+
+  # Restricted estimate should capture the trend
+  expect_true(all(diff(result$restricted_bounds$restr_est) >= -0.5))
   
   # Check that metadata contains expected fields
-  expect_true(!is.null(result$metadata$surrogate_class))
-  expect_true(is.character(result$metadata$surrogate_class))
+  expect_true(!is.null(result$metadata$restr_class))
+  expect_true(is.character(result$metadata$restr_class))
 })
 
 test_that("calculate_restricted_bounds handles constant estimates", {
@@ -268,9 +268,9 @@ test_that("calculate_restricted_bounds handles constant estimates", {
   var <- diag(n) * 0.1
   
   result <- calculate_restricted_bounds(estimates_const, var)
-  
-  # Surrogate should be approximately constant
-  expect_true(all(abs(diff(result$restricted_bounds$surrogate)) < 0.1))
+
+  # Restricted estimate should be approximately constant
+  expect_true(all(abs(diff(result$restricted_bounds$restr_est)) < 0.1))
   
   # Bounds should be relatively uniform
   widths <- result$restricted_bounds$upper - result$restricted_bounds$lower
@@ -368,9 +368,9 @@ test_that("calculate_restricted_bounds works with n_cores = 1", {
   expect_s3_class(result_1core, "restricted_bounds")
   expect_equal(result_1core$restricted_bounds$horizon,
                result_seq$restricted_bounds$horizon)
-  expect_equal(result_1core$restricted_bounds$coef,
-               result_seq$restricted_bounds$coef)
-  expect_equal(result_1core$restricted_bounds$surrogate,
-               result_seq$restricted_bounds$surrogate,
+  expect_equal(result_1core$restricted_bounds$unrestr_est,
+               result_seq$restricted_bounds$unrestr_est)
+  expect_equal(result_1core$restricted_bounds$restr_est,
+               result_seq$restricted_bounds$restr_est,
                tolerance = 0.01)
 })

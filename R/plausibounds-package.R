@@ -13,11 +13,11 @@
 #' The package includes example datasets to demonstrate the functionality:
 #' \itemize{
 #'   \item \code{\link{estimates_constant}} and \code{\link{var_iid}}:
-#'         A simple case with constant estimates and independent errors
+#'         A simple case with constant estimates and no correlation
 #'   \item \code{\link{estimates_bighump}} and \code{\link{var_bighump}}:
 #'         A case with sinusoidal estimates and moderate correlation
 #'   \item \code{\link{estimates_smooth}} and \code{\link{var_smooth}}:
-#'         Real-world treatment effects with 8 preperiods
+#'         A smooth case with effects that slowly level off and no correlation, from Figure 1 of Freyaldenhoven and Hansen (2026)
 #' }
 #'
 #' 

@@ -142,7 +142,7 @@ create_bounds_plot <- function(bounds_data, availability, annotations = NULL) {
   colors <- c(
       estimate = "black",
       restr_est = "cornflowerblue",
-      surrogate_bounds = "cornflowerblue",
+      restr_bounds = "cornflowerblue",
       pointwise = "darkgray",
       supt = "gray"
     )
@@ -150,7 +150,7 @@ create_bounds_plot <- function(bounds_data, availability, annotations = NULL) {
   line_types <- c(
       estimate = "solid",
       restr_est = "solid",
-      surrogate_bounds = "dashed",
+      restr_bounds = "dashed",
       pointwise = "solid",
       supt = "solid"
   )
@@ -173,8 +173,8 @@ create_bounds_plot <- function(bounds_data, availability, annotations = NULL) {
   if (nrow(df_post) > 0 && !all(is.na(df_post$restr_est))) {
     p <- p +
       ggplot2::geom_line(data = df_post, ggplot2::aes(y = restr_est, color = "restr_est", linetype = "restr_est")) +
-      ggplot2::geom_line(data = df_post, ggplot2::aes(y = lower, color = "surrogate_bounds", linetype = "surrogate_bounds")) +
-      ggplot2::geom_line(data = df_post, ggplot2::aes(y = upper, color = "surrogate_bounds", linetype = "surrogate_bounds"))
+      ggplot2::geom_line(data = df_post, ggplot2::aes(y = lower, color = "restr_bounds", linetype = "restr_bounds")) +
+      ggplot2::geom_line(data = df_post, ggplot2::aes(y = upper, color = "restr_bounds", linetype = "restr_bounds"))
   }
 
   # Add vertical line at event time 0 if we have pre-periods

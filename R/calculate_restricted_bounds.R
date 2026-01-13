@@ -114,7 +114,7 @@ calculate_restricted_bounds <- function(estimates, var, alpha = 0.05,
   best_J <- NULL
   best_obj <- NULL
   best_pval <- NULL
-  surrogate_class <- "polynomial"
+  restr_class <- "polynomial"
   
   Xtmp <- matrix(1, nrow = p, ncol = 1)
   res <- MDproj2(estimates, var, Xtmp)
@@ -143,7 +143,7 @@ calculate_restricted_bounds <- function(estimates, var, alpha = 0.05,
       best_obj <- res$bic
       best_J <- res$J
       best_pval <- res$model_fit_pval
-      surrogate_class <- "polynomial"
+      restr_class <- "polynomial"
       best_bic <- bic
     }
     mbhsf <- pmax(mbhsf, apply(abs(rd %*% res$J), 1, max))
@@ -160,7 +160,7 @@ calculate_restricted_bounds <- function(estimates, var, alpha = 0.05,
     J <- tryCatch(chol(cVdb), error = function(e) diag(p))
     best_fit <- list(estimates_proj = estimates_proj, var_proj = var_proj, obj = obj, J = J, model_fit_pval = model_fit_pval)
     best_df <- p
-    surrogate_class <- "unrestricted"
+    restr_class <- "unrestricted"
     best_bic <- bic_unrestricted
   }
   mbhsf <- pmax(mbhsf, apply(abs(rd %*% best_fit$J), 1, max))
@@ -315,7 +315,7 @@ calculate_restricted_bounds <- function(estimates, var, alpha = 0.05,
         best_obj <- result$best_obj
         best_J <- result$best_J
         best_pval <- result$best_pval
-        surrogate_class <- "M"
+        restr_class <- "M"
         best_bic <- result$best_bic
       }
       mbhsf <- pmax(mbhsf, result$mbhsf)
@@ -397,7 +397,7 @@ calculate_restricted_bounds <- function(estimates, var, alpha = 0.05,
     K = bestK,
     lambda1 = bestlam1,
     lambda2 = bestlam2,
-    surrogate_class = surrogate_class,
+    restr_class = restr_class,
     individual_upper = restricted_UB,
     individual_lower = restricted_LB,
     best_fit_model = best_fit_clean
