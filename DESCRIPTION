@@ -2,9 +2,9 @@ Package: plausibounds
 Title: Plausible Bounds for Treatment Path Estimates
 Version: 0.1.0
 Authors@R: c(
-    person("Simon", "Freyaldenhoven", , "simon.freyaldenhoven@phil.frb.org", role = c("aut")),
-    person("Christian", "Hansen", , "chansen1@chicagobooth.edu", role = c("aut")),
-    person("Ryan", "Kobler", , "kobleary@gmail.com", role = c("aut", "cre"))
+    person("Simon", "Freyaldenhoven", , "simon.freyaldenhoven@phil.frb.org", role = c("aut", "cph")),
+    person("Christian", "Hansen", , "chansen1@chicagobooth.edu", role = c("aut", "cph")),
+    person("Ryan", "Kobler", , "kobleary@gmail.com", role = c("aut", "cre", "cph"))
   )
 Description: Implements the additions to dynamic effect plots suggested in Freyaldenhoven and Hansen (2026) <https://simonfreyaldenhoven.github.io/papers/Plausible_bounds.pdf>. Data-driven smoothing delivers a smooth estimated path with potentially improved point estimation properties and confidence regions covering a surrogate that can be substantially tighter than conventional pointwise or uniform bands.
 License: MIT + file LICENSE
