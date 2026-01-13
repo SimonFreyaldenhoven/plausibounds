@@ -141,7 +141,7 @@ create_bounds_plot <- function(bounds_data, availability, annotations = NULL) {
 
   colors <- c(
       estimate = "black",
-      surrogate = "cornflowerblue",
+      restr_est = "cornflowerblue",
       surrogate_bounds = "cornflowerblue",
       pointwise = "darkgray",
       supt = "gray"
@@ -149,7 +149,7 @@ create_bounds_plot <- function(bounds_data, availability, annotations = NULL) {
 
   line_types <- c(
       estimate = "solid",
-      surrogate = "solid",
+      restr_est = "solid",
       surrogate_bounds = "dashed",
       pointwise = "solid",
       supt = "solid"
@@ -167,12 +167,12 @@ create_bounds_plot <- function(bounds_data, availability, annotations = NULL) {
   # Create base plot
   p <- ggplot2::ggplot(df, ggplot2::aes(x = horizon)) +
     ggplot2::geom_hline(yintercept = 0, linetype = "dotted", color = "black") +
-    ggplot2::geom_point(ggplot2::aes(y = coef, color = "estimate"))
+    ggplot2::geom_point(ggplot2::aes(y = unrestr_est, color = "estimate"))
 
   # Add surrogate and bounds only for post-periods
-  if (nrow(df_post) > 0 && !all(is.na(df_post$surrogate))) {
+  if (nrow(df_post) > 0 && !all(is.na(df_post$restr_est))) {
     p <- p +
-      ggplot2::geom_line(data = df_post, ggplot2::aes(y = surrogate, color = "surrogate", linetype = "surrogate")) +
+      ggplot2::geom_line(data = df_post, ggplot2::aes(y = restr_est, color = "restr_est", linetype = "restr_est")) +
       ggplot2::geom_line(data = df_post, ggplot2::aes(y = lower, color = "surrogate_bounds", linetype = "surrogate_bounds")) +
       ggplot2::geom_line(data = df_post, ggplot2::aes(y = upper, color = "surrogate_bounds", linetype = "surrogate_bounds"))
   }
@@ -210,8 +210,8 @@ create_bounds_plot <- function(bounds_data, availability, annotations = NULL) {
   }
 
   # Calculate y-axis limits to include all bounds
-  y_min <- min(df$coef, df$lower, na.rm = TRUE)
-  y_max <- max(df$coef, df$upper, na.rm = TRUE)
+  y_min <- min(df$unrestr_est, df$lower, na.rm = TRUE)
+  y_max <- max(df$unrestr_est, df$upper, na.rm = TRUE)
   
   # Include pointwise bounds in y-axis limits if available
   if ("pointwise_lower" %in% names(df) && "pointwise_upper" %in% names(df)) {
@@ -256,7 +256,7 @@ create_bounds_plot <- function(bounds_data, availability, annotations = NULL) {
     ggplot2::scale_color_manual(
       name = NULL,
       values = colors,
-      breaks = c("estimate", "surrogate"),
+      breaks = c("estimate", "restr_est"),
       labels = c("Point Estimates", "Restricted")
     ) +
     # Hide linetype from legend

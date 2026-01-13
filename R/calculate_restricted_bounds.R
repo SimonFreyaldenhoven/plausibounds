@@ -16,7 +16,7 @@
 #'
 #' @return A list containing:
 #'   \item{restricted_bounds}{A data frame with columns for horizon (event time),
-#'     coefficients, surrogate values, and bounds}
+#'     unrestricted estimates, restricted estimates, and plausible bounds}
 #'   \item{Wpre}{Wald test for no pre-trends (statistic and p-value), if preperiods > 0}
 #'   \item{Wpost}{Wald test for no treatment effect (statistic and p-value)}
 #'   \item{metadata}{A list with metadata about the calculation}
@@ -347,16 +347,16 @@ calculate_restricted_bounds <- function(estimates, var, alpha = 0.05,
     # Post-period bounds
     bounds_df_post <- data.frame(
       horizon = 1:p,
-      coef = estimates,
-      surrogate = best_fit$estimates_proj,
+      unrestr_est = estimates,
+      restr_est = best_fit$estimates_proj,
       lower = restricted_LB,
       upper = restricted_UB
     )
     # Pre-period bounds (no surrogate for pre-periods)
     bounds_df_pre <- data.frame(
       horizon = -preperiods:-1,
-      coef = estimates_pre,
-      surrogate = NA_real_,
+      unrestr_est = estimates_pre,
+      restr_est = NA_real_,
       lower = NA_real_,
       upper = NA_real_
     )
@@ -364,8 +364,8 @@ calculate_restricted_bounds <- function(estimates, var, alpha = 0.05,
   } else {
     bounds_df <- data.frame(
       horizon = 1:p,
-      coef = estimates,
-      surrogate = best_fit$estimates_proj,
+      unrestr_est = estimates,
+      restr_est = best_fit$estimates_proj,
       lower = restricted_LB,
       upper = restricted_UB
     )
