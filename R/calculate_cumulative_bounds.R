@@ -15,6 +15,9 @@
 #'   \item{cumulative_bounds}{A data frame with columns for horizon (event time), unrestricted estimates, and bounds}
 #'   \item{ate}{Average treatment effect with standard error}
 #'   \item{metadata}{A list with metadata about the calculation}
+#' @keywords internal
+#' @noRd
+
 
 calculate_cumulative_bounds <- function(estimates, var, alpha = 0.05,
                                        preperiods = 0) {

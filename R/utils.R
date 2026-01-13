@@ -23,6 +23,8 @@ bands_plugin <- function(delta, var, p, nsim = 2000, level = 0.95) {
 #'
 #' @return A list containing lower bounds, upper bounds, and critical value
 #' @keywords internal
+#' @noRd
+
 calculate_pointwise_bounds <- function(estimates, var, alpha) {
   pointwise_critical <- stats::qnorm(1 - alpha/2)
   pointwise_lower <- estimates - pointwise_critical * sqrt(diag(var))
@@ -43,6 +45,7 @@ calculate_pointwise_bounds <- function(estimates, var, alpha) {
 #'
 #' @return A list containing lower bounds, upper bounds, and critical value
 #' @keywords internal
+#' @noRd
 calculate_supt_bounds <- function(estimates, var, alpha) {
   p <- length(estimates)
   result <- bands_plugin(estimates, var, p, nsim = 2000, level = 1 - alpha)

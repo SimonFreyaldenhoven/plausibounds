@@ -21,7 +21,7 @@
 #'   \item{Wpost}{Wald test for no treatment effect (statistic and p-value)}
 #'   \item{metadata}{A list with metadata about the calculation}
 #' @keywords internal
-
+#' @noRd
 calculate_restricted_bounds <- function(estimates, var, alpha = 0.05,
                                        preperiods = 0,
                                        parallel = FALSE,
