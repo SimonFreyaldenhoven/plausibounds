@@ -19,8 +19,8 @@ The true effect is approximately constant, representing a simple treatment effec
 }
 \examples{
 data(estimates_constant)
-data(var_iid)
-result <- plausible_bounds(estimates_constant[1:4], var_iid[1:4, 1:4])
+data(var_constant)
+result <- plausible_bounds(estimates_constant[1:4], var_constant[1:4, 1:4])
 create_plot(result)
 }
 \keyword{datasets}

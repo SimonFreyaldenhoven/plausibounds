@@ -12,7 +12,7 @@ if (!dir.exists(fixtures_dir)) {
 
 # Load required data
 data(estimates_constant, envir = environment())
-data(var_iid, envir = environment())
+data(var_constant, envir = environment())
 data(estimates_bighump, envir = environment())
 data(var_bighump, envir = environment())
 
@@ -20,7 +20,7 @@ data(var_bighump, envir = environment())
 
 # Simple plausible bounds
 simple_plausible <- plausible_bounds(
-  estimates_constant, var_iid
+  estimates_constant, var_constant
 )
 saveRDS(simple_plausible, file.path(fixtures_dir, "simple_plausible.rds"))
 

@@ -1,12 +1,12 @@
 test_that("calculate_restricted_bounds works with real example data", {
   # Use smaller subset for computational efficiency
   data(estimates_constant)
-  data(var_iid)
+  data(var_constant)
 
   # Use first 10 observations for faster testing
   n_test <- min(7, length(estimates_constant))
   estimates_subset <- estimates_constant[1:n_test]
-  var_subset <- var_iid[1:n_test, 1:n_test]
+  var_subset <- var_constant[1:n_test, 1:n_test]
   
   result <- calculate_restricted_bounds(estimates_subset, var_subset)
   

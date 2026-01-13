@@ -14,106 +14,106 @@ block_diag_matrix <- function(A, B) {
 
 test_that("preperiods parameter accepts valid values", {
   data(estimates_constant, envir = environment())
-  data(var_iid, envir = environment())
+  data(var_constant, envir = environment())
 
   n_test <- 7
   # Valid: zero preperiods
-  expect_error(plausible_bounds(estimates_constant[1:n_test], var_iid[1:n_test, 1:n_test], preperiods = 0), NA)
+  expect_error(plausible_bounds(estimates_constant[1:n_test], var_constant[1:n_test, 1:n_test], preperiods = 0), NA)
 
   # Valid: single preperiod
   pre_single <- rnorm(1)
   Vpre_single <- matrix(0.1, 1, 1)
   estimates <- c(pre_single, estimates_constant[1:n_test])
-  var <- block_diag_matrix(Vpre_single, var_iid[1:n_test, 1:n_test])
+  var <- block_diag_matrix(Vpre_single, var_constant[1:n_test, 1:n_test])
   expect_error(plausible_bounds(estimates, var, preperiods = 1), NA)
 
   # Valid: multiple preperiods (8 pre + 7 post)
   pre_mean0 <- readRDS(test_path("fixtures", "preperiods_mean0.rds"))
   Vpre_iid <- readRDS(test_path("fixtures", "Vpre_iid.rds"))
   estimates_full <- c(pre_mean0, estimates_constant[1:7])
-  var_full <- block_diag_matrix(Vpre_iid, var_iid[1:7, 1:7])
+  var_full <- block_diag_matrix(Vpre_iid, var_constant[1:7, 1:7])
   expect_error(plausible_bounds(estimates_full, var_full, preperiods = 8), NA)
 })
 
 test_that("preperiods parameter rejects negative values", {
   data(estimates_constant, envir = environment())
-  data(var_iid, envir = environment())
+  data(var_constant, envir = environment())
 
   n_test <- 6
   expect_error(
-    plausible_bounds(estimates_constant[1:n_test], var_iid[1:n_test, 1:n_test], preperiods = -1),
+    plausible_bounds(estimates_constant[1:n_test], var_constant[1:n_test, 1:n_test], preperiods = -1),
     "preperiods must be a non-negative integer"
   )
 
   expect_error(
-    plausible_bounds(estimates_constant[1:n_test], var_iid[1:n_test, 1:n_test], preperiods = -5),
+    plausible_bounds(estimates_constant[1:n_test], var_constant[1:n_test, 1:n_test], preperiods = -5),
     "preperiods must be a non-negative integer"
   )
 })
 
 test_that("preperiods parameter rejects non-integer values", {
   data(estimates_constant, envir = environment())
-  data(var_iid, envir = environment())
+  data(var_constant, envir = environment())
 
   n_test <- 6
   expect_error(
-    plausible_bounds(estimates_constant[1:n_test], var_iid[1:n_test, 1:n_test], preperiods = 2.5),
+    plausible_bounds(estimates_constant[1:n_test], var_constant[1:n_test, 1:n_test], preperiods = 2.5),
     "preperiods must be a non-negative integer"
   )
 
   expect_error(
-    plausible_bounds(estimates_constant[1:n_test], var_iid[1:n_test, 1:n_test], preperiods = 3.7),
+    plausible_bounds(estimates_constant[1:n_test], var_constant[1:n_test, 1:n_test], preperiods = 3.7),
     "preperiods must be a non-negative integer"
   )
 })
 
 test_that("preperiods parameter rejects values >= length(estimates)", {
   data(estimates_constant, envir = environment())
-  data(var_iid, envir = environment())
+  data(var_constant, envir = environment())
 
   n_test <- 6
   expect_error(
-    plausible_bounds(estimates_constant[1:n_test], var_iid[1:n_test, 1:n_test], preperiods = n_test),
+    plausible_bounds(estimates_constant[1:n_test], var_constant[1:n_test, 1:n_test], preperiods = n_test),
     "preperiods must be less than the length of estimates"
   )
 
   expect_error(
-    plausible_bounds(estimates_constant[1:n_test], var_iid[1:n_test, 1:n_test], preperiods = n_test + 1),
+    plausible_bounds(estimates_constant[1:n_test], var_constant[1:n_test, 1:n_test], preperiods = n_test + 1),
     "preperiods must be less than the length of estimates"
   )
 })
 
 test_that("preperiods parameter rejects invalid types", {
   data(estimates_constant, envir = environment())
-  data(var_iid, envir = environment())
+  data(var_constant, envir = environment())
 
   n_test <- 6
   # Non-numeric string
   expect_error(
-    plausible_bounds(estimates_constant[1:n_test], var_iid[1:n_test, 1:n_test], preperiods = "two"),
+    plausible_bounds(estimates_constant[1:n_test], var_constant[1:n_test, 1:n_test], preperiods = "two"),
     "preperiods must be a non-negative integer"
   )
 
   # NULL
   expect_error(
-    plausible_bounds(estimates_constant[1:n_test], var_iid[1:n_test, 1:n_test], preperiods = NULL),
+    plausible_bounds(estimates_constant[1:n_test], var_constant[1:n_test, 1:n_test], preperiods = NULL),
     "preperiods must be a non-negative integer"
   )
 
   # NA
   expect_error(
-    plausible_bounds(estimates_constant[1:n_test], var_iid[1:n_test, 1:n_test], preperiods = NA),
+    plausible_bounds(estimates_constant[1:n_test], var_constant[1:n_test, 1:n_test], preperiods = NA),
     "preperiods must be a non-negative integer"
   )
 })
 
 test_that("preperiods parameter rejects vector inputs", {
   data(estimates_constant, envir = environment())
-  data(var_iid, envir = environment())
+  data(var_constant, envir = environment())
 
   n_test <- 6
   expect_error(
-    plausible_bounds(estimates_constant[1:n_test], var_iid[1:n_test, 1:n_test], preperiods = c(1, 2)),
+    plausible_bounds(estimates_constant[1:n_test], var_constant[1:n_test, 1:n_test], preperiods = c(1, 2)),
     "preperiods must be a non-negative integer"
   )
 })
@@ -125,12 +125,12 @@ test_that("core functionality with 8 preperiods (mean0 scenario)", {
   pre_mean0 <- readRDS(test_path("fixtures", "preperiods_mean0.rds"))
   Vpre_iid <- readRDS(test_path("fixtures", "Vpre_iid.rds"))
   data(estimates_constant, envir = environment())
-  data(var_iid, envir = environment())
+  data(var_constant, envir = environment())
 
   npre <- 8
   npost <- 7
   estimates <- c(pre_mean0[1:npre], estimates_constant[1:npost])
-  var <- block_diag_matrix(Vpre_iid[1:npre, 1:npre], var_iid[1:npost, 1:npost])
+  var <- block_diag_matrix(Vpre_iid[1:npre, 1:npre], var_constant[1:npost, 1:npost])
 
   # Call functions once (used across multiple assertions below)
   result <- plausible_bounds(estimates, var, preperiods = npre)
@@ -185,7 +185,7 @@ test_that("core functionality with 8 preperiods (mean0 scenario)", {
   # Test 8: Pre and post periods treated as independent blocks
   var_block <- matrix(0, npre + npost, npre + npost)
   var_block[1:npre, 1:npre] <- Vpre_iid[1:npre, 1:npre]
-  var_block[(npre + 1):(npre + npost), (npre + 1):(npre + npost)] <- var_iid[1:npost, 1:npost]
+  var_block[(npre + 1):(npre + npost), (npre + 1):(npre + npost)] <- var_constant[1:npost, 1:npost]
   estimates_block <- c(pre_mean0[1:npre], estimates_constant[1:npost])
   result_block <- plausible_bounds(estimates_block, var_block, preperiods = npre)
   expect_true(all(var_block[1:npre, (npre + 1):(npre + npost)] == 0))
@@ -215,9 +215,9 @@ test_that("zero preperiods functionality", {
   skip_on_cran()
   # Setup data once for all assertions
   data(estimates_constant, envir = environment())
-  data(var_iid, envir = environment())
+  data(var_constant, envir = environment())
 
-  result <- plausible_bounds(estimates_constant[1:7], var_iid[1:7, 1:7], preperiods = 0)
+  result <- plausible_bounds(estimates_constant[1:7], var_constant[1:7, 1:7], preperiods = 0)
 
   # Test 1: Wpre is NULL when preperiods = 0
   expect_null(result$wald_test$pre)
@@ -230,13 +230,13 @@ test_that("zero preperiods functionality", {
 
 test_that("Wpre fails for reject scenario with pre-trends", {
   data(estimates_constant, envir = environment())
-  data(var_iid, envir = environment())
+  data(var_constant, envir = environment())
 
   # Test with reject scenario (designed to fail) - use 8 pre + 7 post
   pre_reject <- readRDS(test_path("fixtures", "preperiods_reject.rds"))
   Vpre_reject <- readRDS(test_path("fixtures", "Vpre_reject.rds"))
   estimates <- c(pre_reject, estimates_constant[1:7])
-  var <- block_diag_matrix(Vpre_reject, var_iid[1:7, 1:7])
+  var <- block_diag_matrix(Vpre_reject, var_constant[1:7, 1:7])
 
   result <- plausible_bounds(estimates, var, preperiods = 8)
 
@@ -249,15 +249,15 @@ test_that("Wpost is computed on post-periods only", {
   pre_mean0 <- readRDS(test_path("fixtures", "preperiods_mean0.rds"))
   Vpre_iid <- readRDS(test_path("fixtures", "Vpre_iid.rds"))
   data(estimates_constant, envir = environment())
-  data(var_iid, envir = environment())
+  data(var_constant, envir = environment())
 
   # With preperiods - use 8 pre + 7 post
   estimates <- c(pre_mean0, estimates_constant[1:7])
-  var <- block_diag_matrix(Vpre_iid, var_iid[1:7, 1:7])
+  var <- block_diag_matrix(Vpre_iid, var_constant[1:7, 1:7])
   result_with_pre <- plausible_bounds(estimates, var, preperiods = 8)
 
   # Without preperiods (same post data) - use 6 post
-  result_no_pre <- plausible_bounds(estimates_constant[1:7], var_iid[1:7, 1:7], preperiods = 0)
+  result_no_pre <- plausible_bounds(estimates_constant[1:7], var_constant[1:7, 1:7], preperiods = 0)
 
   # Wpost should be the same (only depends on post-periods)
   expect_equal(
@@ -279,14 +279,14 @@ test_that("ATE is computed from post-periods only", {
   pre_mean0 <- readRDS(test_path("fixtures", "preperiods_mean0.rds"))
   Vpre_iid <- readRDS(test_path("fixtures", "Vpre_iid.rds"))
   data(estimates_constant, envir = environment())
-  data(var_iid, envir = environment())
+  data(var_constant, envir = environment())
 
   # Use 8 pre + 7 post
   estimates <- c(pre_mean0, estimates_constant[1:7])
-  var <- block_diag_matrix(Vpre_iid, var_iid[1:7, 1:7])
+  var <- block_diag_matrix(Vpre_iid, var_constant[1:7, 1:7])
 
   result_with_pre <- plausible_bounds(estimates, var, preperiods = 8)
-  result_no_pre <- plausible_bounds(estimates_constant[1:7], var_iid[1:7, 1:7], preperiods = 0)
+  result_no_pre <- plausible_bounds(estimates_constant[1:7], var_constant[1:7, 1:7], preperiods = 0)
 
   # ATE should be the same (only depends on post-periods)
   expect_equal(
@@ -308,11 +308,11 @@ test_that("supt bounds use critical value from all periods", {
   pre_mean0 <- readRDS(test_path("fixtures", "preperiods_mean0.rds"))
   Vpre_iid <- readRDS(test_path("fixtures", "Vpre_iid.rds"))
   data(estimates_constant, envir = environment())
-  data(var_iid, envir = environment())
+  data(var_constant, envir = environment())
 
   # Use 8 pre + 7 post
   estimates <- c(pre_mean0, estimates_constant[1:7])
-  var <- block_diag_matrix(Vpre_iid, var_iid[1:7, 1:7])
+  var <- block_diag_matrix(Vpre_iid, var_constant[1:7, 1:7])
 
   result <- plausible_bounds(estimates, var, preperiods = 8, include_supt = TRUE)
 
@@ -337,10 +337,10 @@ test_that("plotting handles preperiods correctly", {
   pre_mean0 <- readRDS(test_path("fixtures", "preperiods_mean0.rds"))
   Vpre_iid <- readRDS(test_path("fixtures", "Vpre_iid.rds"))
   data(estimates_constant, envir = environment())
-  data(var_iid, envir = environment())
+  data(var_constant, envir = environment())
 
   estimates <- c(pre_mean0, estimates_constant[1:7])
-  var <- block_diag_matrix(Vpre_iid, var_iid[1:7, 1:7])
+  var <- block_diag_matrix(Vpre_iid, var_constant[1:7, 1:7])
   result <- plausible_bounds(estimates, var, preperiods = 8)
 
   # Call plot once (used across multiple assertions below)
@@ -368,13 +368,13 @@ test_that("plotting handles preperiods correctly", {
 
 test_that("single preperiod works correctly", {
   data(estimates_constant, envir = environment())
-  data(var_iid, envir = environment())
+  data(var_constant, envir = environment())
 
   # Single preperiod + 6 post
   pre_single <- rnorm(1, mean = 0, sd = 0.3)
   Vpre_single <- matrix(0.1, 1, 1)
   estimates <- c(pre_single, estimates_constant[1:5])
-  var <- block_diag_matrix(Vpre_single, var_iid[1:5, 1:5])
+  var <- block_diag_matrix(Vpre_single, var_constant[1:5, 1:5])
 
   result <- plausible_bounds(estimates, var, preperiods = 1)
   expect_equal(result$preperiods, 1)

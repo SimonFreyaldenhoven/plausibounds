@@ -137,13 +137,13 @@ test_that("parallel and non-parallel results are identical", {
   
   # Test with constant estimates and IID errors
   data(estimates_constant)
-  data(var_iid)
+  data(var_constant)
 
   # Run with parallel = TRUE
   set.seed(42)  # Set seed for reproducibility
   result_parallel_const <- plausible_bounds(
     estimates_constant[1:l],
-    var_iid[1:l,1:l],
+    var_constant[1:l,1:l],
     parallel = TRUE
   )
   
@@ -151,7 +151,7 @@ test_that("parallel and non-parallel results are identical", {
   set.seed(42)  # Reset seed to ensure same random numbers
   result_sequential_const <- plausible_bounds(
     estimates_constant[1:l],
-    var_iid[1:l,1:l],
+    var_constant[1:l,1:l],
     parallel = FALSE
   )
   

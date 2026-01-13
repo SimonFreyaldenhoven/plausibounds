@@ -1,10 +1,10 @@
 test_that("calculate_cumulative_bounds works with real example data", {
   # Test with constant IID data (use subset for CRAN efficiency)
   data(estimates_constant)
-  data(var_iid)
+  data(var_constant)
 
   n_test <- 6
-  result <- calculate_cumulative_bounds(estimates_constant[1:n_test], var_iid[1:n_test, 1:n_test])
+  result <- calculate_cumulative_bounds(estimates_constant[1:n_test], var_constant[1:n_test, 1:n_test])
   
   expect_s3_class(result, "cumulative_bounds")
   expect_s3_class(result, "plausible_bounds_result")
@@ -54,18 +54,18 @@ test_that("calculate_cumulative_bounds works with bighump data", {
 
 test_that("calculate_cumulative_bounds handles different alpha values", {
   data(estimates_constant)
-  data(var_iid)
+  data(var_constant)
 
   n_test <- 6
   # Test with different confidence levels
   result_99 <- calculate_cumulative_bounds(estimates_constant[1:n_test],
-                                          var_iid[1:n_test, 1:n_test],
+                                          var_constant[1:n_test, 1:n_test],
                                           alpha = 0.01)
   result_95 <- calculate_cumulative_bounds(estimates_constant[1:n_test],
-                                          var_iid[1:n_test, 1:n_test],
+                                          var_constant[1:n_test, 1:n_test],
                                           alpha = 0.05)
   result_90 <- calculate_cumulative_bounds(estimates_constant[1:n_test],
-                                          var_iid[1:n_test, 1:n_test],
+                                          var_constant[1:n_test, 1:n_test],
                                           alpha = 0.10)
   
   # Check alpha is stored correctly
@@ -187,15 +187,15 @@ test_that("calculate_cumulative_bounds handles different variance structures", {
 
 test_that("calculate_cumulative_bounds produces reproducible results", {
   data(estimates_constant)
-  data(var_iid)
+  data(var_constant)
 
   n_test <- 6
   # Calculate bounds (note: this function is deterministic, no randomness)
   result1 <- calculate_cumulative_bounds(estimates_constant[1:n_test],
-                                        var_iid[1:n_test, 1:n_test])
+                                        var_constant[1:n_test, 1:n_test])
 
   result2 <- calculate_cumulative_bounds(estimates_constant[1:n_test],
-                                        var_iid[1:n_test, 1:n_test])
+                                        var_constant[1:n_test, 1:n_test])
 
   # Results should be identical
   expect_identical(result1$cumulative_bounds, result2$cumulative_bounds)

@@ -12,7 +12,7 @@
 #' @section Example Datasets:
 #' The package includes example datasets to demonstrate the functionality:
 #' \itemize{
-#'   \item \code{\link{estimates_constant}} and \code{\link{var_iid}}:
+#'   \item \code{\link{estimates_constant}} and \code{\link{var_constant}}:
 #'         A simple case with constant estimates and no correlation
 #'   \item \code{\link{estimates_bighump}} and \code{\link{var_bighump}}:
 #'         A case with sinusoidal estimates and moderate correlation

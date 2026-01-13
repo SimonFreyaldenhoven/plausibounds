@@ -7,8 +7,8 @@
 #' @source Generated from simulation with constant design and IID errors
 #' @examples
 #' data(estimates_constant)
-#' data(var_iid)
-#' result <- plausible_bounds(estimates_constant[1:4], var_iid[1:4, 1:4])
+#' data(var_constant)
+#' result <- plausible_bounds(estimates_constant[1:4], var_constant[1:4, 1:4])
 #' create_plot(result)
 "estimates_constant"
 
@@ -21,10 +21,10 @@
 #' @source Generated from simulation with constant design and IID errors
 #' @examples
 #' data(estimates_constant)
-#' data(var_iid)
-#' result <- plausible_bounds(estimates_constant[1:4], var_iid[1:4, 1:4])
+#' data(var_constant)
+#' result <- plausible_bounds(estimates_constant[1:4], var_constant[1:4, 1:4])
 #' create_plot(result)
-"var_iid"
+"var_constant"
 
 #' Smooth Estimates from Freyaldenhoven and Hansen (2026)
 #'

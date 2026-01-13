@@ -71,7 +71,7 @@ set.seed(916)
 # Generate constant estimates with IID errors (rho = 0)
 sim_constant <- simulate_dgp("constant", rho = 0, se = 0.014, p = 12)
 estimates_constant <- sim_constant$dhat
-var_iid <- sim_constant$Vhat
+var_constant <- sim_constant$Vhat
 
 # Generate bighump estimates with moderate correlation (rho = 0.5)
 # Big hump in first 6 periods, then flat at zero for remaining 30 periods = 36 total
@@ -89,7 +89,7 @@ estimates_smooth <- as.numeric(ex$dall)
 usethis::use_data(estimates_smooth, overwrite = TRUE)
 usethis::use_data(var_smooth, overwrite = TRUE)
 usethis::use_data(estimates_constant, overwrite = TRUE)
-usethis::use_data(var_iid, overwrite = TRUE)
+usethis::use_data(var_constant, overwrite = TRUE)
 usethis::use_data(estimates_bighump, overwrite = TRUE)
 usethis::use_data(var_bighump, overwrite = TRUE)
 
