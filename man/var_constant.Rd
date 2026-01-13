@@ -3,12 +3,12 @@
 \docType{data}
 \name{var_constant}
 \alias{var_constant}
-\title{Variance Matrix for Constant Estimates with IID Errors}
+\title{Variance Matrix for Constant Estimates}
 \format{
 A 12 x 12 matrix
 }
 \source{
-Generated from simulation with constant design and IID errors
+Generated from simulation with constant design and no correlation across horizons.
 }
 \usage{
 var_constant

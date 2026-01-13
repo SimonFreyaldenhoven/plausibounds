@@ -83,8 +83,8 @@ var_bighump <- sim_bighump$Vhat
 library(R.matlab)
 smooth <- readMat("analysis/preperiod_data.mat")
 
-var_smooth <- ex$Vall
-estimates_smooth <- as.numeric(ex$dall)
+var_smooth <- smooth$Vall
+estimates_smooth <- as.numeric(smooth$dall)
 
 usethis::use_data(estimates_smooth, overwrite = TRUE)
 usethis::use_data(var_smooth, overwrite = TRUE)

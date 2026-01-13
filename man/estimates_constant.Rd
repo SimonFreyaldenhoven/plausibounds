@@ -3,19 +3,18 @@
 \docType{data}
 \name{estimates_constant}
 \alias{estimates_constant}
-\title{Constant Estimates with IID Errors}
+\title{Constant Estimates}
 \format{
 A numeric vector with 12 elements
 }
 \source{
-Generated from simulation with constant design and IID errors
+Generated from simulation with constant design and no correlation across horizons
 }
 \usage{
 estimates_constant
 }
 \description{
-A dataset containing estimates from a constant design, independent across horizons.
-The true effect is approximately constant, representing a simple treatment effect scenario.
+A dataset containing estimates from a simple constant design, no correlation across horizons.
 }
 \examples{
 data(estimates_constant)

@@ -1,10 +1,9 @@
-#' Constant Estimates with IID Errors
+#' Constant Estimates
 #'
-#' A dataset containing estimates from a constant design, independent across horizons.
-#' The true effect is approximately constant, representing a simple treatment effect scenario.
+#' A dataset containing estimates from a simple constant design, no correlation across horizons.
 #'
 #' @format A numeric vector with 12 elements
-#' @source Generated from simulation with constant design and IID errors
+#' @source Generated from simulation with constant design and no correlation across horizons
 #' @examples
 #' data(estimates_constant)
 #' data(var_constant)
@@ -12,13 +11,13 @@
 #' create_plot(result)
 "estimates_constant"
 
-#' Variance Matrix for Constant Estimates with IID Errors
+#' Variance Matrix for Constant Estimates
 #'
-#' A variance matrix for the constant, independent, and identically distributed estimates.
+#' A variance matrix for the constant estimates.
 #' This is a diagonal matrix representing no correlation across time periods.
 #'
 #' @format A 12 x 12 matrix
-#' @source Generated from simulation with constant design and IID errors
+#' @source Generated from simulation with constant design and no correlation across horizons.
 #' @examples
 #' data(estimates_constant)
 #' data(var_constant)
@@ -28,11 +27,11 @@
 
 #' Smooth Estimates from Freyaldenhoven and Hansen (2026)
 #'
-#' A dataset containing smooth treatment effect estimates that dip down and then level off.
+#' A dataset containing smooth treatment effect estimates that dip down and then converge to zero.
 #' The first 8 observations comprise the preperiods, the next 36 are post-period.
 #'
 #' @format A numeric vector with 44 elements (8 preperiods, 36 postperiods)
-#' @source Point estimates from in Figure 1 of Freyaldenhoven and Hansen (2026)
+#' @source Point estimates from Figure 1 of Freyaldenhoven and Hansen (2026)
 #' @examples
 #' data(estimates_smooth)
 #' data(var_smooth)
@@ -47,7 +46,7 @@
 #' The first 8 rows and 8 columns comprise the variance matrix for the 8 preperiods.
 #'
 #' @format A 44 x 44 matrix 
-#' @source Variance Matrix of Figure 1 of Freyaldenhoven and Hansen (2026)
+#' @source Variance Matrix from Figure 1 of Freyaldenhoven and Hansen (2026)
 #' @examples
 #' data(estimates_smooth)
 #' data(var_smooth)

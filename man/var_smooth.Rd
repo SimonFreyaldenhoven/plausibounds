@@ -8,7 +8,7 @@
 A 44 x 44 matrix
 }
 \source{
-Variance Matrix of Figure 1 of Freyaldenhoven and Hansen (2026)
+Variance Matrix from Figure 1 of Freyaldenhoven and Hansen (2026)
 }
 \usage{
 var_smooth

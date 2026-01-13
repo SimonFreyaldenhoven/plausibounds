@@ -8,13 +8,13 @@
 A numeric vector with 44 elements (8 preperiods, 36 postperiods)
 }
 \source{
-Point estimates from in Figure 1 of Freyaldenhoven and Hansen (2026)
+Point estimates from Figure 1 of Freyaldenhoven and Hansen (2026)
 }
 \usage{
 estimates_smooth
 }
 \description{
-A dataset containing smooth treatment effect estimates that dip down and then level off.
+A dataset containing smooth treatment effect estimates that dip down and then converge to zero.
 The first 8 observations comprise the preperiods, the next 36 are post-period.
 }
 \examples{
