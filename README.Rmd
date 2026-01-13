@@ -1,0 +1,79 @@
+---
+output: github_document
+---
+
+# plausibounds
+
+<!-- badges: start -->
+[![CRAN status](https://www.r-pkg.org/badges/version/plausibounds)](https://CRAN.R-project.org/package=plausibounds)
+[![CRAN RStudio mirror downloads](https://cranlogs.r-pkg.org/badges/grand-total/plausibounds)](https://r-pkg.org/pkg/plausibounds)
+<!-- badges: end -->
+
+```{r, echo = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.path = "man/figures/README-"
+)
+```
+
+## Overview
+
+The `plausibounds` package implements the additions to dynamic effect plots suggested in [Freyaldenhoven and Hansen (2026)](https://simonfreyaldenhoven.github.io/papers/Plausible_bounds.pdf). Data-driven smoothing delivers a smooth estimated path with potentially improved point estimation properties and confidence regions covering a surrogate that can be substantially tighter than conventional pointwise or uniform bands.
+
+## Installation
+
+```{r, eval = FALSE}
+# Install from CRAN
+install.packages("plausibounds")
+
+# Install latest version from GitHub
+install.packages("devtools")
+devtools::install_github("SimonFreyaldenhoven/plausibounds")
+```
+
+## Usage
+
+Find a minimal example below. For more information see the package [documentation](https://cran.r-project.org/package=plausibounds/plausibounds.pdf) and [vignette](https://cran.r-project.org/package=plausibounds/vignettes/documentation.html).
+
+```{r example, results = FALSE, message = FALSE}
+library(plausibounds)
+library(ggplot2)
+
+set.seed(916)
+
+# Load example data
+data(estimates_bighump)
+data(var_bighump)
+
+# Compute restricted bounds for 1 year of estimates
+pb <- plausible_bounds(
+  estimates = estimates_bighump[1:12],
+  var = var_bighump[1:12, 1:12]
+)
+```
+
+```{r view-plot}
+# View results
+summary(pb)
+
+# Visualize bounds
+create_plot(pb)
+```
+
+```{r, eval = FALSE}
+# Example with parallel processing
+pb_parallel <- plausible_bounds(
+  estimates = estimates_bighump,
+  var = var_bighump,
+  alpha = 0.05,
+  parallel = TRUE,
+  n_cores = 4
+)
+```
+
+## Citation
+
+Simon Freyaldenhoven, Christian Hansen. "(Visualizing) Plausible Treatment Effect Paths." Federal Reserve Bank of Philadelphia and University of Chicago, 2026.
+
+Simon Freyaldenhoven, Christian Hansen, Ryan Kobler. "`plausibounds` package." Code and data repository at <https://github.com/SimonFreyaldenhoven/plausibounds>, 2026.

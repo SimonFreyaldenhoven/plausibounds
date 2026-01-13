@@ -1,24 +1,23 @@
-#' plausibounds: Plausible Bounds for Impulse Response Functions
+#' plausibounds: Plausible Bounds for Treatment Path Estimates
 #'
-#' The plausibounds package provides methods for calculating plausible bounds
-#' for impulse response functions. It implements both cumulative and restricted
-#' bounds calculations, as well as visualization tools.
+#' Enhances dynamic effect plots as suggested in Freyaldenhoven and Hansen (2026). 
+#' Data-driven smoothing delivers a smooth estimated path with potentially improved point estimation properties and confidence regions covering a surrogate that can be substantially tighter than conventional pointwise or uniform bands.
 #'
 #' @section Main Functions:
 #' \itemize{
-#'   \item \code{\link{plausible_bounds}}: Calculate both cumulative and restricted bounds
-#'   \item \code{\link{calculate_cumulative_bounds}}: Calculate cumulative bounds
-#'   \item \code{\link{calculate_restricted_bounds}}: Calculate restricted bounds
+#'   \item \code{\link{plausible_bounds}}: Calculate plausible bounds
 #'   \item \code{\link{create_plot}}: Create plots of the bounds
 #' }
 #'
 #' @section Example Datasets:
 #' The package includes example datasets to demonstrate the functionality:
 #' \itemize{
-#'   \item \code{\link{estimates_constant_iid}} and \code{\link{var_constant_iid}}: 
-#'         A simple case with constant estimates and independent errors
-#'   \item \code{\link{estimates_wiggly_strong_corr}} and \code{\link{var_wiggly_strong_corr}}:
-#'         A complex case with wiggly estimates and strongly correlated errors
+#'   \item \code{\link{estimates_constant}} and \code{\link{var_constant}}:
+#'         A simple case with constant estimates and no correlation
+#'   \item \code{\link{estimates_bighump}} and \code{\link{var_bighump}}:
+#'         A case with sinusoidal estimates and moderate correlation
+#'   \item \code{\link{estimates_smooth}} and \code{\link{var_smooth}}:
+#'         A smooth case with effects that slowly level off and no correlation, from Figure 1 of Freyaldenhoven and Hansen (2026)
 #' }
 #'
 #' 

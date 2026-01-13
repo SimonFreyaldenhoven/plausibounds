@@ -1,0 +1,9 @@
+citHeader("To cite the plausibounds package in publications use:")
+
+bibentry(
+  bibtype  = "Misc",
+  title    = "plausibounds package",
+  author   = "Simon Freyaldenhoven, Christian Hansen, Ryan Kobler",
+  url      = "https://github.com/SimonFreyaldenhoven/plausibounds",
+  year     = 2026
+)

@@ -1,0 +1,202 @@
+---
+title: "Introduction to plausibounds: Computing Plausible Bounds for dynamic effect plots"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Introduction to plausibounds}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.width = 7,
+  fig.height = 5,
+  fig.align = "center"
+)
+```
+
+```{r setup}
+library(plausibounds)
+library(ggplot2)
+```
+## Dynamic Effect Plots
+
+To understand the dynamic effects of a policy, it is common to summarize estimated effects over time in a dynamic effect (or event-study) plot. For example, a macroeconomist may estimate the response of the Consumer Price Index to a monetary shock via local projections, or a microeconomist may estimate the response of labor market outcomes to a change in welfare policies via distributed lag models.
+
+## Overview
+
+The `plausibounds` package provides simple additions to standard visualizations of dynamic treatment effects aimed at enhancing their informativeness following [Freyaldenhoven and Hansen (2026)](https://simonfreyaldenhoven.github.io/papers/Plausible_bounds.pdf). In particular, it provides functionality to:
+
+* include joint hypothesis tests and summary measures that are often of direct interest alongside the standard event-study plot.
+
+* compute a smooth approximation to the treatment-effect path from a prespecified, economically motivated class and produces corresponding confidence regions. The resulting intervals can be substantially tighter than conventional uniform bands while maintaining formal coverage guarantees through post-selection inference (Berk et al. [2013]).
+
+## Background
+
+We write $\theta=(\beta^{pre'},\beta')'$ for the $p \times 1$ vector that collects the elements of the dynamic treatment effect path depicted on the dynamic effect plot. Here, $\beta_{pre} = \{\beta^{pre}_h\}_{h={-L}}^{-1}$ denotes the displayed pre-event effects, $\beta=\{\beta_h\}_{h={1}}^{H}$ collects the dynamic treatment effect path after the event up to the fixed maximum horizon of interest $H$, and thus $p = H+L$. We assume access to point estimates of the parameters $\theta_h$, denoted by $\hat{\theta}_h$, that correspond to the cumulative effect of the policy at horizon $h$ relative to period 0. Throughout, we assume the vector that collects the estimated dynamic treatment effect path, $\hat\theta$, satisfies $\hat\theta \sim N(\theta,V_{\theta})$ and that we have access to the covariance matrix $V_{\theta}$. Leading examples to obtain such estimates include distributed lag models, local projections, and event studies.
+
+The package takes $\hat{\theta}$ and $\hat{V}_{\theta}$ as input.
+
+## Choosing the surrogate model
+
+The main contribution is to include new visual elements meant to depict approximations to the underlying effect path constrained to exhibit economically and statistically plausible shapes. Intuitively, these elements formalize "visual data snooping": Our proposal approximates looking at a dynamic effect plot and then choosing a specification that "captures the main dynamics." 
+This specification should a) provide a notion of valid inference that explicitly accounts for the data-dependent choice of specification and b) use the full covariance structure of the estimates when choosing the specification.
+
+Specifically, we construct *restricted estimates* and *plausible bounds* by using data-driven regularization to select an approximation to the treatment path from a pre-specified class of models. We consider a default universe of approximations motivated by a preference for (1) smooth dynamics that (2) eventually die out. The restricted estimates are the resulting regularized point estimates of the treatment path. Our plausible bounds are sup-t bands under the selected approximation, adjusted to account for data-dependent selection using Berk et al.'s [2013] post-selection inference (PoSI).
+
+Intuitively, the plausible bounds represent a compromise between inference under no restrictions --- which may yield very wide confidence intervals --- and inference based on a single, prespecified model that does not adapt to the data and may therefore be overly restrictive.
+
+For the technical details, see Section 3 of Freyaldenhoven and Hansen (2026).
+
+
+## Basic Usage
+
+Let's start by examining the structure of the example datasets included in the package:
+
+```{r data-structure}
+# Load example datasets
+data(estimates_smooth)
+data(var_smooth)
+
+# Examine the data structures
+print(estimates_smooth)
+print(var_smooth[1:4, 1:4])
+```
+
+The `estimates_smooth` vector contains 36 treatment effect estimates at different horizons and 8 preperiods. The `var_smooth` matrix is a diagonal variance matrix with no correlation between periods.
+
+### Example 1: No Correlation Estimates
+
+A simple case uses the `plausible_bounds()` function with just the estimates and variance. The `alpha` parameter controls the confidence level (default is 0.05 for 95% confidence):
+
+```{r iid-example, results = FALSE, message = FALSE, cache = FALSE}
+# Remove pretrends from the example dataset
+estimates_smooth_nopretrends <- estimates_smooth[9:44]
+var_smooth_nopretrends <- var_smooth[9:44, 9:44]
+
+set.seed(916)
+
+pb <- plausible_bounds(
+  estimates = estimates_smooth_nopretrends,
+  var = var_smooth_nopretrends
+)
+```
+
+The returned object is a list containing the bounds, test statistics, and metadata. The `summary()` method extracts the key results in a tabular format, showing the horizon, unrestricted estimates, restricted estimates, and restricted/plausible bounds for that path:
+
+```{r summary}
+summary(pb)
+```
+
+For a more detailed view of the object structure:
+
+```{r structure-iid}
+str(pb)
+```
+
+The object contains several components. The `restricted_bounds` data frame is identical to that produced with the `summary()` method.
+The `restricted_bounds_metadata` list stores information about the model selection process, including the model class selected (e.g., polynomial or penalized smoothing), the degrees of freedom, and the sup-t critical value used in constructing the bounds.
+The `avg_treatment_effect` component provides the average treatment effect estimate, its standard error, and confidence interval. 
+
+When arguments `include_pointwise` and `include_supt` of `plausible_bounds()` are `TRUE` (the default), the object also contains `pointwise_bounds` and `supt_bounds` lists with the corresponding confidence bounds. 
+Finally, `wald_test` contains test statistics and p-values for testing the joint null hypothesis of no treatment effect.
+
+
+
+### Visualization with `create_plot()`
+
+Next let's plot the results:
+
+```{r plot-iid, fig.cap="Plausible bounds for treatment path estimates with no correlation"}
+create_plot(pb)
+```
+
+The plot displays several types of bounds and statistics, each serving a different inferential purpose:
+
+**Unrestricted estimates (black dots)**: The original treatment effect estimates $\hat{\beta}_h$ at each horizon.
+
+**Plausible bounds (blue dashed lines)**: These bounds provide uniform $(1-\alpha)$ coverage for the selected restricted estimates, not the true treatment path itself. The restricted path is chosen via BIC from the pre-specified model universe and represents a data-dependent smoothed approximation to the true treatment path.
+
+**Restricted estimates (blue line)**: The restricted estimates are the smoothed point estimates under the selected regularization.
+
+**Pointwise bounds (gray horizontal bars)**: Standard confidence intervals for each horizon separately, constructed as $\hat{\beta}_h \pm z_{1-\alpha/2} \sqrt{V_{\beta,hh}}$. 
+
+**Sup-t bounds (gray vertical lines)**: Uniform confidence bands that provide $(1-\alpha)$ joint coverage of the entire treatment path. These are constructed using the supremum of $t$-statistics from individual estimates. Guarantee full-path coverage but can become quite wide.
+
+**Annotations**: The bottom of the plot shows several summary statistics. The "No effect p-value" comes from a Wald test of the null hypothesis that all treatment effects are zero. The "Average effect [CI]" provides the average effect $\bar{\beta} = \frac{1}{H}\sum_h \beta_h$ along with its confidence interval.
+
+### Example 2: Correlated Estimates
+
+When estimates are correlated across horizons (common in dynamic settings), the plausible bounds adapt to the correlation structure and will tend to become wider:
+
+```{r corr-example, results = FALSE, message = FALSE, cache = FALSE}
+pb_corr <- plausible_bounds(
+  estimates = estimates_bighump[1:12],
+  var = var_bighump[1:12, 1:12],
+  alpha = 0.05
+)
+```
+
+```{r corr-plot, fig.cap="Plausible bounds for treatment path estimates with correlated estimates"}
+create_plot(pb_corr)
+```
+
+## Pre-Treatment Periods
+
+The package supports designs where some periods occur before treatment. This allows testing for pre-trends and distinguishing them from treatment effects. When specifying the `preperiods` argument, the function automatically computes two Wald tests: one testing $H_0$: no pre-trends in the pre-treatment periods, and another testing $H_0$: no treatment effect in the post-treatment periods. Both p-values appear in the plot annotations.
+
+### Specifying Pre-Treatment Periods
+
+Use the `preperiods` argument to indicate how many of the initial estimates correspond to pre-treatment periods. Note that period 0 (the period immediately before treatment) is assumed to be normalized to zero and should not be included in the estimates vector:
+
+```{r pretrends-example, results = FALSE, message = FALSE, cache = FALSE}
+pb_pre <- plausible_bounds(
+  estimates = estimates_smooth,
+  var = var_smooth,
+  alpha = 0.05,
+  preperiods = 8  # First 8 elements are pre-treatment periods
+)
+```
+
+```{r plot-pretrends, fig.cap="Event study with pre-treatment periods showing pre-trends"}
+create_plot(pb_pre)
+```
+
+The vertical dashed line at event time 0 separates pre- and post-treatment periods. Pre-treatment estimates appear at negative horizons, revealing any pre-existing trends. The plausible bounds and restricted estimates are only computed for the post-treatment periods, since the goal is inference on the treatment effect path.
+
+The annotations now include both Wald test p-values. The "Pretrends p-value" tests whether the pre-treatment coefficients are jointly zero—a rejection indicates violations of parallel trends. The "No effect p-value" tests whether the post-treatment coefficients are jointly zero.
+
+
+## Customizing plots
+
+The `create_plot()` function provides a few arguments to customize which elements appear in the plot.
+The `show_annotations` argument controls whether the Wald test results and average treatment effect are displayed at the bottom.
+The `show_supt` and `show_pointwise` arguments control whether sup-t and pointwise bounds are included.
+For example, displaying only the plausible and pointwise bounds:
+
+```{r viz-custom, fig.cap="Customized plot showing only point estimates and restricted bounds"}
+create_plot(pb, show_annotations = FALSE, show_pointwise = FALSE, show_supt = FALSE)
+```
+
+
+## Parallel Processing
+
+For datasets with many horizons, the restricted bounds calculation can be time-consuming due to the model selection procedure. The `parallel` argument enables parallel computation across the model universe. Use `n_cores` to specify the number of cores (the default uses all available cores minus one):
+
+```{r parallel, eval=FALSE}
+pb_parallel <- plausible_bounds(
+  estimates = estimates_smooth,
+  var = var_smooth,
+  alpha = 0.05,
+  parallel = TRUE,
+  n_cores = 4
+)
+```
+
+
+## References
+
+* Freyaldenhoven, S. and Hansen, C. (2026). "(Visualizing) Plausible Treatment Effect Paths." Federal Reserve Bank of Philadelphia and University of Chicago.
+* Berk, R., Brown, L., Buja, A., Zhang, K., and Zhao, L. (2013). "Valid post-selection inference." *Annals of Statistics*, 41(2):802-837.

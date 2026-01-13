@@ -8,39 +8,58 @@ plausible_bounds(
   estimates,
   var,
   alpha = 0.05,
+  preperiods = 0,
   include_pointwise = TRUE,
   include_supt = TRUE,
-  parallel = FALSE
+  parallel = FALSE,
+  n_cores = NULL
 )
 }
 \arguments{
-\item{estimates}{A vector of point estimates}
+\item{estimates}{A numeric vector or single-row/single-column matrix of point estimates.
+If preperiods > 0, the first preperiods elements are pre-treatment estimates,
+followed by post-treatment estimates.}
 
 \item{var}{The variance-covariance matrix of the estimates}
 
 \item{alpha}{Significance level (default: 0.05)}
+
+\item{preperiods}{Number of pre-treatment periods (default: 0). Period 0 is assumed
+to be normalized and not included in estimates.}
 
 \item{include_pointwise}{Whether to include pointwise bounds (default: TRUE)}
 
 \item{include_supt}{Whether to include sup-t bounds (default: TRUE)}
 
 \item{parallel}{Whether to use parallel processing for restricted bounds calculation (default: FALSE)}
+
+\item{n_cores}{Number of cores to use for parallel processing (default: NULL, which uses
+detectCores() - 1). Only used when parallel = TRUE.}
 }
 \value{
 A list containing:
-\item{cumulative_bounds}{Results from calculate_cumulative_bounds}
-\item{restricted_bounds}{Results from calculate_restricted_bounds}
+\item{alpha}{Significance level}
+\item{preperiods}{Number of pre-treatment periods}
+\item{wald_test}{List with post (and pre if preperiods > 0) Wald test results}
+\item{restricted_bounds}{Data frame with horizon, unrestr_est, restr_est, lower, upper}
+\item{restricted_bounds_metadata}{List with supt_critval, supt_b,
+degrees_of_freedom, K, lambda1, lambda2, restr_class, best_fit_model}
+\item{avg_treatment_effect}{List with estimate, se, lower, upper}
+\item{pointwise_bounds}{List with lower and upper vectors (if include_pointwise = TRUE)}
+\item{supt_bounds}{List with lower and upper vectors (if include_supt = TRUE)}
 }
 \description{
-This function calculates both cumulative and restricted bounds for a vector of estimates.
-It calls both calculate_cumulative_bounds and calculate_restricted_bounds functions.
+This function calculates the plausible bounds for a vector of estimates along with
+average treatment effect, Wald tests, and optional pointwise/sup-t bounds.
+Supports pre-treatment periods for event study designs.
 }
 \examples{
-# Example with constant estimates and IID errors (simple case)
-data(estimates_constant_iid)
-data(var_constant_iid)
-result1 <- plausible_bounds(estimates_constant_iid[1:4], var_constant_iid[1:4, 1:4])
-print(result1)
+# Example with constant estimates and no correlation (simple case)
+data(estimates_constant)
+data(var_constant)
+pb <- plausible_bounds(estimates_constant[1:4], var_constant[1:4, 1:4])
+print(pb)
+summary(pb)
 
 
 }
