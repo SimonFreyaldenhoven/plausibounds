@@ -21,7 +21,7 @@
 #'   \item{alpha}{Significance level}
 #'   \item{preperiods}{Number of pre-treatment periods}
 #'   \item{wald_test}{List with post (and pre if preperiods > 0) Wald test results}
-#'   \item{restricted_bounds}{Data frame with horizon, coef, surrogate, lower, upper}
+#'   \item{restricted_bounds}{Data frame with horizon, unrestr_est, restr_est, lower, upper}
 #'   \item{restricted_bounds_metadata}{List with supt_critval, supt_b,
 #'     degrees_of_freedom, K, lambda1, lambda2, surrogate_class, best_fit_model}
 #'   \item{avg_treatment_effect}{List with estimate, se, lower, upper}
@@ -171,7 +171,7 @@ plausible_bounds <- function(estimates, var, alpha = 0.05,
 #'
 #' @export
 summary.plausible_bounds <- function(object, ...) {
-  # Build summary from restricted_bounds (which has coef, surrogate, lower, upper)
+  # Build summary from restricted_bounds (which has unrestr_est, restr_est, lower, upper)
   result <- object$restricted_bounds %>%
     dplyr::rename(restr_lower = lower, restr_upper = upper)
 
