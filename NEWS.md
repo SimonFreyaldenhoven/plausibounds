@@ -1,3 +1,8 @@
+# plausibounds 1.0.1
+
+* Makes GitHub repo public
+
+
 # plausibounds 1.0.0
 
 * Initial CRAN submission.
